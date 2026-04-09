@@ -301,3 +301,26 @@ export async function buildEnhanceLoreApplyPrompt(info: {
     answersText: formatAnswers(info.answers),
   });
 }
+
+// ─── Lore File Summary ──────────────────────────────────────
+
+export async function buildLoreFileSummaryPrompt(
+  filename: string,
+  content: string,
+): Promise<string> {
+  return loadTemplate('lore-file-summary', { filename, content });
+}
+
+// ─── Lore Relevance Selection ────────────────────────────────
+
+export async function buildLoreRelevancePrompt(
+  loreSummaryContext: string,
+  fileNames: string[],
+  taskDescription: string,
+): Promise<string> {
+  return loadTemplate('lore-relevance', {
+    loreSummaryContext,
+    fileList: fileNames.join('\n'),
+    taskDescription,
+  });
+}

@@ -11,3 +11,7 @@ Always keep `README.md` up to date when making changes to the project. This incl
 - Changing CLI behavior or flags → reflect it in usage examples
 
 When in doubt, re-read `README.md` after your changes and ask: "Would a new user understand how to use this with the current README?" If not, update it.
+
+## Testing
+
+Always run `npm test` after making changes to verify nothing is broken.

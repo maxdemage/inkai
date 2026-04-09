@@ -13,9 +13,11 @@ import { statusCommand } from './commands/status.js';
 import { archiveCommand } from './commands/archive.js';
 import { jobsCommand } from './commands/jobs.js';
 import { readCommand } from './commands/read.js';
+import { readReviewCommand } from './commands/read-review.js';
 import { exportCommand } from './commands/export.js';
 import { resetPromptsCommand } from './commands/reset-prompts.js';
 import { enhanceLoreCommand } from './commands/enhance-lore.js';
+import { summaryCommand } from './commands/summary.js';
 import { getAllBooks } from './db.js';
 import { chatSmall } from './llm/manager.js';
 import { parseLLMJson } from './llm/parse.js';
@@ -38,9 +40,11 @@ function registerAllCommands(): void {
   registerCommand(archiveCommand);
   registerCommand(jobsCommand);
   registerCommand(readCommand);
+  registerCommand(readReviewCommand);
   registerCommand(exportCommand);
   registerCommand(resetPromptsCommand);
   registerCommand(enhanceLoreCommand);
+  registerCommand(summaryCommand);
 
   // Quit command
   registerCommand({

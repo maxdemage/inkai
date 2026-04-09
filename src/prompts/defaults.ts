@@ -433,4 +433,39 @@ Only include files that need changes. Return valid JSON:
   "changes": ["Brief description of what was changed in each file"]
 }`,
 
+// ─── Lore File Summary ──────────────────────────────────────
+
+'lore-file-summary': `Summarize the following lore file for a book project. The summary should capture all key facts, names, rules, and relationships in 2-4 paragraphs. Be specific — include character names, place names, dates, and rules. This summary will be used to decide whether this file's full content is needed for a given writing task.
+
+File: {{filename}}
+
+{{content}}
+
+Write a dense, fact-rich summary. Do not include meta-commentary about the file itself.`,
+
+// ─── Lore Relevance Selection ────────────────────────────────
+
+'lore-relevance': `You are selecting which lore files are needed for a writing task. Below are SUMMARIES of each lore file, followed by the task description.
+
+=== LORE FILE SUMMARIES ===
+{{loreSummaryContext}}
+
+=== AVAILABLE FILES ===
+{{fileList}}
+
+=== TASK ===
+{{taskDescription}}
+
+Select which lore files contain information RELEVANT to this specific task. Include a file if:
+- It contains characters, locations, or rules referenced in the task
+- It provides world-building context needed for consistency
+- It has style or tone guidance related to the task
+
+Do NOT include files that are clearly irrelevant to this task.
+
+Return ONLY valid JSON:
+{
+  "files": ["filename1.md", "filename2.md"]
+}`,
+
 };

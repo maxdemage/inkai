@@ -40,6 +40,7 @@ async function run(): Promise<void> {
       bookId: job.bookId,
       chapterNumber: job.chapterNumber,
       loreContext: job.loreContext,
+      fullLoreContext: job.fullLoreContext,
       styleGuide: job.styleGuide,
       chapterSummary: job.chapterSummary,
       chapterPlan: job.chapterPlan,

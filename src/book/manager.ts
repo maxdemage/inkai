@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
 import type { BookRecord, BookType, BookStatus, InkaiConfig } from '../types.js';
 import { addBook, getBookByName, updateBook } from '../db.js';
@@ -19,6 +20,10 @@ export function getChaptersDir(config: InkaiConfig, projectName: string): string
 
 export function getChapterPlansDir(config: InkaiConfig, projectName: string): string {
   return join(getBookDir(config, projectName), 'chapters-plan');
+}
+
+export function getLoreSummariesDir(config: InkaiConfig, projectName: string): string {
+  return join(getLoreDir(config, projectName), '.summaries');
 }
 
 export async function createBookProject(
@@ -104,6 +109,95 @@ export async function readLoreContext(config: InkaiConfig, projectName: string):
   return Object.entries(files)
     .filter(([name]) => name !== 'summary-of-chapters.md')
     .map(([name, content]) => `=== ${name} ===\n${content}`)
+    .join('\n\n');
+}
+
+// ─── Lore Summaries ───────────────────────────────────────────
+
+export function hashLoreContent(content: string): string {
+  return createHash('sha256').update(content).digest('hex').slice(0, 12);
+}
+
+export async function readLoreSummary(
+  config: InkaiConfig,
+  projectName: string,
+  filename: string
+): Promise<{ hash: string; summary: string } | null> {
+  const summariesDir = getLoreSummariesDir(config, projectName);
+  const filePath = join(summariesDir, filename);
+  if (!existsSync(filePath)) return null;
+
+  const content = await readFile(filePath, 'utf-8');
+  const hashMatch = content.match(/^<!-- hash:(\w+) -->\n/);
+  if (!hashMatch) return null;
+
+  return {
+    hash: hashMatch[1],
+    summary: content.slice(hashMatch[0].length),
+  };
+}
+
+export async function writeLoreSummary(
+  config: InkaiConfig,
+  projectName: string,
+  filename: string,
+  summary: string,
+  contentHash: string
+): Promise<void> {
+  const summariesDir = getLoreSummariesDir(config, projectName);
+  await mkdir(summariesDir, { recursive: true });
+  const content = `<!-- hash:${contentHash} -->\n${summary}`;
+  await writeFile(join(summariesDir, filename), content, 'utf-8');
+}
+
+export async function readAllLoreSummaries(
+  config: InkaiConfig,
+  projectName: string
+): Promise<Record<string, string>> {
+  const summariesDir = getLoreSummariesDir(config, projectName);
+  if (!existsSync(summariesDir)) return {};
+
+  const files = await readdir(summariesDir);
+  const result: Record<string, string> = {};
+
+  for (const file of files) {
+    if (file.endsWith('.md')) {
+      const data = await readLoreSummary(config, projectName, file);
+      if (data) result[file] = data.summary;
+    }
+  }
+
+  return result;
+}
+
+export async function getStaleLoreFiles(
+  config: InkaiConfig,
+  projectName: string
+): Promise<string[]> {
+  const loreFiles = await readLoreFiles(config, projectName);
+  const stale: string[] = [];
+
+  for (const [filename, content] of Object.entries(loreFiles)) {
+    if (filename === 'summary-of-chapters.md') continue;
+
+    const currentHash = hashLoreContent(content);
+    const summary = await readLoreSummary(config, projectName, filename);
+
+    if (!summary || summary.hash !== currentHash) {
+      stale.push(filename);
+    }
+  }
+
+  return stale;
+}
+
+export async function readLoreSummaryContext(
+  config: InkaiConfig,
+  projectName: string
+): Promise<string> {
+  const summaries = await readAllLoreSummaries(config, projectName);
+  return Object.entries(summaries)
+    .map(([name, summary]) => `=== ${name} ===\n${summary}`)
     .join('\n\n');
 }
 

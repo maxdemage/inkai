@@ -10,6 +10,7 @@ import { chatWriter } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
 import { getBookDir } from '../book/manager.js';
 import { buildChapterReviewPrompt } from '../prompts/templates.js';
+import { ensureLoreSummaries } from '../lore.js';
 import { header, success, info, error, blank, boxMessage, c } from '../ui.js';
 
 export const reviewChapterCommand: Command = {
@@ -49,6 +50,9 @@ export const reviewChapterCommand: Command = {
       readStyleGuide(ctx.config, book.projectName),
     ]);
 
+    // Keep summaries fresh while we're at it
+    await ensureLoreSummaries(ctx.config, book.projectName);
+
     spinner.text = `Reviewing Chapter ${chapterNum} (writer LLM)...`;
 
     try {
@@ -61,9 +65,10 @@ export const reviewChapterCommand: Command = {
       spinner.succeed(`Review complete`);
 
       blank();
-      boxMessage(review.slice(0, 2000) + (review.length > 2000 ? '\n\n...(see full review in file)' : ''), `Review: Chapter ${chapterNum}`);
+      boxMessage(review.slice(0, 2000) + (review.length > 2000 ? '\n\n...(truncated — use /read-review to read full review)' : ''), `Review: Chapter ${chapterNum}`);
       blank();
       info(`Full review saved: ${c.muted(filePath)}`);
+      info(`Use ${c.primary(`/read-review ${chapterNum}`)} to read the full review.`);
       info(`Use ${c.primary(`/rewrite-chapter ${chapterNum}`)} to apply suggestions.`);
       blank();
 

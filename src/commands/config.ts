@@ -1,8 +1,13 @@
 import { input, select, password } from '@inquirer/prompts';
+import { mkdir, access, constants } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import type { Command, LLMProviderName, LLMTier } from '../types.js';
 import { loadConfig, saveConfig } from '../config.js';
 import { clearProviderCache } from '../llm/manager.js';
-import { header, success, info, keyValue, blank, divider, c } from '../ui.js';
+import { OpenAIProvider } from '../llm/openai.js';
+import { AnthropicProvider } from '../llm/anthropic.js';
+import { GeminiProvider } from '../llm/gemini.js';
+import { header, success, info, warn, error as showError, keyValue, blank, divider, c } from '../ui.js';
 
 const PROVIDER_CHOICES = [
   { name: 'OpenAI', value: 'openai' as LLMProviderName },
@@ -86,11 +91,20 @@ export const configCommand: Command = {
       });
 
       if (apiKey.trim()) {
-        config.providers[provider] = { apiKey: apiKey.trim() };
-        await saveConfig(config);
-        clearProviderCache();
-        Object.assign(ctx.config, config);
-        success(`${provider} API key saved.`);
+        const key = apiKey.trim();
+        info('Verifying API key...');
+        try {
+          await testApiKey(provider, key);
+          config.providers[provider] = { apiKey: key };
+          await saveConfig(config);
+          clearProviderCache();
+          Object.assign(ctx.config, config);
+          success(`${provider} API key verified and saved.`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          showError(`API key verification failed: ${msg}`);
+          warn('Key was not saved. Please check the key and try again.');
+        }
       }
     }
 
@@ -128,10 +142,21 @@ export const configCommand: Command = {
         default: config.booksDir,
       });
 
-      config.booksDir = dir.trim();
+      const resolved = resolve(dir.trim());
+
+      try {
+        await mkdir(resolved, { recursive: true });
+        await access(resolved, constants.W_OK | constants.R_OK);
+      } catch {
+        showError(`Cannot write to directory: ${resolved}`);
+        warn('Please choose a directory you have write access to.');
+        return;
+      }
+
+      config.booksDir = resolved;
       await saveConfig(config);
       Object.assign(ctx.config, config);
-      success(`Books directory set to ${dir}`);
+      success(`Books directory set to ${resolved}`);
     }
 
     async function viewConfig() {
@@ -171,3 +196,27 @@ export const configCommand: Command = {
     }
   },
 };
+
+async function testApiKey(provider: LLMProviderName, apiKey: string): Promise<void> {
+  const testModel: Record<LLMProviderName, string> = {
+    openai: 'gpt-4o-mini',
+    anthropic: 'claude-sonnet-4-20250514',
+    gemini: 'gemini-3.1-flash-lite-preview',
+  };
+
+  const model = testModel[provider];
+  const messages = [{ role: 'user' as const, content: 'Say "ok".' }];
+  const opts = { maxTokens: 8, temperature: 0 };
+
+  switch (provider) {
+    case 'openai':
+      await new OpenAIProvider(apiKey, model).chat(messages, opts);
+      break;
+    case 'anthropic':
+      await new AnthropicProvider(apiKey, model).chat(messages, opts);
+      break;
+    case 'gemini':
+      await new GeminiProvider(apiKey, model).chat(messages, opts);
+      break;
+  }
+}

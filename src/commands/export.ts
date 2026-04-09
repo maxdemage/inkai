@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import JSZip from 'jszip';
+import { select } from '@inquirer/prompts';
 import type { Command } from '../types.js';
 import { readChapter, getBookDir } from '../book/manager.js';
 import { header, success, error, info, blank, c } from '../ui.js';
@@ -185,13 +186,187 @@ async function generateOdt(
   return zip.generateAsync({ type: 'nodebuffer', mimeType: 'application/vnd.oasis.opendocument.text' });
 }
 
+// ─── EPUB Generation ──────────────────────────────────────────
+
+function markdownToXhtml(md: string): string {
+  const lines = md.split('\n');
+  let html = '';
+
+  for (const line of lines) {
+    if (line.startsWith('# ')) {
+      html += `<h1>${escapeXml(line.slice(2))}</h1>\n`;
+    } else if (line.startsWith('## ')) {
+      html += `<h2>${escapeXml(line.slice(3))}</h2>\n`;
+    } else if (line.startsWith('### ')) {
+      html += `<h3>${escapeXml(line.slice(4))}</h3>\n`;
+    } else if (line.startsWith('---') || line.startsWith('***')) {
+      html += `<p class="separator">* * *</p>\n`;
+    } else if (line.startsWith('> ')) {
+      html += `<blockquote><p>${escapeXml(line.slice(2))}</p></blockquote>\n`;
+    } else if (line.trim() === '') {
+      // skip empty lines (paragraph spacing handled by CSS)
+    } else {
+      let text = escapeXml(line);
+      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      html += `<p>${text}</p>\n`;
+    }
+  }
+
+  return html;
+}
+
+function buildEpubChapterXhtml(chapterContent: string, chapterIndex: number): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Chapter ${chapterIndex + 1}</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+${markdownToXhtml(chapterContent)}
+</body>
+</html>`;
+}
+
+function buildEpubTitlePage(title: string, authors: string[]): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${escapeXml(title)}</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<div class="title-page">
+  <h1 class="book-title">${escapeXml(title)}</h1>
+  <p class="book-author">${escapeXml(authors.join(', '))}</p>
+</div>
+</body>
+</html>`;
+}
+
+function buildEpubStylesheet(): string {
+  return `body {
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.6;
+  margin: 1em;
+  color: #1a1a1a;
+}
+h1 { font-size: 1.8em; margin: 1em 0 0.5em; color: #1a1a2e; }
+h2 { font-size: 1.4em; margin: 0.8em 0 0.4em; color: #0f3460; }
+h3 { font-size: 1.1em; margin: 0.6em 0 0.3em; font-style: italic; }
+p { margin: 0.4em 0; text-indent: 1.5em; }
+p.separator { text-align: center; text-indent: 0; color: #999; margin: 1em 0; font-size: 1.2em; }
+blockquote { margin: 0.5em 1.5em; }
+blockquote p { font-style: italic; color: #555; text-indent: 0; }
+.title-page { text-align: center; margin-top: 30%; }
+.book-title { font-size: 2.4em; margin-bottom: 0.5em; }
+.book-author { font-size: 1.2em; color: #555; }
+`;
+}
+
+function buildEpubContainerXml(): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`;
+}
+
+function buildEpubContentOpf(title: string, authors: string[], chapterCount: number): string {
+  const bookId = `inkai-${Date.now()}`;
+  const author = escapeXml(authors.join(', '));
+  const date = new Date().toISOString().split('T')[0];
+
+  let manifest = `    <item id="style" href="style.css" media-type="text/css"/>\n`;
+  manifest += `    <item id="title-page" href="title.xhtml" media-type="application/xhtml+xml"/>\n`;
+  manifest += `    <item id="toc" href="toc.xhtml" media-type="application/xhtml+xml" properties="nav"/>\n`;
+  for (let i = 0; i < chapterCount; i++) {
+    manifest += `    <item id="chapter-${i + 1}" href="chapter-${String(i + 1).padStart(2, '0')}.xhtml" media-type="application/xhtml+xml"/>\n`;
+  }
+
+  let spine = `    <itemref idref="title-page"/>\n`;
+  spine += `    <itemref idref="toc"/>\n`;
+  for (let i = 0; i < chapterCount; i++) {
+    spine += `    <itemref idref="chapter-${i + 1}"/>\n`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="BookId">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="BookId">${bookId}</dc:identifier>
+    <dc:title>${escapeXml(title)}</dc:title>
+    <dc:creator>${author}</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:date>${date}</dc:date>
+    <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')}</meta>
+  </metadata>
+  <manifest>
+${manifest}  </manifest>
+  <spine>
+${spine}  </spine>
+</package>`;
+}
+
+function buildEpubTocXhtml(title: string, chapterCount: number): string {
+  let items = '';
+  for (let i = 0; i < chapterCount; i++) {
+    items += `      <li><a href="chapter-${String(i + 1).padStart(2, '0')}.xhtml">Chapter ${i + 1}</a></li>\n`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Table of Contents</title>
+  <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+  <nav epub:type="toc" id="toc">
+    <h1>Table of Contents</h1>
+    <ol>
+${items}    </ol>
+  </nav>
+</body>
+</html>`;
+}
+
+async function generateEpub(
+  title: string,
+  authors: string[],
+  chapters: string[]
+): Promise<Buffer> {
+  const zip = new JSZip();
+
+  // mimetype must be first and uncompressed (EPUB spec)
+  zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+  zip.file('META-INF/container.xml', buildEpubContainerXml());
+  zip.file('OEBPS/content.opf', buildEpubContentOpf(title, authors, chapters.length));
+  zip.file('OEBPS/style.css', buildEpubStylesheet());
+  zip.file('OEBPS/title.xhtml', buildEpubTitlePage(title, authors));
+  zip.file('OEBPS/toc.xhtml', buildEpubTocXhtml(title, chapters.length));
+
+  for (let i = 0; i < chapters.length; i++) {
+    const filename = `chapter-${String(i + 1).padStart(2, '0')}.xhtml`;
+    zip.file(`OEBPS/${filename}`, buildEpubChapterXhtml(chapters[i], i));
+  }
+
+  return zip.generateAsync({ type: 'nodebuffer', mimeType: 'application/epub+zip' });
+}
+
 export const exportCommand: Command = {
   name: 'export',
-  description: 'Export all chapters to a single .odt document',
-  aliases: ['odt'],
+  description: 'Export all chapters to .odt or .epub',
+  aliases: ['odt', 'epub'],
   requiresBook: true,
 
-  async execute(_args, ctx) {
+  async execute(args, ctx) {
     const book = ctx.selectedBook!;
     const totalChapters = book.chapterCount;
 
@@ -201,6 +376,22 @@ export const exportCommand: Command = {
     }
 
     header('Export Book');
+
+    // Determine format from alias or arg, otherwise ask
+    let format: 'odt' | 'epub' | undefined;
+    const firstArg = args[0]?.toLowerCase();
+    if (firstArg === 'odt' || firstArg === 'epub') {
+      format = firstArg;
+    }
+    if (!format) {
+      format = await select({
+        message: 'Export format:',
+        choices: [
+          { name: 'EPUB — e-readers, Kindle, Apple Books', value: 'epub' as const },
+          { name: 'ODT — LibreOffice, Google Docs', value: 'odt' as const },
+        ],
+      });
+    }
 
     const spinner = ora({ text: 'Collecting chapters...', color: 'cyan' }).start();
 
@@ -212,17 +403,21 @@ export const exportCommand: Command = {
       }
     }
 
-    spinner.text = 'Generating ODT...';
+    const ext = format;
+    spinner.text = `Generating ${ext.toUpperCase()}...`;
 
-    const buffer = await generateOdt(book.title, book.authors, chapters);
-    const filename = `${book.projectName}.odt`;
+    const buffer = format === 'epub'
+      ? await generateEpub(book.title, book.authors, chapters)
+      : await generateOdt(book.title, book.authors, chapters);
+
+    const filename = `${book.projectName}.${ext}`;
     const outputPath = join(getBookDir(ctx.config, book.projectName), filename);
 
     await writeFile(outputPath, buffer);
 
     spinner.stop();
 
-    success(`Exported ${chapters.length} chapter(s) to ODT.`);
+    success(`Exported ${chapters.length} chapter(s) to ${ext.toUpperCase()}.`);
     info(`File: ${c.highlight(outputPath)}`);
     blank();
   },

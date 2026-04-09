@@ -20,6 +20,9 @@ node dist/index.js
 # Or link globally
 npm link
 inkai
+
+# Run tests
+npm test
 ```
 
 ## Features
@@ -30,13 +33,14 @@ inkai
 - **Book Projects** — create and manage multiple book projects
 - **2-Round Adaptive Questioning** — AI asks foundational questions first, then deeper follow-ups based on your answers
 - **AI-Generated Lore** — world-building, characters, timelines, style guides
+- **Smart Lore Selection** — per-file summaries with content hashing; a cheap LLM pre-flight picks only the lore files relevant to each task, saving tokens on large worlds
 - **6-Step Chapter Pipeline** — plan → write → QA with separate AI agents
 - **Chapter Review** — detailed literary review with improvement suggestions
 - **Chapter Rewriting** — apply review feedback automatically
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
 - **Background Writing** — optionally run chapter writing in a detached process that survives exit
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
-- **ODT Export** — export all chapters to a single `.odt` document with basic styling
+- **ODT & EPUB Export** — export all chapters to `.odt` (LibreOffice/Google Docs) or `.epub` (e-readers/Kindle)
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available
 - **Local Database** — tracks all projects with status management
@@ -62,12 +66,14 @@ inkai
 |---------|---------|-------------|
 | `/create-chapter` | `/write`, `/chapter` | Write the next chapter (6-step pipeline) |
 | `/review-chapter [n]` | `/review` | Get AI review of a chapter |
+| `/read-review [n]` | `/view-review` | Read a chapter review in the CLI reader |
 | `/rewrite-chapter [n]` | `/rewrite` | Rewrite a chapter based on review feedback |
 | `/edit-lore` | `/lore` | Review and modify book lore |
 | `/enhance-lore` | `/enhance` | AI-guided lore enhancement — answer targeted questions to deepen your world |
 | `/status` | `/info`, `/stat` | Show current book project status |
+| `/summary` | `/chapters-summary` | Show the chapter summary document |
 | `/read [n]` | `/reader`, `/view` | Read chapters in a CLI reader (↑↓/jk scroll, N/P chapters, Q quit) |
-| `/export` | `/odt` | Export all chapters to a single `.odt` file |
+| `/export [format]` | `/odt`, `/epub` | Export all chapters to `.odt` or `.epub` |
 
 ## Configuration
 
@@ -100,7 +106,9 @@ On first run, inkai writes default prompt templates to `~/.inkai/prompts/`. You 
 ├── lore-summary.md             # Lore overview for editing
 ├── lore-edit.md                # Lore modification
 ├── book-summary.md             # Book status summary
-└── chapter-writing.md          # Legacy direct chapter writing
+├── chapter-writing.md          # Legacy direct chapter writing
+├── lore-file-summary.md        # Summarise individual lore files for smart selection
+└── lore-relevance.md           # Select relevant lore files for a task
 ```
 
 ## Book Project Structure
@@ -118,7 +126,11 @@ On first run, inkai writes default prompt templates to `~/.inkai/prompts/`. You 
 │   ├── magic-system.md         # (optional) Fantasy/sci-fi systems
 │   ├── technology-tree.md      # (optional) Tech details
 │   ├── notes.md                # (optional) Misc notes
-│   └── links.md                # (optional) Reference links
+│   ├── links.md                # (optional) Reference links
+│   └── .summaries/             # Auto-generated lore summaries (hash-validated)
+│       ├── basic-lore.md
+│       ├── characters.md
+│       └── ...
 ├── chapters/
 │   ├── chapter-01.md
 │   ├── review_chapter_01.md
@@ -153,7 +165,7 @@ A 6-step agentic pipeline:
 |------|------|-----|
 | 1 | **Guidelines** — AI suggests a direction, or write your own | small |
 | 2 | **Plan** — detailed scene-by-scene chapter blueprint | medium |
-| 3 | **Prepare context** — gather lore, style, plan for a fresh writer | — |
+| 3 | **Prepare context** — smart lore selection picks relevant files for the writer | small |
 | 4 | **Write** — full chapter from plan (fresh agent, no prior conversation) | writer |
 | 5 | **QA** — separate agent checks against lore/plan, auto-fixes issues | writer |
 | 6 | **Save & summarise** — write chapter + update rolling summary | small |
@@ -175,6 +187,21 @@ Applies review feedback automatically with the writer LLM.
 ### 6. Iterate
 
 Use `/edit-lore` to refine the world, then continue writing chapters.
+
+## Testing
+
+Inkai uses [Vitest](https://vitest.dev/) for testing.
+
+```bash
+npm test            # single run
+npm run test:watch  # watch mode
+```
+
+Test suites cover:
+- **LLM JSON parsing** — all extraction strategies (direct, code fences, brace detection) and error handling
+- **Prompt templates** — variable interpolation, conditionals, and default template integrity
+- **Book manager** — path helpers, lore/chapter/plan/review file I/O round-trips
+- **Chapter pipeline** — full 3-step orchestration (write → QA → save) with mocked LLM calls, callback firing, error recovery, and git integration
 
 ## License
 

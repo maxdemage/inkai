@@ -17,6 +17,7 @@ export interface ChapterJob {
   // All serialised context the worker needs
   configSnapshot: string;       // JSON-encoded InkaiConfig
   loreContext: string;
+  fullLoreContext: string;
   styleGuide: string;
   chapterSummary: string;
   chapterPlan: string;

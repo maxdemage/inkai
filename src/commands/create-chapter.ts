@@ -23,6 +23,7 @@ import {
   buildChapterPlanPrompt,
 } from '../prompts/templates.js';
 import { runChapterPipeline } from '../pipeline.js';
+import { selectRelevantLore } from '../lore.js';
 import { header, success, info, warn, error, blank, boxMessage, divider, c, progressStep } from '../ui.js';
 
 const TOTAL_STEPS = 6;
@@ -44,12 +45,28 @@ export const createChapterCommand: Command = {
 
     // ─── Load context ───────────────────────────────────────
 
-    const [loreContext, styleGuide, chapterSummary, writingInstructions] = await Promise.all([
-      readLoreContext(ctx.config, book.projectName),
+    const [styleGuide, chapterSummary, writingInstructions] = await Promise.all([
       readStyleGuide(ctx.config, book.projectName),
       readChapterSummary(ctx.config, book.projectName),
       readWritingInstructions(ctx.config, book.projectName),
     ]);
+
+    // Smart lore: ensure summaries are fresh, then select relevant files
+    const loreContext = await selectRelevantLore(
+      ctx.config, book.projectName,
+      `Writing chapter ${nextChapter}. Summary so far:\n${chapterSummary}`,
+      {
+        onSummaryGenerateStart(count) {
+          spinner.text = `Generating lore summaries (${count} files)...`;
+        },
+        onSummaryGenerateProgress(filename) {
+          spinner.text = `Summarizing ${filename}...`;
+        },
+        onSelectionStart() {
+          spinner.text = 'Selecting relevant lore...';
+        },
+      },
+    );
 
     // Read previous chapter if it exists
     let previousChapter: string | null = null;
@@ -221,6 +238,7 @@ export const createChapterCommand: Command = {
           chapterNumber: nextChapter,
           configSnapshot: JSON.stringify(ctx.config),
           loreContext,
+          fullLoreContext: await readLoreContext(ctx.config, book.projectName),
           styleGuide,
           chapterSummary,
           chapterPlan,
@@ -267,6 +285,9 @@ export const createChapterCommand: Command = {
     blank();
     progressStep(3, TOTAL_STEPS, 'Preparing writer context');
 
+    // Load full lore for QA consistency checks
+    const fullLoreContext = await readLoreContext(ctx.config, book.projectName);
+
     // ─── Steps 4-6: Write → QA → Save (shared pipeline) ────
 
     progressStep(4, TOTAL_STEPS, 'Writing chapter');
@@ -279,6 +300,7 @@ export const createChapterCommand: Command = {
         bookId: book.id,
         chapterNumber: nextChapter,
         loreContext,
+        fullLoreContext,
         styleGuide,
         chapterSummary,
         chapterPlan,

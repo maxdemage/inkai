@@ -24,6 +24,7 @@ export interface PipelineInput {
   bookId: string;
   chapterNumber: number;
   loreContext: string;
+  fullLoreContext?: string;  // full lore for QA — falls back to loreContext if not provided
   styleGuide: string;
   chapterSummary: string;
   chapterPlan: string;
@@ -59,6 +60,7 @@ export async function runChapterPipeline(
     config, projectName, bookId, chapterNumber,
     loreContext, styleGuide, chapterSummary, chapterPlan, writingInstructions,
   } = input;
+  const qaLoreContext = input.fullLoreContext ?? loreContext;
 
   // ─── Step 4: Write the chapter ────────────────────────────
 
@@ -85,7 +87,7 @@ export async function runChapterPipeline(
 
   try {
     const qaPrompt = await buildChapterQAPrompt(
-      loreContext, styleGuide, chapterPlan, chapterContent, chapterNumber,
+      qaLoreContext, styleGuide, chapterPlan, chapterContent, chapterNumber,
     );
 
     const qaResponse = await chatWriter(config, [
