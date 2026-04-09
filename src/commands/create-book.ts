@@ -8,6 +8,7 @@ import { createBookProject, writeLoreFiles, setBookStatus } from '../book/manage
 import { gitInit, gitCommit, isGitAvailable } from '../git.js';
 import { getBookDir } from '../book/manager.js';
 import { buildLoreQuestionsRound1Prompt, buildLoreQuestionsRound2Prompt, buildLoreGenerationPrompt } from '../prompts/templates.js';
+import { parseLLMJson } from '../llm/parse.js';
 import { header, success, info, error, blank, c, boxMessage, divider, subheader } from '../ui.js';
 
 export const createBookCommand: Command = {
@@ -43,10 +44,32 @@ export const createBookCommand: Command = {
       choices: BOOK_TYPES.map(t => ({ name: t.label, value: t.value })),
     });
 
-    const genre = await input({
-      message: 'Genre (e.g., fantasy, sci-fi, mystery, literary fiction):',
-      validate: (val) => val.trim() ? true : 'Required',
+    const genre = await select({
+      message: 'Genre:',
+      choices: [
+        { name: 'Fantasy', value: 'fantasy' },
+        { name: 'Science Fiction', value: 'sci-fi' },
+        { name: 'Mystery / Thriller', value: 'mystery' },
+        { name: 'Romance', value: 'romance' },
+        { name: 'Horror', value: 'horror' },
+        { name: 'Literary Fiction', value: 'literary fiction' },
+        { name: 'Historical Fiction', value: 'historical fiction' },
+        { name: 'Adventure', value: 'adventure' },
+        { name: 'Crime', value: 'crime' },
+        { name: 'Comedy / Satire', value: 'comedy' },
+        { name: 'Drama', value: 'drama' },
+        { name: 'Non-Fiction', value: 'non-fiction' },
+        { name: 'Self-Help', value: 'self-help' },
+        { name: 'Other (type your own)', value: '__other__' },
+      ],
     });
+
+    const finalGenre = genre === '__other__'
+      ? await input({
+          message: 'Genre (custom):',
+          validate: (val) => val.trim() ? true : 'Required',
+        })
+      : genre;
 
     const subgenre = await input({
       message: 'Sub-genre (e.g., dark fantasy, cyberpunk, cozy mystery):',
@@ -74,14 +97,14 @@ export const createBookCommand: Command = {
         projectName: projectName.trim().toLowerCase().replace(/\s+/g, '-'),
         title: title.trim(),
         type,
-        genre: genre.trim(),
+        genre: finalGenre.trim(),
         subgenre: subgenre.trim(),
         authors,
         purpose: purpose.trim(),
       });
       spinner.succeed('Project created');
-    } catch (err: any) {
-      spinner.fail(err.message);
+    } catch (err: unknown) {
+      spinner.fail(err instanceof Error ? err.message : String(err));
       return;
     }
 
@@ -111,11 +134,11 @@ export const createBookCommand: Command = {
         { role: 'user', content: prompt },
       ], { jsonMode: true, temperature: 0.8 });
 
-      const parsed = JSON.parse(response);
+      const parsed = parseLLMJson<{ questions: LoreQuestion[] }>(response, 'round 1 questions');
       round1Questions = parsed.questions;
       spinner.succeed(`Generated ${round1Questions.length} foundational questions`);
-    } catch (err: any) {
-      spinner.fail('Failed to generate questions: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Failed to generate questions: ' + (err instanceof Error ? err.message : String(err)));
       info('Continuing with default questions...');
       round1Questions = getDefaultQuestionsRound1(type);
     }
@@ -173,11 +196,11 @@ export const createBookCommand: Command = {
         { role: 'user', content: prompt },
       ], { jsonMode: true, temperature: 0.8 });
 
-      const parsed = JSON.parse(response);
+      const parsed = parseLLMJson<{ questions: LoreQuestion[] }>(response, 'round 2 questions');
       round2Questions = parsed.questions;
       spinner.succeed(`Generated ${round2Questions.length} follow-up questions`);
-    } catch (err: any) {
-      spinner.warn('Could not generate follow-up questions: ' + err.message);
+    } catch (err: unknown) {
+      spinner.warn('Could not generate follow-up questions: ' + (err instanceof Error ? err.message : String(err)));
       round2Questions = getDefaultQuestionsRound2(type);
     }
 
@@ -229,7 +252,7 @@ export const createBookCommand: Command = {
         { role: 'user', content: prompt },
       ], { jsonMode: true, maxTokens: 8192, temperature: 0.7 });
 
-      const parsed = JSON.parse(response);
+      const parsed = parseLLMJson<{ files: Record<string, string> }>(response, 'lore generation');
       await writeLoreFiles(ctx.config, book.projectName, parsed.files);
 
       const fileCount = Object.keys(parsed.files).length;
@@ -242,8 +265,8 @@ export const createBookCommand: Command = {
       }
 
       await setBookStatus(book.id, 'work-in-progress');
-    } catch (err: any) {
-      spinner.fail('Failed to generate lore: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Failed to generate lore: ' + (err instanceof Error ? err.message : String(err)));
       error('You can try regenerating lore later with /edit-lore after selecting this book.');
       await setBookStatus(book.id, 'new');
     }

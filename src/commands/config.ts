@@ -22,9 +22,9 @@ const MODEL_SUGGESTIONS: Record<LLMProviderName, Record<LLMTier, string>> = {
     writer: 'claude-opus-4-20250514',
   },
   gemini: {
-    small: 'gemini-2.0-flash',
-    medium: 'gemini-2.5-pro',
-    writer: 'gemini-3.1-pro',
+    small: 'gemini-3.1-flash-lite-preview',
+    medium: 'gemini-3.1-pro-preview',
+    writer: 'gemini-3.1-pro-preview',
   },
 };
 
@@ -46,6 +46,7 @@ export const configCommand: Command = {
         { name: 'Change books directory', value: 'booksdir' },
         { name: `Toggle background writing (currently ${config.backgroundWriting ? 'ON' : 'OFF'})`, value: 'background' },
         { name: 'View current config', value: 'view' },
+        { name: '← Back', value: 'back' },
       ],
     });
 
@@ -65,6 +66,8 @@ export const configCommand: Command = {
       case 'view':
         await viewConfig();
         break;
+      case 'back':
+        return;
     }
 
     async function configureKeys() {

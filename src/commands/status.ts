@@ -1,5 +1,5 @@
 import type { Command } from '../types.js';
-import { readLoreFiles, getChapterCount, getBookDir } from '../book/manager.js';
+import { readLoreFiles, getBookDir } from '../book/manager.js';
 import { header, keyValue, blank, statusBadge, divider, c, info } from '../ui.js';
 
 export const statusCommand: Command = {
@@ -10,7 +10,7 @@ export const statusCommand: Command = {
 
   async execute(_args, ctx) {
     const book = ctx.selectedBook!;
-    const chapterCount = await getChapterCount(ctx.config, book.projectName);
+    const chapterCount = book.chapterCount;
     const loreFiles = await readLoreFiles(ctx.config, book.projectName);
 
     header(`📊 ${book.title}`);
@@ -33,11 +33,16 @@ export const statusCommand: Command = {
     const loreFileNames = Object.keys(loreFiles);
     if (loreFileNames.length > 0) {
       info(`Lore files (${loreFileNames.length}):`);
+      let totalChars = 0;
       for (const name of loreFileNames) {
         const size = loreFiles[name].length;
+        totalChars += size;
+        const tokens = Math.ceil(size / 4);
         const sizeStr = size > 1000 ? `${(size / 1000).toFixed(1)}k` : `${size}`;
-        console.log(`    ${c.muted('•')} ${c.value(name)} ${c.muted(`(${sizeStr} chars)`)}`);
+        console.log(`    ${c.muted('•')} ${c.value(name)} ${c.muted(`(${sizeStr} chars, ~${tokens.toLocaleString()} tokens)`)}`);
       }
+      const totalTokens = Math.ceil(totalChars / 4);
+      info(`  Total: ~${totalTokens.toLocaleString()} tokens (${(totalChars / 1024).toFixed(1)} KB)`);
     } else {
       info('No lore files yet.');
     }

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import wrapAnsi from 'wrap-ansi';
 import type { Command } from '../types.js';
-import { getChapterCount, readChapter } from '../book/manager.js';
+import { readChapter } from '../book/manager.js';
 import { header, error, info, blank, c } from '../ui.js';
 
 const CONTENT_WIDTH = 72;
@@ -239,7 +239,7 @@ export const readCommand: Command = {
 
   async execute(args, ctx) {
     const book = ctx.selectedBook!;
-    const totalChapters = await getChapterCount(ctx.config, book.projectName);
+    const totalChapters = book.chapterCount;
 
     if (totalChapters === 0) {
       error('No chapters written yet. Use /create-chapter to write one.');

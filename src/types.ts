@@ -24,6 +24,8 @@ export interface BookRecord {
   purpose: string;
   status: BookStatus;
   chapterCount: number;
+  cachedSummary?: string;
+  summaryFresh?: boolean;
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;

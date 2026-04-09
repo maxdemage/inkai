@@ -1,12 +1,48 @@
-import { input } from '@inquirer/prompts';
+import { select } from '@inquirer/prompts';
 import ora from 'ora';
+import { spawnSync } from 'node:child_process';
+import { writeFileSync, readFileSync, mkdtempSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import type { Command } from '../types.js';
 import { readLoreFiles, writeLoreFiles } from '../book/manager.js';
-import { chatMedium, chatWriter } from '../llm/manager.js';
+import { updateBook } from '../db.js';
 import { gitCommit, isGitAvailable } from '../git.js';
 import { getBookDir } from '../book/manager.js';
-import { buildLoreSummaryPrompt, buildLoreEditPrompt } from '../prompts/templates.js';
-import { header, success, info, error, blank, boxMessage, c } from '../ui.js';
+import { enhanceLoreCommand } from './enhance-lore.js';
+import { header, success, info, warn, blank, boxMessage, c } from '../ui.js';
+
+/** Rough token estimate: ~4 chars per token for English text. */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * Opens the given content in the user's $EDITOR (falls back to nano, then vi).
+ * Returns the edited content, or null if unchanged or editor failed.
+ */
+function editInExternalEditor(filename: string, content: string): string | null {
+  const editor = process.env.EDITOR || process.env.VISUAL || 'nano';
+  const tmpDir = mkdtempSync(join(tmpdir(), 'inkai-'));
+  const tmpFile = join(tmpDir, filename);
+
+  writeFileSync(tmpFile, content, 'utf-8');
+
+  const result = spawnSync(editor, [tmpFile], {
+    stdio: 'inherit',
+  });
+
+  if (result.status !== 0) {
+    try { unlinkSync(tmpFile); } catch {}
+    return null;
+  }
+
+  const edited = readFileSync(tmpFile, 'utf-8');
+  try { unlinkSync(tmpFile); } catch {}
+
+  if (edited === content) return null; // no changes
+  return edited;
+}
 
 export const editLoreCommand: Command = {
   name: 'edit-lore',
@@ -27,65 +63,90 @@ export const editLoreCommand: Command = {
       return;
     }
 
-    // Get summary from medium LLM
-    spinner.text = 'Analyzing current lore...';
-    let summary: string;
-    try {
-      summary = await chatMedium(ctx.config, [
-        { role: 'system', content: 'You are a book development assistant. Summarize the lore concisely and ask what the author wants to change.' },
-        { role: 'user', content: await buildLoreSummaryPrompt(loreFiles) },
-      ], { maxTokens: 1500 });
-      spinner.succeed('Lore analyzed');
-    } catch (err: any) {
-      spinner.fail('Failed to analyze lore: ' + err.message);
-      return;
+    spinner.succeed('Lore loaded');
+
+    // Show token cost breakdown
+    blank();
+    info('Lore files:');
+    let totalChars = 0;
+    for (const [name, content] of Object.entries(loreFiles)) {
+      const tokens = estimateTokens(content);
+      totalChars += content.length;
+      info(`  ${c.highlight(name)} — ${c.value(`~${tokens.toLocaleString()} tokens`)}`);
     }
+    const totalTokens = Math.ceil(totalChars / 4);
+    info(`  Total: ${c.value(`~${totalTokens.toLocaleString()} tokens`)} (${(totalChars / 1024).toFixed(1)} KB)`);
 
-    blank();
-    boxMessage(summary, 'Current Lore Overview');
+    // Display basic-lore.md as the overview
+    const overview = loreFiles['basic-lore.md'];
+    if (overview) {
+      blank();
+      boxMessage(overview, 'Current Lore Overview');
+    } else {
+      blank();
+      info('No basic-lore.md found. Available files: ' + Object.keys(loreFiles).join(', '));
+    }
     blank();
 
-    // Get author's edit request
-    const editRequest = await input({
-      message: 'What would you like to change? (Enter to cancel):',
+    // Ask: manual or LLM-assisted
+    const mode = await select({
+      message: 'How would you like to edit?',
+      choices: [
+        { name: 'Edit manually (select a file)', value: 'manual' },
+        { name: 'AI-assisted enhancement (LLM)', value: 'llm' },
+        { name: '← Back', value: 'back' },
+      ],
     });
 
-    if (!editRequest.trim()) {
-      info('No changes requested.');
+    if (mode === 'back') return;
+
+    if (mode === 'llm') {
+      await enhanceLoreCommand.execute(_args, ctx);
       return;
     }
 
-    // Apply changes with writer LLM
-    spinner.start('Applying changes (writer LLM)...');
+    // ─── Manual edit flow ───────────────────────────────────
 
-    try {
-      const response = await chatWriter(ctx.config, [
-        { role: 'system', content: 'You are an expert book development assistant. Apply requested changes to lore files. Return valid JSON with modified files only.' },
-        { role: 'user', content: await buildLoreEditPrompt(loreFiles, editRequest) },
-      ], { jsonMode: true, maxTokens: 8192, temperature: 0.5 });
+    const fileNames = Object.keys(loreFiles);
 
-      const parsed = JSON.parse(response);
-      await writeLoreFiles(ctx.config, book.projectName, parsed.files);
+    const selectedFile = await select({
+      message: 'Which file to edit?',
+      choices: [
+        ...fileNames.map(name => ({
+          name: `${name} (~${estimateTokens(loreFiles[name]).toLocaleString()} tokens)`,
+          value: name,
+        })),
+        { name: '← Back', value: '__back__' },
+      ],
+    });
 
-      const modifiedFiles = Object.keys(parsed.files);
-      spinner.succeed(`Updated ${modifiedFiles.length} file(s)`);
+    if (selectedFile === '__back__') return;
 
-      for (const file of modifiedFiles) {
-        info(`  Modified: ${c.muted(file)}`);
-      }
+    const editor = process.env.EDITOR || process.env.VISUAL || 'nano';
+    info(`Opening ${c.highlight(selectedFile)} in ${c.value(editor)}...`);
+    blank();
 
-      // Git commit
-      if (isGitAvailable() && ctx.config.git.enabled && ctx.config.git.autoCommit) {
-        const bookDir = getBookDir(ctx.config, book.projectName);
-        await gitCommit(bookDir, `Edit lore: ${editRequest.slice(0, 60)}`);
-      }
+    const newContent = editInExternalEditor(selectedFile, loreFiles[selectedFile]);
 
+    if (newContent === null) {
       blank();
-      success('Lore updated successfully!');
-      blank();
-
-    } catch (err: any) {
-      spinner.fail('Failed to update lore: ' + err.message);
+      info('No changes detected.');
+      return;
     }
+
+    // Save the file
+    await writeLoreFiles(ctx.config, book.projectName, { [selectedFile]: newContent });
+    blank();
+    success(`Saved ${selectedFile}`);
+
+    // Git commit
+    if (isGitAvailable() && ctx.config.git.enabled && ctx.config.git.autoCommit) {
+      const bookDir = getBookDir(ctx.config, book.projectName);
+      await gitCommit(bookDir, `Manual edit: ${selectedFile}`);
+    }
+
+    // Invalidate cached summary
+    await updateBook(book.id, { summaryFresh: false });
+    blank();
   },
 };

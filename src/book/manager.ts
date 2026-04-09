@@ -129,13 +129,6 @@ export async function setBookStatus(bookId: string, status: BookStatus): Promise
   await updateBook(bookId, { status });
 }
 
-export async function getChapterCount(config: InkaiConfig, projectName: string): Promise<number> {
-  const chapDir = getChaptersDir(config, projectName);
-  if (!existsSync(chapDir)) return 0;
-  const files = await readdir(chapDir);
-  return files.filter(f => f.match(/^chapter-\d+\.md$/)).length;
-}
-
 export async function writeChapter(
   config: InkaiConfig,
   projectName: string,

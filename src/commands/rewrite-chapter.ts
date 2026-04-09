@@ -7,7 +7,6 @@ import {
   readChapter,
   readReview,
   writeChapter,
-  getChapterCount,
 } from '../book/manager.js';
 import { chatWriter } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
@@ -23,7 +22,7 @@ export const rewriteChapterCommand: Command = {
 
   async execute(args, ctx) {
     const book = ctx.selectedBook!;
-    const totalChapters = await getChapterCount(ctx.config, book.projectName);
+    const totalChapters = book.chapterCount;
 
     if (totalChapters === 0) {
       error('No chapters written yet.');
@@ -68,8 +67,8 @@ export const rewriteChapterCommand: Command = {
         const { writeReview } = await import('../book/manager.js');
         await writeReview(ctx.config, book.projectName, chapterNum, reviewContent);
         spinner.succeed('Review generated');
-      } catch (err: any) {
-        spinner.fail('Failed to generate review: ' + err.message);
+      } catch (err: unknown) {
+        spinner.fail('Failed to generate review: ' + (err instanceof Error ? err.message : String(err)));
         return;
       }
     } else {
@@ -116,8 +115,8 @@ export const rewriteChapterCommand: Command = {
       info(`Use ${c.primary(`/review-chapter ${chapterNum}`)} to review the new version.`);
       blank();
 
-    } catch (err: any) {
-      spinner.fail('Rewrite failed: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Rewrite failed: ' + (err instanceof Error ? err.message : String(err)));
     }
   },
 };

@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import JSZip from 'jszip';
 import type { Command } from '../types.js';
-import { getChapterCount, readChapter, getBookDir } from '../book/manager.js';
+import { readChapter, getBookDir } from '../book/manager.js';
 import { header, success, error, info, blank, c } from '../ui.js';
 import ora from 'ora';
 
@@ -193,7 +193,7 @@ export const exportCommand: Command = {
 
   async execute(_args, ctx) {
     const book = ctx.selectedBook!;
-    const totalChapters = await getChapterCount(ctx.config, book.projectName);
+    const totalChapters = book.chapterCount;
 
     if (totalChapters === 0) {
       error('No chapters to export. Use /create-chapter to write one.');

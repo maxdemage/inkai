@@ -5,7 +5,6 @@ import {
   readStyleGuide,
   readChapter,
   writeReview,
-  getChapterCount,
 } from '../book/manager.js';
 import { chatWriter } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
@@ -21,7 +20,7 @@ export const reviewChapterCommand: Command = {
 
   async execute(args, ctx) {
     const book = ctx.selectedBook!;
-    const totalChapters = await getChapterCount(ctx.config, book.projectName);
+    const totalChapters = book.chapterCount;
 
     if (totalChapters === 0) {
       error('No chapters written yet. Use /create-chapter first.');
@@ -74,8 +73,8 @@ export const reviewChapterCommand: Command = {
         await gitCommit(bookDir, `Review Chapter ${chapterNum}`);
       }
 
-    } catch (err: any) {
-      spinner.fail('Review failed: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Review failed: ' + (err instanceof Error ? err.message : String(err)));
     }
   },
 };

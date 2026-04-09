@@ -1,8 +1,8 @@
 import { select } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
-import { getAllBooks, getBookByName } from '../db.js';
-import { readLoreFiles, getChapterCount } from '../book/manager.js';
+import { getAllBooks, getBookByName, updateBook } from '../db.js';
+import { readLoreFiles } from '../book/manager.js';
 import { chatSmall } from '../llm/manager.js';
 import { buildBookSummaryPrompt } from '../prompts/templates.js';
 import { header, success, info, error, blank, boxMessage, keyValue, statusBadge, c } from '../ui.js';
@@ -46,25 +46,33 @@ export const selectCommand: Command = {
     keyValue('Authors', book.authors.join(', '));
     keyValue('Status', statusBadge(book.status));
 
-    const chapterCount = await getChapterCount(ctx.config, book.projectName);
-    keyValue('Chapters', String(chapterCount));
+    keyValue('Chapters', String(book.chapterCount));
     blank();
 
     // Show AI summary if book has lore
     if (book.status !== 'new') {
-      const spinner = ora({ text: 'Loading book summary...', color: 'cyan' }).start();
-      try {
-        const loreFiles = await readLoreFiles(ctx.config, book.projectName);
-        const prompt = await buildBookSummaryPrompt(loreFiles, chapterCount);
-        const summary = await chatSmall(ctx.config, [
-          { role: 'system', content: 'You are a concise book assistant. Give a brief, engaging project status update.' },
-          { role: 'user', content: prompt },
-        ], { maxTokens: 300 });
-        spinner.stop();
-        boxMessage(summary, 'Summary');
-      } catch {
-        spinner.stop();
-        // Skip summary if LLM fails
+      if (book.summaryFresh && book.cachedSummary) {
+        boxMessage(book.cachedSummary, 'Summary');
+      } else {
+        const spinner = ora({ text: 'Loading book summary...', color: 'cyan' }).start();
+        try {
+          const loreFiles = await readLoreFiles(ctx.config, book.projectName);
+          const prompt = await buildBookSummaryPrompt(loreFiles, book.chapterCount);
+          const summary = await chatSmall(ctx.config, [
+            { role: 'system', content: 'You are a concise book assistant. Give a brief, engaging project status update.' },
+            { role: 'user', content: prompt },
+          ], { maxTokens: 300 });
+          spinner.stop();
+          boxMessage(summary, 'Summary');
+
+          // Cache the summary
+          await updateBook(book.id, { cachedSummary: summary, summaryFresh: true });
+          book.cachedSummary = summary;
+          book.summaryFresh = true;
+        } catch {
+          spinner.stop();
+          // Skip summary if LLM fails
+        }
       }
     }
 
@@ -74,6 +82,6 @@ export const selectCommand: Command = {
     blank();
 
     // Save session for resume on next startup
-    await saveSession({ lastBook: book.projectName, lastChapter: chapterCount, timestamp: new Date().toISOString() });
+    await saveSession({ lastBook: book.projectName, lastChapter: book.chapterCount, timestamp: new Date().toISOString() });
   },
 };

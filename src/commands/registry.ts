@@ -50,8 +50,8 @@ export async function executeCommand(input: string, ctx: AppContext): Promise<bo
 
   try {
     await cmd.execute(args, ctx);
-  } catch (err: any) {
-    error(err.message || 'Command failed.');
+  } catch (err: unknown) {
+    error(err instanceof Error ? err.message : 'Command failed.');
   }
 
   return true;

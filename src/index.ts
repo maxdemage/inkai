@@ -9,7 +9,6 @@ import { listJobs, isJobProcessAlive } from './jobs.js';
 import { startREPL } from './repl.js';
 import { input, select, password, confirm } from '@inquirer/prompts';
 import type { AppContext, LLMProviderName } from './types.js';
-import { getChapterCount } from './book/manager.js';
 
 async function main(): Promise<void> {
   // ─── Banner ─────────────────────────────────────────────
@@ -124,7 +123,7 @@ async function main(): Promise<void> {
   if (session?.lastBook) {
     const lastBook = await getBookByName(session.lastBook);
     if (lastBook && lastBook.status !== 'archived') {
-      const chapters = await getChapterCount(config, lastBook.projectName);
+      const chapters = lastBook.chapterCount;
       blank();
       const resume = await confirm({
         message: `Continue working on ${c.highlight(lastBook.title)}? (${chapters} chapter${chapters !== 1 ? 's' : ''})`,

@@ -1,5 +1,6 @@
 import { input, select, confirm } from '@inquirer/prompts';
 import { spawn } from 'node:child_process';
+import { openSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { nanoid } from 'nanoid';
@@ -10,26 +11,18 @@ import {
   readStyleGuide,
   readChapterSummary,
   readChapter,
-  writeChapter,
   writeChapterPlan,
   readWritingInstructions,
   writeWritingInstructions,
-  updateChapterSummary,
-  getChapterCount,
-  getBookDir,
 } from '../book/manager.js';
-import { updateBook } from '../db.js';
-import { chatSmall, chatMedium, chatWriter } from '../llm/manager.js';
+import { chatSmall, chatMedium } from '../llm/manager.js';
 import { multilineInput } from '../multiline.js';
-import { gitCommit } from '../git.js';
-import { saveJob, type ChapterJob } from '../jobs.js';
+import { saveJob, jobLogPath, isJobProcessAlive, type ChapterJob } from '../jobs.js';
 import {
   buildChapterSuggestionPrompt,
   buildChapterPlanPrompt,
-  buildChapterWritingFromPlanPrompt,
-  buildChapterQAPrompt,
-  buildSummaryUpdatePrompt,
 } from '../prompts/templates.js';
+import { runChapterPipeline } from '../pipeline.js';
 import { header, success, info, warn, error, blank, boxMessage, divider, c, progressStep } from '../ui.js';
 
 const TOTAL_STEPS = 6;
@@ -42,7 +35,7 @@ export const createChapterCommand: Command = {
 
   async execute(_args, ctx) {
     const book = ctx.selectedBook!;
-    const currentCount = await getChapterCount(ctx.config, book.projectName);
+    const currentCount = book.chapterCount;
     const nextChapter = currentCount + 1;
 
     header(`Write Chapter ${nextChapter}`);
@@ -190,8 +183,8 @@ export const createChapterCommand: Command = {
       const planPath = await writeChapterPlan(ctx.config, book.projectName, nextChapter, chapterPlan);
       spinner.succeed('Chapter plan created');
       info(`Plan saved: ${c.muted(planPath)}`);
-    } catch (err: any) {
-      spinner.fail('Failed to create plan: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Failed to create plan: ' + (err instanceof Error ? err.message : String(err)));
       return;
     }
 
@@ -236,16 +229,32 @@ export const createChapterCommand: Command = {
         await saveJob(job);
 
         // Spawn detached worker — survives parent exit
+        // Redirect stdout/stderr to a log file for debugging
         const workerPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'worker.js');
+        const logFile = jobLogPath(job.id);
+        const logFd = openSync(logFile, 'a');
         const child = spawn(process.execPath, [workerPath, job.id], {
           detached: true,
-          stdio: 'ignore',
+          stdio: ['ignore', logFd, logFd],
         });
+        const childPid = child.pid;
         child.unref();
+
+        // Give the process a moment to start, then verify it's alive
+        await new Promise(resolve => setTimeout(resolve, 200));
+        if (!isJobProcessAlive(childPid)) {
+          job.status = 'failed';
+          job.error = `Worker process exited immediately. Check log: ${logFile}`;
+          job.finishedAt = new Date().toISOString();
+          await saveJob(job);
+          error(`Background worker crashed on startup. See log: ${c.muted(logFile)}`);
+          return;
+        }
 
         blank();
         success(`Chapter ${nextChapter} dispatched to background worker!`);
         info(`Job ID: ${c.muted(job.id)}`);
+        info(`Log: ${c.muted(logFile)}`);
         info(`Use ${c.primary('/jobs')} to check progress.`);
         info('You can safely exit inkai — the writer will keep running.');
         blank();
@@ -258,121 +267,77 @@ export const createChapterCommand: Command = {
     blank();
     progressStep(3, TOTAL_STEPS, 'Preparing writer context');
 
-    // ─── Step 4: Write the chapter (fresh writer agent) ─────
+    // ─── Steps 4-6: Write → QA → Save (shared pipeline) ────
 
     progressStep(4, TOTAL_STEPS, 'Writing chapter');
 
-    spinner.start(`Writing Chapter ${nextChapter} (writer LLM — this may take a while)...`);
-
-    let chapterContent: string;
+    let result;
     try {
-      // Fresh context: writer only sees lore + style + plan (no previous conversation)
-      chapterContent = await chatWriter(ctx.config, [
-        {
-          role: 'system',
-          content: 'You are an expert fiction writer. You receive a lore bible, style guide, and a detailed chapter plan. Write the complete chapter following the plan precisely. Output only the chapter in markdown.',
+      result = await runChapterPipeline({
+        config: ctx.config,
+        projectName: book.projectName,
+        bookId: book.id,
+        chapterNumber: nextChapter,
+        loreContext,
+        styleGuide,
+        chapterSummary,
+        chapterPlan,
+        writingInstructions: finalInstructions,
+      }, {
+        onWriteStart() {
+          spinner.start(`Writing Chapter ${nextChapter} (writer LLM — this may take a while)...`);
         },
-        {
-          role: 'user',
-          content: await buildChapterWritingFromPlanPrompt(
-            loreContext,
-            styleGuide,
-            chapterPlan,
-            nextChapter,
-            finalInstructions
-          ),
+        onWriteComplete() {
+          spinner.succeed(`Chapter ${nextChapter} draft written`);
+          blank();
+          progressStep(5, TOTAL_STEPS, 'Quality check');
         },
-      ], { maxTokens: 8192, temperature: 0.8 });
-
-      spinner.succeed(`Chapter ${nextChapter} draft written`);
-    } catch (err: any) {
-      spinner.fail('Failed to write chapter: ' + err.message);
+        onQAStart() {
+          spinner.start('QA agent reviewing chapter (writer LLM)...');
+        },
+        onQAComplete(qa) {
+          if (qa.changesMade) {
+            spinner.succeed('QA complete — issues found and fixed');
+            if (qa.issues?.length) {
+              blank();
+              info('Issues fixed by QA:');
+              for (const issue of qa.issues) {
+                console.log(`    ${c.muted('•')} ${c.value(issue)}`);
+              }
+            }
+          } else {
+            spinner.succeed('QA complete — no issues found');
+          }
+        },
+        onQAParseError() {
+          spinner.warn('QA response was not parseable — using original draft');
+        },
+        onQAError(err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          spinner.warn('QA check failed: ' + msg + ' — using original draft');
+        },
+        onSaveStart() {
+          blank();
+          progressStep(6, TOTAL_STEPS, 'Saving and summarizing');
+        },
+        onSaveComplete(filePath) {
+          info(`Chapter saved: ${c.muted(filePath)}`);
+          spinner.start('Updating chapter summary...');
+        },
+        onSummaryComplete() {
+          spinner.succeed('Summary updated');
+        },
+        onSummaryError() {
+          spinner.warn('Could not update summary — you can do it manually');
+        },
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      spinner.fail('Failed to write chapter: ' + msg);
       return;
     }
 
-    // ─── Step 5: QA agent (fresh context) ───────────────────
-
-    blank();
-    progressStep(5, TOTAL_STEPS, 'Quality check');
-
-    spinner.start('QA agent reviewing chapter (writer LLM)...');
-
-    try {
-      // Fresh context: QA agent only sees lore + style + plan + draft
-      const qaResponse = await chatWriter(ctx.config, [
-        {
-          role: 'system',
-          content: 'You are a quality assurance editor. Check the chapter against lore and plan. Fix issues directly. Always respond with valid JSON.',
-        },
-        {
-          role: 'user',
-          content: await buildChapterQAPrompt(
-            loreContext,
-            styleGuide,
-            chapterPlan,
-            chapterContent,
-            nextChapter
-          ),
-        },
-      ], { jsonMode: true, maxTokens: 8192, temperature: 0.3 });
-
-      try {
-        const qaResult = JSON.parse(qaResponse);
-
-        if (qaResult.changes_made && qaResult.chapter) {
-          chapterContent = qaResult.chapter;
-          spinner.succeed('QA complete — issues found and fixed');
-
-          if (qaResult.issues_found?.length) {
-            blank();
-            info('Issues fixed by QA:');
-            for (const issue of qaResult.issues_found) {
-              console.log(`    ${c.muted('•')} ${c.value(issue)}`);
-            }
-          }
-        } else {
-          spinner.succeed('QA complete — no issues found');
-        }
-      } catch {
-        // If JSON parsing fails, use original draft
-        spinner.warn('QA response was not parseable — using original draft');
-      }
-    } catch (err: any) {
-      spinner.warn('QA check failed: ' + err.message + ' — using original draft');
-    }
-
-    // ─── Step 6: Save and summarize ─────────────────────────
-
-    blank();
-    progressStep(6, TOTAL_STEPS, 'Saving and summarizing');
-
-    // Write chapter
-    const filePath = await writeChapter(ctx.config, book.projectName, nextChapter, chapterContent);
-    info(`Chapter saved: ${c.muted(filePath)}`);
-
-    // Update chapter summary
-    spinner.start('Updating chapter summary...');
-    try {
-      const updatedSummary = await chatSmall(ctx.config, [
-        { role: 'system', content: 'You are a book assistant. Update the summary document. Output only markdown.' },
-        { role: 'user', content: await buildSummaryUpdatePrompt(chapterSummary, chapterContent, nextChapter) },
-      ], { maxTokens: 2000 });
-
-      await updateChapterSummary(ctx.config, book.projectName, updatedSummary);
-      spinner.succeed('Summary updated');
-    } catch {
-      spinner.warn('Could not update summary — you can do it manually');
-    }
-
-    // Update book record
-    await updateBook(book.id, { chapterCount: nextChapter });
     book.chapterCount = nextChapter;
-
-    // Git commit
-    if (ctx.config.git.enabled && ctx.config.git.autoCommit) {
-      const bookDir = getBookDir(ctx.config, book.projectName);
-      await gitCommit(bookDir, `Write Chapter ${nextChapter}`);
-    }
 
     // ─── Done ───────────────────────────────────────────────
 

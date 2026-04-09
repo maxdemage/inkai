@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -39,7 +39,7 @@ export function getConfigPath(): string {
 
 export async function ensureInkaiDir(): Promise<void> {
   if (!existsSync(INKAI_DIR)) {
-    await mkdir(INKAI_DIR, { recursive: true });
+    await mkdir(INKAI_DIR, { recursive: true, mode: 0o700 });
   }
 }
 
@@ -68,7 +68,8 @@ export async function loadConfig(): Promise<InkaiConfig> {
 
 export async function saveConfig(config: InkaiConfig): Promise<void> {
   await ensureInkaiDir();
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), { encoding: 'utf-8', mode: 0o600 });
+  await chmod(CONFIG_PATH, 0o600);
 }
 
 export async function hasAnyProvider(config: InkaiConfig): Promise<boolean> {
@@ -94,5 +95,6 @@ export async function loadSession(): Promise<SessionState | null> {
 
 export async function saveSession(state: SessionState): Promise<void> {
   await ensureInkaiDir();
-  await writeFile(SESSION_PATH, JSON.stringify(state, null, 2), 'utf-8');
+  await writeFile(SESSION_PATH, JSON.stringify(state, null, 2), { encoding: 'utf-8', mode: 0o600 });
+  await chmod(SESSION_PATH, 0o600);
 }

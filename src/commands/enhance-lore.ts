@@ -2,10 +2,12 @@ import { input } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
 import { readLoreFiles, writeLoreFiles, getBookDir } from '../book/manager.js';
+import { updateBook } from '../db.js';
 import { chatMedium, chatWriter } from '../llm/manager.js';
 import { multilineInput } from '../multiline.js';
 import { gitCommit, isGitAvailable } from '../git.js';
 import { buildEnhanceLoreQuestionsPrompt, buildEnhanceLoreApplyPrompt } from '../prompts/templates.js';
+import { parseLLMJson } from '../llm/parse.js';
 import { header, success, info, error, blank, boxMessage, subheader, c } from '../ui.js';
 
 interface EnhanceQuestion {
@@ -56,11 +58,11 @@ export const enhanceLoreCommand: Command = {
         { role: 'user', content: prompt },
       ], { jsonMode: true, temperature: 0.8 });
 
-      const parsed = JSON.parse(response);
+      const parsed = parseLLMJson<{ questions: EnhanceQuestion[] }>(response, 'enhance lore questions');
       questions = parsed.questions;
       spinner.succeed(`Generated ${questions.length} enhancement questions`);
-    } catch (err: any) {
-      spinner.fail('Failed to generate questions: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Failed to generate questions: ' + (err instanceof Error ? err.message : String(err)));
       return;
     }
 
@@ -125,7 +127,7 @@ export const enhanceLoreCommand: Command = {
         { role: 'user', content: prompt },
       ], { jsonMode: true, maxTokens: 8192, temperature: 0.5 });
 
-      const parsed = JSON.parse(response);
+      const parsed = parseLLMJson<{ files: Record<string, string>; changes?: string[] }>(response, 'enhance lore apply');
       await writeLoreFiles(ctx.config, book.projectName, parsed.files);
 
       const modifiedFiles = Object.keys(parsed.files);
@@ -152,11 +154,15 @@ export const enhanceLoreCommand: Command = {
 
       blank();
       success('Lore enhanced successfully!');
+
+      // Invalidate cached summary
+      await updateBook(book.id, { summaryFresh: false });
+
       info(`Use ${c.primary('/edit-lore')} to review the changes, or ${c.primary('/enhance-lore')} again to go deeper.`);
       blank();
 
-    } catch (err: any) {
-      spinner.fail('Failed to enhance lore: ' + err.message);
+    } catch (err: unknown) {
+      spinner.fail('Failed to enhance lore: ' + (err instanceof Error ? err.message : String(err)));
     }
   },
 };

@@ -46,6 +46,10 @@ function jobPath(id: string): string {
   return join(JOBS_DIR, `${id}.json`);
 }
 
+export function jobLogPath(id: string): string {
+  return join(JOBS_DIR, `${id}.log`);
+}
+
 // ─── CRUD ────────────────────────────────────────────────────
 
 export async function saveJob(job: ChapterJob): Promise<void> {
