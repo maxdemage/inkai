@@ -52,7 +52,7 @@ function registerAllCommands(): void {
     description: 'Exit inkai',
     aliases: ['exit', 'q'],
     async execute() {
-      console.log(c.muted('\n  Goodbye! Happy writing. ✨\n'));
+      console.log(c.muted('\n  🐙 Goodbye! Happy writing. ✨\n'));
       process.exit(0);
     },
   });

@@ -26,43 +26,20 @@ export function showBanner(): void {
     horizontalLayout: 'default',
   });
 
-  const blobs = [
-    [
-      `    ${c.accent('○')}${c.primary('╮')}`,
-      `   ${c.primary('╭')}${c.accent('┤')}${c.primary('│')}    ${c.muted('~ "let me write that for you"')}`,
-      `   ${c.primary('╰')}${c.accent('●')}${c.primary('╯')}`,
-      `    ${c.primary('┘')}`,
-    ],
-    [
-      `     ${c.accent('◠')} ${c.primary('‿')} ${c.accent('◠')}`,
-      `    ${c.primary('(')} ${c.accent('◕')}${c.muted('ᴗ')}${c.accent('◕')} ${c.primary(')')}   ${c.muted('~ "worlds await!"')}`,
-      `   ${c.primary('╭┤')}     ${c.primary('├╮')}`,
-      `    ${c.primary('╰')}${c.accent('┬')}${c.primary('───')}${c.accent('┬')}${c.primary('╯')}`,
-      `     ${c.primary('╰')}${c.muted('○')} ${c.muted('○')}${c.primary('╯')}`,
-    ],
-    [
-      `    ${c.primary('╭')}${c.accent('─')}${c.accent('─')}${c.primary('╮')}`,
-      `    ${c.primary('│')}${c.accent('◉◉')}${c.primary('│')}   ${c.muted('~ "plot twist incoming..."')}`,
-      `    ${c.primary('│')}${c.accent('▽')} ${c.primary('│')}`,
-      `   ${c.primary('╭╯')}  ${c.primary('╰╮')}`,
-      `   ${c.primary('╰')}${c.accent('┬──┬')}${c.primary('╯')}`,
-      `    ${c.primary('╰')}${c.muted('╥╥')}${c.primary('╯')}`,
-    ],
-    [
-      `      ${c.accent('·')}`,
-      `     ${c.primary('(')}${c.accent('^')}${c.primary(')')}   ${c.muted('~ "once upon a time..."')}`,
-      `     ${c.primary('/')}${c.accent('│')}${c.primary('╲')}`,
-      `     ${c.primary('╰')}${c.accent('┘')}${c.primary('╯')}`,
-    ],
+  const quotes = [
+    '~ "let me ink that for you"',
+    '~ "worlds await!"',
+    '~ "plot twist incoming..."',
+    '~ "once upon a time..."',
   ];
 
-  const blob = blobs[Math.floor(Math.random() * blobs.length)];
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
   const banner = boxen(
     c.primary(ascii) + '\n' +
-    c.muted('          AI-Powered Book Writing Agent') + '\n' +
-    c.muted('                    v0.1.0') + '\n\n' +
-    blob.join('\n'),
+    c.muted('      🐙 AI-Powered Book Writing Agent') + '\n' +
+    c.muted('                    v0.3.0') + '\n\n' +
+    `    ${c.muted(quote)}`,
     {
       padding: 1,
       margin: { top: 1, bottom: 1, left: 2, right: 2 },
@@ -145,7 +122,7 @@ export function boxMessage(text: string, title?: string): void {
 // ─── Prompt Prefix ────────────────────────────────────────────
 
 export function getPrompt(bookName?: string): string {
-  const base = c.primary('inkai');
+  const base = c.primary('🐙 inkai');
   if (bookName) {
     return `${base} ${c.accent(`[${bookName}]`)} ${c.muted('❯')} `;
   }

@@ -72,6 +72,7 @@ export interface InkaiConfig {
     autoCommit: boolean;
   };
   backgroundWriting: boolean;
+  language: string;
 }
 
 // ─── Database Types ───────────────────────────────────────────

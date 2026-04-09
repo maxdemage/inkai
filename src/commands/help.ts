@@ -8,7 +8,7 @@ export const helpCommand: Command = {
   aliases: ['h', '?'],
 
   async execute(_args, ctx) {
-    header('Available Commands');
+    header('🐙 Available Commands');
 
     const cmds = getAllCommands();
     const globalCmds = cmds.filter(c => !c.requiresBook);

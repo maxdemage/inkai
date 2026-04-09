@@ -1,9 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { confirm } from '@inquirer/prompts';
+import { confirm, select } from '@inquirer/prompts';
 import type { Command } from '../types.js';
-import { PROMPT_DEFAULTS } from '../prompts/defaults.js';
-import { getPromptsDir } from '../prompts/loader.js';
+import { SUPPORTED_LANGUAGES } from '../prompts/defaults.js';
+import { getPromptsDir, resetPromptFiles } from '../prompts/loader.js';
+import { saveConfig } from '../config.js';
 import { header, success, info, warn, blank, c } from '../ui.js';
 
 export const resetPromptsCommand: Command = {
@@ -11,11 +12,21 @@ export const resetPromptsCommand: Command = {
   description: 'Reset all local prompt files to built-in defaults',
   aliases: ['prompts-reset'],
 
-  async execute(_args, _ctx) {
+  async execute(_args, ctx) {
     header('Reset Prompts');
 
-    const count = Object.keys(PROMPT_DEFAULTS).length;
-    warn(`This will overwrite all ${count} prompt files in ${c.highlight(getPromptsDir())} with built-in defaults.`);
+    // Ask language
+    const language = await select({
+      message: 'Which language should the prompts use?',
+      choices: SUPPORTED_LANGUAGES.map(l => ({
+        name: l.name,
+        value: l.code,
+      })),
+      default: ctx.config.language,
+    });
+
+    const dir = getPromptsDir();
+    warn(`This will overwrite all prompt files in ${c.highlight(dir)} with ${language.toUpperCase()} defaults.`);
     info('Any customisations you made will be lost.');
     blank();
 
@@ -26,12 +37,13 @@ export const resetPromptsCommand: Command = {
       return;
     }
 
-    const dir = getPromptsDir();
-    for (const [name, content] of Object.entries(PROMPT_DEFAULTS)) {
-      await writeFile(join(dir, `${name}.md`), content, 'utf-8');
-    }
+    const count = await resetPromptFiles(language);
 
-    success(`Reset ${count} prompt file(s) to defaults.`);
+    // Save chosen language to config
+    ctx.config.language = language;
+    await saveConfig(ctx.config);
+
+    success(`Reset ${count} prompt file(s) to ${language.toUpperCase()} defaults.`);
     blank();
   },
 };

@@ -27,6 +27,7 @@ export const DEFAULT_CONFIG: InkaiConfig = {
     autoCommit: true,
   },
   backgroundWriting: false,
+  language: 'en',
 };
 
 export function getInkaiDir(): string {

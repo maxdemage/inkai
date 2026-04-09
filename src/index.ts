@@ -5,6 +5,7 @@ import { loadConfig, saveConfig, isConfigured, hasAnyProvider, loadSession } fro
 import { initDB, getAllBooks, getBookByName } from './db.js';
 import { checkGit, isGitAvailable } from './git.js';
 import { initPromptFiles } from './prompts/loader.js';
+import { SUPPORTED_LANGUAGES } from './prompts/defaults.js';
 import { listJobs, isJobProcessAlive } from './jobs.js';
 import { startREPL } from './repl.js';
 import { input, select, password, confirm } from '@inquirer/prompts';
@@ -22,7 +23,6 @@ async function main(): Promise<void> {
   // ─── Initialize database & prompt files ─────────────────
 
   await initDB();
-  await initPromptFiles();
 
   // ─── Load or create config ──────────────────────────────
 
@@ -44,7 +44,24 @@ async function main(): Promise<void> {
 
   if (!(await isConfigured()) || !(await hasAnyProvider(config))) {
     blank();
-    info('Welcome! Let\'s configure your LLM providers.');
+    info('🐙 Welcome! Let\'s configure inkai.');
+    blank();
+
+    // ─── Language selection ───────────────────────────────
+
+    const language = await select({
+      message: 'What language should your books be written in?',
+      choices: SUPPORTED_LANGUAGES.map(l => ({
+        name: l.name,
+        value: l.code,
+      })),
+    });
+
+    config.language = language;
+    await saveConfig(config);
+
+    blank();
+    info('Now let\'s set up your LLM provider.');
     info('You need at least one provider to get started.');
     blank();
 
@@ -84,6 +101,8 @@ async function main(): Promise<void> {
   }
 
   // ─── Books directory ────────────────────────────────────────
+
+  await initPromptFiles(config.language);
 
   const { mkdir } = await import('node:fs/promises');
   await mkdir(config.booksDir, { recursive: true });

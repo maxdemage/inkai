@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getInkaiDir } from '../config.js';
 import { PROMPT_DEFAULTS } from './defaults.js';
+import { getPromptDefaults } from './i18n/index.js';
 
 const PROMPTS_DIR = join(getInkaiDir(), 'prompts');
 
@@ -10,18 +11,32 @@ export function getPromptsDir(): string {
   return PROMPTS_DIR;
 }
 
-/** Write default prompt files that don't already exist. */
-export async function initPromptFiles(): Promise<void> {
+/** Write default prompt files that don't already exist, using the given language. */
+export async function initPromptFiles(language = 'en'): Promise<void> {
   if (!existsSync(PROMPTS_DIR)) {
     await mkdir(PROMPTS_DIR, { recursive: true });
   }
 
-  for (const [name, content] of Object.entries(PROMPT_DEFAULTS)) {
+  const defaults = getPromptDefaults(language);
+  for (const [name, content] of Object.entries(defaults)) {
     const filePath = join(PROMPTS_DIR, `${name}.md`);
     if (!existsSync(filePath)) {
       await writeFile(filePath, content, 'utf-8');
     }
   }
+}
+
+/** Reset all prompt files to defaults for the given language. */
+export async function resetPromptFiles(language = 'en'): Promise<number> {
+  if (!existsSync(PROMPTS_DIR)) {
+    await mkdir(PROMPTS_DIR, { recursive: true });
+  }
+
+  const defaults = getPromptDefaults(language);
+  for (const [name, content] of Object.entries(defaults)) {
+    await writeFile(join(PROMPTS_DIR, `${name}.md`), content, 'utf-8');
+  }
+  return Object.keys(defaults).length;
 }
 
 /** Load a prompt template by name, interpolate variables. Falls back to built-in default. */

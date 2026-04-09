@@ -7,6 +7,8 @@ import { clearProviderCache } from '../llm/manager.js';
 import { OpenAIProvider } from '../llm/openai.js';
 import { AnthropicProvider } from '../llm/anthropic.js';
 import { GeminiProvider } from '../llm/gemini.js';
+import { SUPPORTED_LANGUAGES } from '../prompts/defaults.js';
+import { resetPromptFiles } from '../prompts/loader.js';
 import { header, success, info, warn, error as showError, keyValue, blank, divider, c } from '../ui.js';
 
 const PROVIDER_CHOICES = [
@@ -50,6 +52,7 @@ export const configCommand: Command = {
         { name: 'Configure LLM tiers (small/medium/writer)', value: 'tiers' },
         { name: 'Change books directory', value: 'booksdir' },
         { name: `Toggle background writing (currently ${config.backgroundWriting ? 'ON' : 'OFF'})`, value: 'background' },
+        { name: `Change book language (currently ${config.language.toUpperCase()})`, value: 'language' },
         { name: 'View current config', value: 'view' },
         { name: '← Back', value: 'back' },
       ],
@@ -67,6 +70,9 @@ export const configCommand: Command = {
         break;
       case 'background':
         await toggleBackground();
+        break;
+      case 'language':
+        await changeLanguage();
         break;
       case 'view':
         await viewConfig();
@@ -181,6 +187,7 @@ export const configCommand: Command = {
       keyValue('Books dir', config.booksDir);
       keyValue('Git', config.git.enabled ? 'enabled' : 'disabled');
       keyValue('Background writing', config.backgroundWriting ? 'enabled' : 'disabled');
+      keyValue('Language', config.language.toUpperCase());
       blank();
     }
 
@@ -193,6 +200,23 @@ export const configCommand: Command = {
         info('Chapter writing (steps 4-6) can now run in a detached process.');
         info('Use /jobs to check progress.');
       }
+    }
+
+    async function changeLanguage() {
+      const language = await select({
+        message: 'Book language (affects prompt templates):',
+        choices: SUPPORTED_LANGUAGES.map(l => ({
+          name: l.name,
+          value: l.code,
+        })),
+        default: config.language,
+      });
+
+      config.language = language;
+      await saveConfig(config);
+      Object.assign(ctx.config, config);
+      success(`Language set to ${language.toUpperCase()}.`);
+      info('Run /reset-prompts to regenerate prompt files in the new language.');
     }
   },
 };

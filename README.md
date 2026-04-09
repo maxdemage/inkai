@@ -4,9 +4,15 @@
 
 ## Manifesto
 
-Inkai is a tool, to help you pour your ideas onto documents - nothing more.
+Inkai is a tool to help you pour your ideas onto documents - nothing more.
 
 See more in MANIFESTO.md
+
+## What inkai is not
+
+inkai is not a one prompt wonder magical wand - it will not create everything for you, it is to help you, guide you, and write what you want. Nothing more.
+
+> **New here?** See [GUIDE.md](GUIDE.md) for a detailed step-by-step walkthrough.
 
 ## Quick Start
 
@@ -41,6 +47,7 @@ npm test
 - **Background Writing** — optionally run chapter writing in a detached process that survives exit
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
 - **ODT & EPUB Export** — export all chapters to `.odt` (LibreOffice/Google Docs) or `.epub` (e-readers/Kindle)
+- **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available
 - **Local Database** — tracks all projects with status management
@@ -57,7 +64,7 @@ npm test
 | `/select [name]` | `/open`, `/use` | Select a book project to work on |
 | `/archive` | — | Archive, restore, or purge book projects |
 | `/jobs` | `/bg`, `/background` | Show background writing jobs (`/jobs clear` to remove finished) |
-| `/reset-prompts` | `/prompts-reset` | Reset all local prompt files to built-in defaults |
+| `/reset-prompts` | `/prompts-reset` | Reset prompt files to defaults (asks language) |
 | `/deselect` | `/close`, `/back` | Deselect current book project |
 | `/quit` | `/exit`, `/q` | Exit inkai |
 
@@ -77,7 +84,7 @@ npm test
 
 ## Configuration
 
-Config is stored in `~/.inkai/config.json`. On first run, you'll be guided through setup.
+Config is stored in `~/.inkai/config.json`. On first run, you'll be guided through setup — including your book language (English or Polish) and LLM provider.
 
 ### LLM Tiers
 
@@ -89,7 +96,7 @@ Config is stored in `~/.inkai/config.json`. On first run, you'll be guided throu
 
 ### Customisable Prompts
 
-On first run, inkai writes default prompt templates to `~/.inkai/prompts/`. You can edit any `.md` file to change how the AI behaves — templates use `{{variable}}` substitution and `{{#if var}}...{{/if}}` conditionals. If you delete a file, the built-in default is used as fallback.
+On first run, inkai writes default prompt templates to `~/.inkai/prompts/` in your chosen language. You can edit any `.md` file to change how the AI behaves — templates use `{{variable}}` substitution and `{{#if var}}...{{/if}}` conditionals. If you delete a file, the built-in default is used as fallback. Use `/reset-prompts` to regenerate all files in a different language.
 
 ```
 ~/.inkai/prompts/
