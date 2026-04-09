@@ -35,6 +35,8 @@ inkai
 - **Chapter Rewriting** — apply review feedback automatically
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
 - **Background Writing** — optionally run chapter writing in a detached process that survives exit
+- **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
+- **ODT Export** — export all chapters to a single `.odt` document with basic styling
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available
 - **Local Database** — tracks all projects with status management
@@ -62,6 +64,8 @@ inkai
 | `/rewrite-chapter [n]` | `/rewrite` | Rewrite a chapter based on review feedback |
 | `/edit-lore` | `/lore` | Review and modify book lore |
 | `/status` | `/info`, `/stat` | Show current book project status |
+| `/read [n]` | `/reader`, `/view` | Read chapters in a CLI reader (↑↓/jk scroll, N/P chapters, Q quit) |
+| `/export` | `/odt` | Export all chapters to a single `.odt` file |
 
 ## Configuration
 

@@ -26,10 +26,43 @@ export function showBanner(): void {
     horizontalLayout: 'default',
   });
 
+  const blobs = [
+    [
+      `    ${c.accent('○')}${c.primary('╮')}`,
+      `   ${c.primary('╭')}${c.accent('┤')}${c.primary('│')}    ${c.muted('~ "let me write that for you"')}`,
+      `   ${c.primary('╰')}${c.accent('●')}${c.primary('╯')}`,
+      `    ${c.primary('┘')}`,
+    ],
+    [
+      `      ${c.accent('◠')}${c.primary('‿')}${c.accent('◠')}`,
+      `     ${c.primary('(')} ${c.accent('◕')}${c.muted('ᴗ')}${c.accent('◕')} ${c.primary(')')}   ${c.muted('~ "worlds await!"')}`,
+      `  ${c.primary('╭┤')}     ${c.primary('├╮')}`,
+      `    ${c.primary('╰')}${c.accent('┬')}${c.primary('───')}${c.accent('┬')}${c.primary('╯')}`,
+      `     ${c.primary('╰')}${c.muted('○')} ${c.muted('○')}${c.primary('╯')}`,
+    ],
+    [
+      `    ${c.primary('╭')}${c.accent('─')}${c.accent('─')}${c.primary('╮')}`,
+      `    ${c.primary('│')}${c.accent('◉◉')}${c.primary('│')}   ${c.muted('~ "plot twist incoming..."')}`,
+      `    ${c.primary('│')}${c.accent('▽')} ${c.primary('│')}`,
+      `   ${c.primary('╭╯')}  ${c.primary('╰╮')}`,
+      `   ${c.primary('╰')}${c.accent('┬──┬')}${c.primary('╯')}`,
+      `    ${c.primary('╰')}${c.muted('╥╥')}${c.primary('╯')}`,
+    ],
+    [
+      `       ${c.accent('·')}`,
+      `      ${c.primary('(')}${c.accent('^')}${c.primary(')')}   ${c.muted('~ "once upon a time..."')}`,
+      `     ${c.primary('/')}${c.accent('│')}${c.primary('╲')}`,
+      `    ${c.primary('╰')}${c.accent('┘')}${c.primary('╯')}`,
+    ],
+  ];
+
+  const blob = blobs[Math.floor(Math.random() * blobs.length)];
+
   const banner = boxen(
     c.primary(ascii) + '\n' +
     c.muted('          AI-Powered Book Writing Agent') + '\n' +
-    c.muted('                    v0.1.0'),
+    c.muted('                    v0.1.0') + '\n\n' +
+    blob.join('\n'),
     {
       padding: 1,
       margin: { top: 1, bottom: 1, left: 2, right: 2 },
@@ -54,19 +87,19 @@ export function subheader(text: string): void {
 // ─── Status Messages ──────────────────────────────────────────
 
 export function info(text: string): void {
-  console.log(c.primary('  ℹ ') + text);
+  console.log(c.primary('  ℹ  ') + text);
 }
 
 export function success(text: string): void {
-  console.log(c.success('  ✔ ') + text);
+  console.log(c.success('  ✔  ') + text);
 }
 
 export function warn(text: string): void {
-  console.log(c.warning('  ⚠ ') + text);
+  console.log(c.warning('  ⚠  ') + text);
 }
 
 export function error(text: string): void {
-  console.log(c.error('  ✖ ') + text);
+  console.log(c.error('  ✖  ') + text);
 }
 
 // ─── Formatted Output ─────────────────────────────────────────

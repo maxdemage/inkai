@@ -13,7 +13,13 @@
     "start": "node dist/index.js",
     "clean": "rm -rf dist"
   },
-  "keywords": ["ai", "book", "writing", "agent", "cli"],
+  "keywords": [
+    "ai",
+    "book",
+    "writing",
+    "agent",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
@@ -23,6 +29,7 @@
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
     "figlet": "^1.8.0",
+    "jszip": "^3.10.1",
     "lowdb": "^7.0.1",
     "nanoid": "^5.0.9",
     "openai": "^4.73.0",
@@ -32,6 +39,7 @@
   },
   "devDependencies": {
     "@types/figlet": "^1.7.0",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
   },

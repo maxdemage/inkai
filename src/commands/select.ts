@@ -39,7 +39,7 @@ export const selectCommand: Command = {
     }
 
     ctx.selectedBook = book;
-    header(`📖 ${book.title}`);
+    header(`📖  ${book.title}`);
     keyValue('Project', book.projectName);
     keyValue('Type', `${book.type} — ${book.genre}${book.subgenre ? ` / ${book.subgenre}` : ''}`);
     keyValue('Authors', book.authors.join(', '));

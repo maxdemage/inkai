@@ -12,6 +12,8 @@ import { editLoreCommand } from './commands/edit-lore.js';
 import { statusCommand } from './commands/status.js';
 import { archiveCommand } from './commands/archive.js';
 import { jobsCommand } from './commands/jobs.js';
+import { readCommand } from './commands/read.js';
+import { exportCommand } from './commands/export.js';
 import type { AppContext } from './types.js';
 import { getPrompt, info, blank, c } from './ui.js';
 
@@ -30,6 +32,8 @@ function registerAllCommands(): void {
   registerCommand(statusCommand);
   registerCommand(archiveCommand);
   registerCommand(jobsCommand);
+  registerCommand(readCommand);
+  registerCommand(exportCommand);
 
   // Quit command
   registerCommand({
