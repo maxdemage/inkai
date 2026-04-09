@@ -14,6 +14,8 @@ import { archiveCommand } from './commands/archive.js';
 import { jobsCommand } from './commands/jobs.js';
 import { readCommand } from './commands/read.js';
 import { exportCommand } from './commands/export.js';
+import { resetPromptsCommand } from './commands/reset-prompts.js';
+import { enhanceLoreCommand } from './commands/enhance-lore.js';
 import type { AppContext } from './types.js';
 import { getPrompt, info, blank, c } from './ui.js';
 
@@ -34,6 +36,8 @@ function registerAllCommands(): void {
   registerCommand(jobsCommand);
   registerCommand(readCommand);
   registerCommand(exportCommand);
+  registerCommand(resetPromptsCommand);
+  registerCommand(enhanceLoreCommand);
 
   // Quit command
   registerCommand({

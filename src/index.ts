@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
 import { showBanner, info, success, warn, blank, c } from './ui.js';
-import { loadConfig, saveConfig, isConfigured, hasAnyProvider } from './config.js';
-import { initDB } from './db.js';
+import { loadConfig, saveConfig, isConfigured, hasAnyProvider, loadSession } from './config.js';
+import { initDB, getAllBooks, getBookByName } from './db.js';
 import { checkGit, isGitAvailable } from './git.js';
 import { initPromptFiles } from './prompts/loader.js';
 import { listJobs, isJobProcessAlive } from './jobs.js';
 import { startREPL } from './repl.js';
-import { input, select, password } from '@inquirer/prompts';
+import { input, select, password, confirm } from '@inquirer/prompts';
 import type { AppContext, LLMProviderName } from './types.js';
+import { getChapterCount } from './book/manager.js';
 
 async function main(): Promise<void> {
   // ─── Banner ─────────────────────────────────────────────
@@ -103,11 +104,38 @@ async function main(): Promise<void> {
     info(`Use ${c.primary('/jobs')} for details.`);
   }
 
+  // ─── Hint if no books exist ─────────────────────────────
+
+  const allBooks = await getAllBooks();
+  if (allBooks.filter(b => b.status !== 'archived').length === 0) {
+    blank();
+    info(`No books yet! Use ${c.primary('/create-book')} to start your first project.`);
+  }
+
   const ctx: AppContext = {
     config,
     selectedBook: null,
     gitEnabled: isGitAvailable(),
   };
+
+  // ─── Resume last session ────────────────────────────────
+
+  const session = await loadSession();
+  if (session?.lastBook) {
+    const lastBook = await getBookByName(session.lastBook);
+    if (lastBook && lastBook.status !== 'archived') {
+      const chapters = await getChapterCount(config, lastBook.projectName);
+      blank();
+      const resume = await confirm({
+        message: `Continue working on ${c.highlight(lastBook.title)}? (${chapters} chapter${chapters !== 1 ? 's' : ''})`,
+        default: true,
+      });
+      if (resume) {
+        ctx.selectedBook = lastBook;
+        success(`Resumed: ${c.highlight(lastBook.projectName)}`);
+      }
+    }
+  }
 
   await startREPL(ctx);
 }

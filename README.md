@@ -53,6 +53,7 @@ inkai
 | `/select [name]` | `/open`, `/use` | Select a book project to work on |
 | `/archive` | — | Archive, restore, or purge book projects |
 | `/jobs` | `/bg`, `/background` | Show background writing jobs (`/jobs clear` to remove finished) |
+| `/reset-prompts` | `/prompts-reset` | Reset all local prompt files to built-in defaults |
 | `/deselect` | `/close`, `/back` | Deselect current book project |
 | `/quit` | `/exit`, `/q` | Exit inkai |
 
@@ -63,6 +64,7 @@ inkai
 | `/review-chapter [n]` | `/review` | Get AI review of a chapter |
 | `/rewrite-chapter [n]` | `/rewrite` | Rewrite a chapter based on review feedback |
 | `/edit-lore` | `/lore` | Review and modify book lore |
+| `/enhance-lore` | `/enhance` | AI-guided lore enhancement — answer targeted questions to deepen your world |
 | `/status` | `/info`, `/stat` | Show current book project status |
 | `/read [n]` | `/reader`, `/view` | Read chapters in a CLI reader (↑↓/jk scroll, N/P chapters, Q quit) |
 | `/export` | `/odt` | Export all chapters to a single `.odt` file |

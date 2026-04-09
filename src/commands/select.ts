@@ -6,6 +6,7 @@ import { readLoreFiles, getChapterCount } from '../book/manager.js';
 import { chatSmall } from '../llm/manager.js';
 import { buildBookSummaryPrompt } from '../prompts/templates.js';
 import { header, success, info, error, blank, boxMessage, keyValue, statusBadge, c } from '../ui.js';
+import { saveSession } from '../config.js';
 
 export const selectCommand: Command = {
   name: 'select',
@@ -71,5 +72,8 @@ export const selectCommand: Command = {
     success(`Now working on: ${c.highlight(book.projectName)}`);
     info(`Commands: ${c.primary('/create-chapter')} ${c.primary('/edit-lore')} ${c.primary('/review-chapter')} ${c.primary('/status')}`);
     blank();
+
+    // Save session for resume on next startup
+    await saveSession({ lastBook: book.projectName, lastChapter: chapterCount, timestamp: new Date().toISOString() });
   },
 };

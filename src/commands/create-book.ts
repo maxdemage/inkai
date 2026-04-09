@@ -18,6 +18,9 @@ export const createBookCommand: Command = {
   async execute(_args, ctx) {
     header('Create New Book');
 
+    info('We\'ll start by gathering some details about your book — basics first, then deeper questions so the AI can understand your vision.');
+    blank();
+
     // ─── Basic Questions ────────────────────────────────────
 
     const projectName = await input({

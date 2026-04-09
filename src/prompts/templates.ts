@@ -263,3 +263,41 @@ export async function buildBookSummaryPrompt(loreFiles: Record<string, string>, 
     chapterCount: String(chapterCount),
   });
 }
+
+// ─── Enhance Lore — Questions ────────────────────────────────
+
+export async function buildEnhanceLoreQuestionsPrompt(info: {
+  title: string;
+  type: string;
+  genre: string;
+  subgenre: string;
+  loreFiles: Record<string, string>;
+}): Promise<string> {
+  return loadTemplate('enhance-lore-questions', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    loreText: formatLoreFiles(info.loreFiles),
+  });
+}
+
+// ─── Enhance Lore — Apply ────────────────────────────────────
+
+export async function buildEnhanceLoreApplyPrompt(info: {
+  title: string;
+  type: string;
+  genre: string;
+  subgenre: string;
+  loreFiles: Record<string, string>;
+  answers: Record<string, string>;
+}): Promise<string> {
+  return loadTemplate('enhance-lore-apply', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    loreText: formatLoreFiles(info.loreFiles),
+    answersText: formatAnswers(info.answers),
+  });
+}

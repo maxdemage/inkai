@@ -336,9 +336,8 @@ Update the summary document to include a concise but comprehensive summary of Ch
 - Character developments
 - Important revelations or changes
 - Emotional beats
-- Setup for future chapters
 
-Keep previous chapter summaries intact. Add the new chapter summary in the appropriate place. Output the complete updated summary document in markdown.`,
+Only summarise what actually happened in this chapter. Do NOT speculate about future chapters, planned arcs, or upcoming events. Keep previous chapter summaries intact. Add the new chapter summary in the appropriate place. Output the complete updated summary document in markdown.`,
 
 // ─── Lore Summary ────────────────────────────────────────────
 
@@ -389,5 +388,49 @@ Provide a 3-4 sentence summary of:
 - What comes next
 
 Be concise and encouraging.`,
+
+// ─── Enhance Lore — Questions ────────────────────────────────
+
+'enhance-lore-questions': `You are an expert book development consultant specialising in {{genre}}{{#if subgenre}} ({{subgenre}}){{/if}}.
+
+Analyse the following lore files for a {{type}} titled "{{title}}":
+
+{{loreText}}
+
+Based on the genre, sub-genre, and existing lore, identify gaps, weaknesses, or areas that could be richer. Generate 5-8 targeted questions that will help the author deepen and strengthen their world, characters, and story.
+
+Focus on questions that are specific to this book — not generic writing advice. Consider:
+- Underdeveloped aspects for this genre (e.g., magic rules for fantasy, tech constraints for sci-fi)
+- Character relationships or motivations that feel thin
+- World-building details that are missing or inconsistent
+- Themes that could be explored more deeply
+- Sensory details, culture, politics, economy, or history gaps
+
+Respond with valid JSON:
+{
+  "questions": [
+    { "key": "unique_key", "question": "Your question here", "context": "Brief note on why this matters", "loreFile": "which-lore-file.md this relates to" }
+  ]
+}`,
+
+// ─── Enhance Lore — Apply ────────────────────────────────────
+
+'enhance-lore-apply': `You are an expert book development assistant. The author has answered enhancement questions about their {{type}} "{{title}}" ({{genre}}{{#if subgenre}} / {{subgenre}}{{/if}}).
+
+=== CURRENT LORE FILES ===
+{{loreText}}
+
+=== AUTHOR'S ANSWERS TO ENHANCEMENT QUESTIONS ===
+{{answersText}}
+
+Based on the author's answers, update the relevant lore files to incorporate this new information. Weave the new details naturally into the existing content — do not simply append. Preserve the existing structure and voice.
+
+Only include files that need changes. Return valid JSON:
+{
+  "files": {
+    "filename.md": "complete updated file content..."
+  },
+  "changes": ["Brief description of what was changed in each file"]
+}`,
 
 };

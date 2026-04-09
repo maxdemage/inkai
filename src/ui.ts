@@ -34,9 +34,9 @@ export function showBanner(): void {
       `    ${c.primary('┘')}`,
     ],
     [
-      `      ${c.accent('◠')}${c.primary('‿')}${c.accent('◠')}`,
-      `     ${c.primary('(')} ${c.accent('◕')}${c.muted('ᴗ')}${c.accent('◕')} ${c.primary(')')}   ${c.muted('~ "worlds await!"')}`,
-      `  ${c.primary('╭┤')}     ${c.primary('├╮')}`,
+      `     ${c.accent('◠')} ${c.primary('‿')} ${c.accent('◠')}`,
+      `    ${c.primary('(')} ${c.accent('◕')}${c.muted('ᴗ')}${c.accent('◕')} ${c.primary(')')}   ${c.muted('~ "worlds await!"')}`,
+      `   ${c.primary('╭┤')}     ${c.primary('├╮')}`,
       `    ${c.primary('╰')}${c.accent('┬')}${c.primary('───')}${c.accent('┬')}${c.primary('╯')}`,
       `     ${c.primary('╰')}${c.muted('○')} ${c.muted('○')}${c.primary('╯')}`,
     ],
@@ -49,10 +49,10 @@ export function showBanner(): void {
       `    ${c.primary('╰')}${c.muted('╥╥')}${c.primary('╯')}`,
     ],
     [
-      `       ${c.accent('·')}`,
-      `      ${c.primary('(')}${c.accent('^')}${c.primary(')')}   ${c.muted('~ "once upon a time..."')}`,
+      `      ${c.accent('·')}`,
+      `     ${c.primary('(')}${c.accent('^')}${c.primary(')')}   ${c.muted('~ "once upon a time..."')}`,
       `     ${c.primary('/')}${c.accent('│')}${c.primary('╲')}`,
-      `    ${c.primary('╰')}${c.accent('┘')}${c.primary('╯')}`,
+      `     ${c.primary('╰')}${c.accent('┘')}${c.primary('╯')}`,
     ],
   ];
 
