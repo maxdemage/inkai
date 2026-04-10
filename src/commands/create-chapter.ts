@@ -195,7 +195,7 @@ export const createChapterCommand: Command = {
           guidelines,
           finalInstructions
         ) },
-      ], { maxTokens: 2000, temperature: 0.6 });
+      ], { maxTokens: 4096, temperature: 0.6 });
 
       const planPath = await writeChapterPlan(ctx.config, book.projectName, nextChapter, chapterPlan);
       spinner.succeed('Chapter plan created');

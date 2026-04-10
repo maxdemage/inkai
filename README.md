@@ -51,6 +51,7 @@ npm test
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available
 - **Local Database** — tracks all projects with status management
+- **No RAG** — For this app, a full RAG stack is probably more hassle than value right now.
 
 ## Commands
 
@@ -77,6 +78,12 @@ npm test
 | `/rewrite-chapter [n]` | `/rewrite` | Rewrite a chapter based on review feedback |
 | `/edit-lore` | `/lore` | Review and modify book lore |
 | `/enhance-lore` | `/enhance` | AI-guided lore enhancement — answer targeted questions to deepen your world |
+| `/lore-review` | `/review-lore` | Full lore review — find contradictions, gaps, and inconsistencies, then fix them |
+| `/story-arc` | `/arc` | Generate or regenerate the book-level story arc |
+| `/characters` | `/chars` | Show, generate, or edit character sheets with arc state and tensions |
+| `/timeline` | — | Generate a chronology from lore, chapters, and notes — flags impossible sequencing |
+| `/rename` | — | Rename the current book title |
+| `/edit-basic-info` | `/edit-info`, `/basic-info` | Edit basic book information (title, genre, authors, etc.) |
 | `/status` | `/info`, `/stat` | Show current book project status |
 | `/summary` | `/chapters-summary` | Show the chapter summary document |
 | `/read [n]` | `/reader`, `/view` | Read chapters in a CLI reader (↑↓/jk scroll, N/P chapters, Q quit) |

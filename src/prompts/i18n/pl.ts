@@ -95,6 +95,7 @@ WYMAGANE pliki (zawsze dołącz):
 - "extended-lore.md": Głęboki worldbuilding, historia, zasady, szczegółowe opisy. 3-5 stron.
 - "summary-of-chapters.md": Zacznij od "Nie napisano jeszcze żadnych rozdziałów.".
 - "style-of-writing.md": Przewodnik stylu pisania — głos, czas, POV, styl prozy, preferencje tempa.
+- "story-arc.md": Łuk fabularny książki — struktura aktów, główne punkty zwrotne, wątki poboczne, cel zakończenia i kręgosłup tematyczny. 2-3 strony.
 
 OPCJONALNE pliki (dołącz w zależności od typu książki):
 {{optionalFilesDescription}}
@@ -105,7 +106,8 @@ Zwróć TYLKO poprawny JSON w tym formacie:
     "basic-lore.md": "# Podstawowe Lore\\n\\n...",
     "extended-lore.md": "# Rozszerzone Lore\\n\\n...",
     "summary-of-chapters.md": "# Podsumowanie Rozdziałów\\n\\n...",
-    "style-of-writing.md": "# Przewodnik Stylu Pisania\\n\\n..."
+    "style-of-writing.md": "# Przewodnik Stylu Pisania\\n\\n...",
+    "story-arc.md": "# Łuk Fabularny\\n\\n..."
   }
 }
 
@@ -499,5 +501,219 @@ Zwróć TYLKO poprawny JSON:
 }
 
 Bądź konkretny: uwzględnij imiona, szczegóły i kontekst. Każda notatka powinna mieć 1-2 zdania max. Uwzględnij tylko naprawdę nowe informacje z tego rozdziału. Pisz PO POLSKU.`,
+
+// ─── Generowanie łuku fabularnego ────────────────────────────
+
+'story-arc-generate': `Jesteś ekspertem od architektury fabuły. Wygeneruj kompleksowy dokument łuku fabularnego dla następującego projektu książkowego. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+Podgatunek: {{subgenre}}
+Cel: {{purpose}}
+Streszczenie: {{summary}}
+
+=== ISTNIEJĄCE LORE ===
+{{loreContext}}
+
+=== DOTYCHCZAS NAPISANE ROZDZIAŁY ===
+{{chapterSummary}}
+
+=== WSKAZÓWKI AUTORA ===
+{{authorGuidance}}
+
+Wygeneruj szczegółowy łuk fabularny w markdown. Uwzględnij:
+
+1. **Struktura aktów** — Podziel historię na akty (zazwyczaj 3, ale dostosuj do typu książki - {{genre}}). Dla każdego aktu:
+   - Cel i ton emocjonalny
+   - Kluczowe wydarzenia i kamienie milowe
+   - Gdzie akt zaczyna się i kończy emocjonalnie
+
+2. **Główne punkty zwrotne** — 4-6 przełomowych momentów, które zmieniają bieg historii:
+   - Zdarzenie inicjujące
+   - Pierwszy wielki zwrot / punkt bez powrotu
+   - Zmiana w połowie
+   - Mroczny moment / najniższy punkt
+   - Kulminacja
+   - Rozwiązanie
+
+3. **Wątki poboczne** — Śledź 2-4 główne wątki poboczne z ich własnymi mini-łukami i tym, jak przecinają się z główną fabułą.
+
+4. **Cel zakończenia** — Jak wygląda zakończenie emocjonalnie i narracyjnie. Na jakie pytania trzeba odpowiedzieć. Z jakim uczuciem czytelnik powinien odejść.
+
+5. **Kręgosłup tematyczny** — Główny temat(y) i jak ewoluują przez historię. Jak różne postacie ucieleśniają lub kwestionują tematy.
+
+Jeśli rozdziały zostały już napisane, uwzględnij to co się wydarzyło i projektuj naprzód. Wyraźnie oznacz już napisane wydarzenia.
+
+Zwróć TYLKO treść markdown dla story-arc.md. Niech to będzie 2-4 strony, bogate i praktyczne. Pisz PO POLSKU.`,
+
+// ─── Generowanie postaci ───────────────────────────────────
+
+'characters-generate': `Jesteś ekspertem od analizy postaci. Wygeneruj kompleksowy dokument postaci dla następującego projektu książkowego. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+Podgatunek: {{subgenre}}
+
+=== ISTNIEJĄCE LORE ===
+{{loreContext}}
+
+=== DOTYCHCZAS NAPISANE ROZDZIAŁY ===
+{{chapterSummary}}
+
+=== WYODRĘBNIONE NOTATKI ===
+{{notesContext}}
+
+Wygeneruj ustrukturyzowany dokument postaci w markdown. Dla KAŻDEJ postaci, która pojawiła się lub została wspomniana:
+
+### Imię Postaci
+- **Rola**: (protagonista, antagonista, mentor, obiekt miłosny, drugoplanowa, itp.)
+- **Pierwsze pojawienie**: Rozdział N lub "wspomniana w lore"
+- **Opis**: Podsumowanie wyglądu i osobowości (2-3 zdania)
+- **Motywacja**: Co nią kieruje
+- **Stan łuku**: Gdzie jest TERAZ w swojej osobistej podróży
+- **Ostatnia znacząca zmiana**: Najnowsze wydarzenie, które ją zmieniło
+- **Sprzeczności**: Wewnętrzne konflikty, hipokryzje lub napięcia
+- **Nierozwiązane napięcia**: Otwarte pytania, niedokończone sprawy, narastające konflikty
+- **Relacje**: Kluczowe powiązania z innymi postaciami
+
+Zorganizuj postacie w sekcje: **Główne postacie**, **Postacie drugoplanowe**, **Postacie poboczne/wspomniane**.
+
+Jeśli nie napisano jeszcze żadnych rozdziałów, oprzyj się tylko na lore i oznacz stany łuków jako "przed historią".
+
+Zwróć TYLKO treść markdown dla characters.md. Bądź dokładny, ale zwięzły dla każdej postaci. Pisz PO POLSKU.`,
+
+// ─── Edycja postaci ──────────────────────────────────────
+
+'characters-edit': `Jesteś ekspertem od analizy i edycji postaci. Autor chce wprowadzić zmiany w dokumencie postaci. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+
+=== AKTUALNY DOKUMENT POSTACI ===
+{{currentCharacters}}
+
+=== KONTEKST LORE ===
+{{loreContext}}
+
+=== ZMIANY ŻĄDANE PRZEZ AUTORA ===
+{{authorChanges}}
+
+Zastosuj żądane zmiany autora do dokumentu postaci. Zachowaj ten sam ustrukturyzowany format. Możesz:
+- Edytować istniejące wpisy postaci
+- Dodawać nowe postacie
+- Usuwać postacie jeśli to żądano
+- Aktualizować stany łuków, napięcia lub relacje
+- Dodawać lub modyfikować dowolne pole
+
+Pozostaw wszystko, o czym autor nie wspomniał, bez zmian. Zwróć KOMPLETNY zaktualizowany dokument characters.md w markdown. Pisz PO POLSKU.`,
+
+// ─── Przegląd lore ───────────────────────────────────────
+
+'lore-review': `Jesteś starszym redaktorem książek i konsultantem world-buildingu. Przeprowadź dokładny przegląd WSZYSTKICH plików lore poniżej dla projektu książkowego. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+Podgatunek: {{subgenre}}
+
+=== WSZYSTKIE PLIKI LORE ===
+{{loreText}}
+
+=== STRESZCZENIE ROZDZIAŁÓW ===
+{{chapterSummary}}
+
+Przejrzyj CAŁE lore pod kątem:
+1. **Sprzeczności** — fakty, które są w konflikcie między plikami lub w ramach pliku
+2. **Niespójności** — różna pisownia imion, niedopasowane daty, zmieniające się szczegóły postaci
+3. **Luki** — ważne elementy przywołane, ale nigdy niezdefiniowane, brakująca historia, słabo rozwinięte obszary
+4. **Redundancja** — te same informacje powtarzane w różnych plikach (sugestia konsolidacji)
+5. **Przestarzałość** — informacje sprzeczne z tym, co wydarzyło się w napisanych rozdziałach
+6. **Słabe obszary** — sekcje, które są niejasne, ogólnikowe lub wymagają większej głębi dla gatunku
+7. **Problemy strukturalne** — informacje w niewłaściwym pliku, słaba organizacja
+
+NIE wymieniaj tego, co jest dobre. TYLKO to, co wymaga zmian.
+
+Zwróć TYLKO poprawny JSON:
+{
+  "fileChanges": [
+    {
+      "file": "filename.md",
+      "changes": [
+        "Konkretny opis zmiany: co naprawić/dodać/usunąć i dlaczego"
+      ]
+    }
+  ],
+  "summary": "2-3 zdaniowa ogólna ocena stanu lore"
+}
+
+Jeśli plik nie wymaga zmian, nie uwzględniaj go. Bądź konkretny i praktyczny — nie mów "popraw worldbuilding", powiedz dokładnie co dodać lub naprawić. Pisz PO POLSKU.`,
+
+// ─── Zastosowanie przeglądu lore ───────────────────────
+
+'lore-review-apply': `Jesteś eksperckim redaktorem lore. Zastosuj następujące konkretne zmiany do pliku lore. Zachowaj ogólną strukturę pliku i formatowanie markdown. Modyfikuj tylko to, co jest wymienione w zmianach — reszta pozostaje nienaruszona. Pisz PO POLSKU.
+
+Tytuł: "{{title}}"
+Plik: {{filename}}
+
+=== AKTUALNA ZAWARTOŚĆ PLIKU ===
+{{fileContent}}
+
+=== ZMIANY DO ZASTOSOWANIA ===
+{{changes}}
+
+Zwróć KOMPLETNĄ zaktualizowaną zawartość pliku w markdown. Nie dodawaj komentarzy — zwracaj tylko zawartość pliku. Pisz PO POLSKU.`,
+
+// ─── Generowanie osi czasu ─────────────────────────────────
+
+'timeline-generate': `Jesteś ekspertem od chronologii fabuły. Zbuduj kompletną oś czasu dla projektu książkowego, syntetyzując WSZYSTKIE dostępne źródła. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+Podgatunek: {{subgenre}}
+
+=== WSZYSTKIE PLIKI LORE ===
+{{loreText}}
+
+=== STRESZCZENIA ROZDZIAŁÓW ===
+{{chapterSummary}}
+
+=== WYODRĘBNIONE NOTATKI ===
+{{notesContext}}
+
+Zbuduj ustrukturowaną oś czasu w markdown z tymi sekcjami:
+
+## Tło / Wydarzenia przed historią
+Wydarzenia, które miały miejsce przed Rozdziałem 1 (z lore, historii świata, historii postaci). Uporządkuj chronologicznie.
+
+## Oś czasu historii
+Dla każdego napisanego rozdziału wymień kluczowe wydarzenia w kolejności. Uwzględnij:
+- **Kiedy**: względne lub bezwzględne odniesienie czasowe (np. "Dzień 1", "Trzy tygodnie później", "Poranek po bitwie")
+- **Co**: wydarzenie
+- **Kto**: zaangażowane postacie
+- **Gdzie**: lokacja
+
+Jeśli nie napisano jeszcze żadnych rozdziałów, zanotuj to i zaprojektuj oś czasu na podstawie lore.
+
+## Przewidywane / Planowane wydarzenia
+Wydarzenia zapowiadane, zaplanowane w łuku fabularnym lub wynikające z lore, które jeszcze się nie wydarzyły.
+
+## ⚠️ Problemy z sekwencjonowaniem
+Oznacz WSZELKIE znalezione problemy:
+- Wydarzenia, które są w sprzeczności czasowej
+- Niemożliwe czasy podróży lub jednoczesne obecności
+- Niespójności wieku
+- Sprzeczności sezonów/pogody
+- Postacie wiedzące rzeczy, zanim mogły się ich dowiedzieć
+- Wydarzenia przywoływane w różnej kolejności w różnych plikach
+
+Jeśli nie znaleziono problemów, napisz "Nie wykryto problemów z sekwencjonowaniem."
+
+Dla każdego problemu wyjaśnij CO jest w konflikcie, GDZIE się pojawia (które pliki/rozdziały) i zasugeruj rozwiązanie.
+
+Zwróć TYLKO treść markdown dla timeline.md. Bądź dokładny i precyzyjny z odniesieniami czasowymi. Pisz PO POLSKU.`,
 
 };

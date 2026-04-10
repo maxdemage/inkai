@@ -344,3 +344,129 @@ export async function buildChapterLoreExtractionPrompt(
     existingNotes: existingNotes || '(no existing notes)',
   });
 }
+
+// ─── Story Arc Generation ────────────────────────────────────
+
+export async function buildStoryArcGeneratePrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  subgenre: string;
+  purpose: string;
+  summary: string;
+  loreContext: string;
+  chapterSummary: string;
+  authorGuidance: string;
+}): Promise<string> {
+  return loadTemplate('story-arc-generate', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    purpose: info.purpose,
+    summary: info.summary || '',
+    loreContext: info.loreContext,
+    chapterSummary: info.chapterSummary || 'No chapters written yet.',
+    authorGuidance: info.authorGuidance || 'None — generate based on existing lore and story information.',
+  });
+}
+
+// ─── Characters Generation ─────────────────────────────────
+
+export async function buildCharactersGeneratePrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  subgenre: string;
+  loreContext: string;
+  chapterSummary: string;
+  notesContext: string;
+}): Promise<string> {
+  return loadTemplate('characters-generate', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    loreContext: info.loreContext,
+    chapterSummary: info.chapterSummary || 'No chapters written yet.',
+    notesContext: info.notesContext || '(no notes)',
+  });
+}
+
+// ─── Characters Edit ─────────────────────────────────────
+
+export async function buildCharactersEditPrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  currentCharacters: string;
+  loreContext: string;
+  authorChanges: string;
+}): Promise<string> {
+  return loadTemplate('characters-edit', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    currentCharacters: info.currentCharacters,
+    loreContext: info.loreContext,
+    authorChanges: info.authorChanges,
+  });
+}
+
+// ─── Lore Review ────────────────────────────────────────
+
+export async function buildLoreReviewPrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  subgenre: string;
+  loreFiles: Record<string, string>;
+  chapterSummary: string;
+}): Promise<string> {
+  return loadTemplate('lore-review', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    loreText: formatLoreFiles(info.loreFiles),
+    chapterSummary: info.chapterSummary || 'No chapters written yet.',
+  });
+}
+
+// ─── Lore Review Apply ──────────────────────────────────
+
+export async function buildLoreReviewApplyPrompt(info: {
+  title: string;
+  filename: string;
+  fileContent: string;
+  changes: string[];
+}): Promise<string> {
+  return loadTemplate('lore-review-apply', {
+    title: info.title,
+    filename: info.filename,
+    fileContent: info.fileContent,
+    changes: info.changes.map((c, i) => `${i + 1}. ${c}`).join('\n'),
+  });
+}
+
+// ─── Timeline Generation ──────────────────────────────────
+
+export async function buildTimelineGeneratePrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  subgenre: string;
+  loreFiles: Record<string, string>;
+  chapterSummary: string;
+  notesContext: string;
+}): Promise<string> {
+  return loadTemplate('timeline-generate', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    loreText: formatLoreFiles(info.loreFiles),
+    chapterSummary: info.chapterSummary || 'No chapters written yet.',
+    notesContext: info.notesContext || '(no notes)',
+  });
+}

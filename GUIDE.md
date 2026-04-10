@@ -158,6 +158,46 @@ AI-guided lore expansion:
 
 This is the easiest way to deepen your world without manually editing files.
 
+### `/lore-review` (alias: `/review-lore`)
+
+Full automated lore audit:
+1. The **writer LLM** reads all your lore files and produces a detailed review — contradictions, timeline gaps, missing details, inconsistencies.
+2. If issues are found, the **medium LLM** applies fixes to each affected file automatically.
+
+Use this after major lore changes or every few chapters to keep your world consistent.
+
+### `/story-arc` (alias: `/arc`)
+
+Generate or regenerate a book-level story arc (`lore/story-arc.md`):
+- Synthesises all lore, chapter summaries, and extracted notes
+- Creates a structured arc with inciting incident, rising action, climax, resolution, and thematic threads
+- If a story arc already exists, shows it and asks before regenerating
+
+### `/characters` (alias: `/chars`)
+
+Character sheet management:
+- **Generate**: Creates `lore/characters.md` with detailed character sheets — traits, arcs, tensions, relationships — from your lore and chapters
+- **Show**: Displays existing character sheets
+- **Edit**: LLM-powered editing — describe what to change and the AI rewrites the sheet
+
+### `/timeline`
+
+Generate a chronological timeline (`lore/timeline.md`):
+- Combines backstory, lore, chapter summaries, and extracted notes into a structured chronology
+- Flags impossible sequencing or contradictions with ⚠️ markers
+- Covers backstory events, story timeline, and projected future events
+
+### `/rename`
+
+Quick rename of the current book's title. Updates the database record.
+
+### `/edit-basic-info` (aliases: `/edit-info`, `/basic-info`)
+
+Walk through all basic book fields and update any you like:
+- Title, type, genre, sub-genre
+- Author list and purpose statement
+- Summary (multiline)
+
 ---
 
 ## 7. Writing Your First Chapter

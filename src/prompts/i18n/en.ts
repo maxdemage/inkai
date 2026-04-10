@@ -94,6 +94,7 @@ REQUIRED files (always include):
 - "extended-lore.md": Deep world-building, history, rules, detailed settings. 3-5 pages.
 - "summary-of-chapters.md": Start with "No chapters written yet.".
 - "style-of-writing.md": Writing style guide — voice, tense, POV, prose style, pacing preferences.
+- "story-arc.md": Book-level story arc — act structure, major turning points, subplot beats, ending target, and thematic spine. 2-3 pages.
 
 OPTIONAL files (include based on book type):
 {{optionalFilesDescription}}
@@ -104,7 +105,8 @@ Return ONLY valid JSON in this format:
     "basic-lore.md": "# Basic Lore\\n\\n...",
     "extended-lore.md": "# Extended Lore\\n\\n...",
     "summary-of-chapters.md": "# Chapter Summary\\n\\n...",
-    "style-of-writing.md": "# Writing Style Guide\\n\\n..."
+    "style-of-writing.md": "# Writing Style Guide\\n\\n...",
+    "story-arc.md": "# Story Arc\\n\\n..."
   }
 }
 
@@ -498,5 +500,219 @@ Return ONLY valid JSON:
 }
 
 Be specific: include names, details, and context. Each note should be 1-2 sentences max. Only include genuinely new information from this chapter.`,
+
+// ─── Story Arc Generation ────────────────────────────────────
+
+'story-arc-generate': `You are an expert story architect. Generate a comprehensive story arc document for the following book project.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+Sub-genre: {{subgenre}}
+Purpose: {{purpose}}
+Summary: {{summary}}
+
+=== EXISTING LORE ===
+{{loreContext}}
+
+=== CHAPTERS WRITTEN SO FAR ===
+{{chapterSummary}}
+
+=== AUTHOR'S GUIDANCE ===
+{{authorGuidance}}
+
+Generate a detailed story arc in markdown. Include:
+
+1. **Act Structure** — Break the story into acts (typically 3, but adapt to the book type). For each act:
+   - Purpose and emotional tone
+   - Key events and milestones
+   - Where the act begins and ends emotionally
+
+2. **Major Turning Points** — The 4-6 pivotal moments that reshape the story:
+   - Inciting incident
+   - First major reversal / point of no return
+   - Midpoint shift
+   - Dark moment / lowest point
+   - Climax
+   - Resolution
+
+3. **Subplot Beats** — Track 2-4 major subplots with their own mini-arcs and how they intersect with the main plot.
+
+4. **Ending Target** — What the ending looks like emotionally and narratively. What questions must be answered. What feeling the reader should walk away with.
+
+5. **Thematic Spine** — The core theme(s) and how they evolve through the story. How different characters embody or challenge the themes.
+
+If chapters have already been written, incorporate what has happened and project forward. Mark already-written events clearly.
+
+Output ONLY the markdown content for story-arc.md. Make it 2-4 pages, rich and actionable.`,
+
+// ─── Characters Generation ──────────────────────────────────
+
+'characters-generate': `You are an expert character analyst. Generate a comprehensive character document for the following book project.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+Sub-genre: {{subgenre}}
+
+=== EXISTING LORE ===
+{{loreContext}}
+
+=== CHAPTERS WRITTEN SO FAR ===
+{{chapterSummary}}
+
+=== EXTRACTED NOTES ===
+{{notesContext}}
+
+Generate a structured character document in markdown. For EACH character that has appeared or been mentioned:
+
+### Character Name
+- **Role**: (protagonist, antagonist, mentor, love interest, supporting, etc.)
+- **First Appearance**: Chapter N or "mentioned in lore"
+- **Description**: Physical and personality summary (2-3 sentences)
+- **Motivation**: What drives them
+- **Arc State**: Where they are NOW in their personal journey
+- **Last Meaningful Change**: The most recent event that shifted them
+- **Contradictions**: Internal conflicts, hypocrisies, or tensions in their character
+- **Unresolved Tensions**: Open questions, unfinished business, or brewing conflicts
+- **Relationships**: Key connections to other characters
+
+Organize characters into sections: **Main Characters**, **Supporting Characters**, **Minor/Mentioned Characters**.
+
+If no chapters are written yet, base this on lore only and mark arc states as "pre-story".
+
+Output ONLY the markdown content for characters.md. Be thorough but concise per character.`,
+
+// ─── Characters Edit ───────────────────────────────────────
+
+'characters-edit': `You are an expert character analyst and editor. The author wants to make changes to the character document.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+
+=== CURRENT CHARACTERS DOCUMENT ===
+{{currentCharacters}}
+
+=== LORE CONTEXT ===
+{{loreContext}}
+
+=== AUTHOR'S REQUESTED CHANGES ===
+{{authorChanges}}
+
+Apply the author's requested changes to the character document. Maintain the same structured format. You may:
+- Edit existing character entries
+- Add new characters
+- Remove characters if requested
+- Update arc states, tensions, or relationships
+- Add or modify any field
+
+Keep everything the author didn't mention unchanged. Output the COMPLETE updated characters.md document in markdown.`,
+
+// ─── Lore Review ─────────────────────────────────────────
+
+'lore-review': `You are a senior book editor and world-building consultant. Perform a thorough review of ALL the lore files below for a book project.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+Sub-genre: {{subgenre}}
+
+=== ALL LORE FILES ===
+{{loreText}}
+
+=== CHAPTER SUMMARY ===
+{{chapterSummary}}
+
+Review the ENTIRE lore for:
+1. **Contradictions** — facts that conflict between files or within a file
+2. **Inconsistencies** — names spelled differently, dates that don't match, character details that shift
+3. **Gaps** — important elements referenced but never defined, missing backstory, under-developed areas
+4. **Redundancy** — the same information repeated across files (consolidate suggestion)
+5. **Staleness** — information that contradicts what happened in written chapters
+6. **Weak areas** — sections that are vague, generic, or need more depth for the genre
+7. **Structural issues** — information in the wrong file, poor organization
+
+Do NOT list what is good. ONLY list what needs to change.
+
+Return ONLY valid JSON:
+{
+  "fileChanges": [
+    {
+      "file": "filename.md",
+      "changes": [
+        "Specific change description: what to fix/add/remove and why"
+      ]
+    }
+  ],
+  "summary": "2-3 sentence overall assessment of lore health"
+}
+
+If a file needs no changes, do not include it. Be specific and actionable — don't say "improve the world-building", say exactly what to add or fix.`,
+
+// ─── Lore Review Apply ───────────────────────────────────
+
+'lore-review-apply': `You are an expert lore editor. Apply the following specific changes to a lore file. Preserve the file's overall structure and markdown formatting. Only modify what is listed in the changes — keep everything else intact.
+
+Title: "{{title}}"
+File: {{filename}}
+
+=== CURRENT FILE CONTENT ===
+{{fileContent}}
+
+=== CHANGES TO APPLY ===
+{{changes}}
+
+Output the COMPLETE updated file content in markdown. Do not add commentary — output only the file content.`,
+
+// ─── Timeline Generation ───────────────────────────────────
+
+'timeline-generate': `You are an expert story chronologist. Build a complete timeline for a book project by synthesizing ALL available sources.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+Sub-genre: {{subgenre}}
+
+=== ALL LORE FILES ===
+{{loreText}}
+
+=== CHAPTER SUMMARIES ===
+{{chapterSummary}}
+
+=== EXTRACTED NOTES ===
+{{notesContext}}
+
+Build a structured timeline in markdown with these sections:
+
+## Backstory / Pre-Story Events
+Events that happened before Chapter 1 (from lore, world history, character backstories). Order chronologically.
+
+## Story Timeline
+For each chapter written, list the key events in order. Include:
+- **When**: relative or absolute time reference (e.g. "Day 1", "Three weeks later", "Morning after the battle")
+- **What**: the event
+- **Who**: characters involved
+- **Where**: location
+
+If no chapters are written yet, note this and project a timeline from lore.
+
+## Projected / Planned Events
+Events foreshadowed, planned in the story arc, or implied by lore that haven't happened yet.
+
+## ⚠️ Sequencing Issues
+Flag ANY problems found:
+- Events that contradict each other temporally
+- Impossible travel times or simultaneous appearances
+- Age inconsistencies
+- Seasonal/weather contradictions
+- Characters knowing things before they could
+- Events referenced in different orders across files
+
+If no issues are found, write "No sequencing issues detected."
+
+For each issue, explain WHAT conflicts, WHERE it appears (which files/chapters), and suggest a fix.
+
+Output ONLY the markdown content for timeline.md. Be thorough and precise with time references.`,
 
 };
