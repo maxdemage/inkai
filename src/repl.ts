@@ -12,6 +12,7 @@ import { exportCommand } from './commands/export.js';
 import { helpCommand } from './commands/help.js';
 import { jobsCommand } from './commands/jobs.js';
 import { listCommand } from './commands/list.js';
+import { listChaptersCommand } from './commands/list-chapters.js';
 import { loreReviewCommand } from './commands/lore-review.js';
 import { readCommand } from './commands/read.js';
 import { readReviewCommand } from './commands/read-review.js';
@@ -45,6 +46,7 @@ function registerAllCommands(): void {
   registerCommand(helpCommand);
   registerCommand(jobsCommand);
   registerCommand(listCommand);
+  registerCommand(listChaptersCommand);
   registerCommand(loreReviewCommand);
   registerCommand(readCommand);
   registerCommand(readReviewCommand);
