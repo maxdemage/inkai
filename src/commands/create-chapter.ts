@@ -26,7 +26,7 @@ import { runChapterPipeline } from '../pipeline.js';
 import { selectRelevantLore } from '../lore.js';
 import { header, success, info, warn, error, blank, boxMessage, divider, c, progressStep } from '../ui.js';
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 export const createChapterCommand: Command = {
   name: 'create-chapter',
@@ -222,13 +222,12 @@ export const createChapterCommand: Command = {
 
     // ─── Background mode? ───────────────────────────────────
 
-    if (ctx.config.backgroundWriting) {
-      const runBg = await confirm({
-        message: 'Run writing in the background? (you can close inkai safely)',
-        default: true,
-      });
+    const runBg = await confirm({
+      message: 'Detach this job? (runs in background — you can close inkai safely)',
+      default: false,
+    });
 
-      if (runBg) {
+    if (runBg) {
         const job: ChapterJob = {
           id: nanoid(10),
           status: 'pending',
@@ -277,7 +276,6 @@ export const createChapterCommand: Command = {
         info('You can safely exit inkai — the writer will keep running.');
         blank();
         return;
-      }
     }
 
     // ─── Step 3: Read lore (fresh context for writer) ───────
@@ -351,6 +349,22 @@ export const createChapterCommand: Command = {
         },
         onSummaryError() {
           spinner.warn('Could not update summary — you can do it manually');
+        },
+        onLoreExtractStart() {
+          blank();
+          progressStep(7, TOTAL_STEPS, 'Extracting lore notes');
+          spinner.start('Extracting key facts from chapter...');
+        },
+        onLoreExtractComplete(notes) {
+          if (notes.length > 0) {
+            spinner.succeed(`Extracted ${notes.length} lore notes to notes.md`);
+          } else {
+            spinner.succeed('No new lore notes to extract');
+          }
+        },
+        onLoreExtractError(err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          spinner.warn('Lore extraction failed: ' + msg + ' — you can add notes manually');
         },
       });
     } catch (err: unknown) {

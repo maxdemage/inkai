@@ -470,4 +470,34 @@ Zwróć TYLKO poprawny JSON:
   "files": ["filename1.md", "filename2.md"]
 }`,
 
+// ─── Ekstrakcja lore z rozdziału ─────────────────────────────
+
+'chapter-lore-extraction': `Jesteś asystentem ekstrakcji lore. Przeczytaj poniższy rozdział i wyodrębnij wszystkie NOWE kluczowe fakty, które zostały wprowadzone lub ustalone. Są to fakty, które powinny zostać zapamiętane dla przyszłych rozdziałów.
+
+Skup się na:
+- Nowe postacie (imię, rola, opis)
+- Nazwane lokacje, miasta, budynki, punkty orientacyjne
+- Nazwane przedmioty, bronie, artefakty, zaklęcia, technologie
+- Ważne decyzje, sojusze, zdrady, odkrycia
+- Nowe zasady, zwyczaje lub szczegóły worldbuildingu
+- Znaczące wydarzenia fabularne lub zmiany statusu
+
+NIE powtarzaj informacji, które już istnieją w poniższych notatkach.
+
+=== ISTNIEJĄCE NOTATKI ===
+{{existingNotes}}
+
+=== ROZDZIAŁ {{chapterNumber}} ===
+{{chapterContent}}
+
+Zwróć TYLKO poprawny JSON:
+{
+  "notes": [
+    "Krótka notatka faktyczna o czymś nowym (np. 'Wprowadzono postać Kael — ślepy płatnerz z Ashenvale')",
+    "Kolejny fakt (np. 'Szkarłatna Brama to jedyne wejście do Podmiasta')"
+  ]
+}
+
+Bądź konkretny: uwzględnij imiona, szczegóły i kontekst. Każda notatka powinna mieć 1-2 zdania max. Uwzględnij tylko naprawdę nowe informacje z tego rozdziału. Pisz PO POLSKU.`,
+
 };

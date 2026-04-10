@@ -469,4 +469,34 @@ Return ONLY valid JSON:
   "files": ["filename1.md", "filename2.md"]
 }`,
 
+// ─── Chapter Lore Extraction ─────────────────────────────────
+
+'chapter-lore-extraction': `You are a lore extraction assistant. Read the following chapter and extract all NEW key facts that were introduced or established. These are facts that should be remembered for future chapters.
+
+Focus on:
+- New characters introduced (name, role, description)
+- Named locations, cities, buildings, landmarks
+- Named items, weapons, artifacts, spells, technologies
+- Important decisions, alliances, betrayals, revelations
+- New rules, customs, or world-building details
+- Significant plot developments or status changes
+
+Do NOT repeat information that already exists in the notes below.
+
+=== EXISTING NOTES ===
+{{existingNotes}}
+
+=== CHAPTER {{chapterNumber}} ===
+{{chapterContent}}
+
+Return ONLY valid JSON:
+{
+  "notes": [
+    "Brief factual note about something new (e.g. 'Introduced character Kael — a blind swordsmith from Ashenvale')",
+    "Another fact (e.g. 'The Crimson Gate is the only entrance to the Undercity')"
+  ]
+}
+
+Be specific: include names, details, and context. Each note should be 1-2 sentences max. Only include genuinely new information from this chapter.`,
+
 };

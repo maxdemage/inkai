@@ -7,6 +7,8 @@ import {
   writeChapter,
   updateChapterSummary,
   getBookDir,
+  readLoreNotes,
+  appendLoreNotes,
 } from './book/manager.js';
 import { updateBook } from './db.js';
 import { gitCommit } from './git.js';
@@ -14,6 +16,7 @@ import {
   buildChapterWritingFromPlanPrompt,
   buildChapterQAPrompt,
   buildSummaryUpdatePrompt,
+  buildChapterLoreExtractionPrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import type { InkaiConfig } from './types.js';
@@ -43,6 +46,9 @@ export interface PipelineCallbacks {
   onSaveComplete?: (filePath: string) => void;
   onSummaryComplete?: () => void;
   onSummaryError?: () => void;
+  onLoreExtractStart?: () => void;
+  onLoreExtractComplete?: (notes: string[]) => void;
+  onLoreExtractError?: (err: unknown) => void;
 }
 
 export interface PipelineResult {
@@ -50,6 +56,7 @@ export interface PipelineResult {
   filePath: string;
   qaApplied: boolean;
   summaryUpdated: boolean;
+  loreNotesExtracted: boolean;
 }
 
 export async function runChapterPipeline(
@@ -141,11 +148,39 @@ export async function runChapterPipeline(
 
   await updateBook(bookId, { chapterCount: chapterNumber, summaryFresh: false });
 
+  // ─── Step 7: Extract lore notes ─────────────────────────
+
+  let loreNotesExtracted = false;
+  callbacks?.onLoreExtractStart?.();
+
+  try {
+    const existingNotes = await readLoreNotes(config, projectName);
+    const extractPrompt = await buildChapterLoreExtractionPrompt(
+      chapterContent, chapterNumber, existingNotes,
+    );
+
+    const extractResponse = await chatSmall(config, [
+      { role: 'system', content: 'You are a lore extraction assistant. Always respond with valid JSON.' },
+      { role: 'user', content: extractPrompt },
+    ], { jsonMode: true, maxTokens: 2000, temperature: 0.3 });
+
+    const extracted = parseLLMJson<{ notes: string[] }>(extractResponse, 'lore extraction');
+    if (extracted.notes?.length) {
+      await appendLoreNotes(config, projectName, chapterNumber, extracted.notes);
+      loreNotesExtracted = true;
+      callbacks?.onLoreExtractComplete?.(extracted.notes);
+    } else {
+      callbacks?.onLoreExtractComplete?.([]);
+    }
+  } catch (err) {
+    callbacks?.onLoreExtractError?.(err);
+  }
+
   if (config.git.enabled && config.git.autoCommit) {
     const bookDir = getBookDir(config, projectName);
     const msg = input.commitMessage ?? `Write Chapter ${chapterNumber}`;
     await gitCommit(bookDir, msg);
   }
 
-  return { chapterContent, filePath, qaApplied, summaryUpdated };
+  return { chapterContent, filePath, qaApplied, summaryUpdated, loreNotesExtracted };
 }

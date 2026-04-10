@@ -114,6 +114,33 @@ export async function readLoreContext(config: InkaiConfig, projectName: string):
     .join('\n\n');
 }
 
+export async function readLoreNotes(config: InkaiConfig, projectName: string): Promise<string> {
+  const notesPath = join(getLoreDir(config, projectName), 'notes.md');
+  if (!existsSync(notesPath)) return '';
+  return readFile(notesPath, 'utf-8');
+}
+
+export async function appendLoreNotes(
+  config: InkaiConfig,
+  projectName: string,
+  chapterNumber: number,
+  notes: string[],
+): Promise<void> {
+  const loreDir = getLoreDir(config, projectName);
+  await mkdir(loreDir, { recursive: true });
+  const notesPath = join(loreDir, 'notes.md');
+
+  let existing = '';
+  if (existsSync(notesPath)) {
+    existing = await readFile(notesPath, 'utf-8');
+  } else {
+    existing = '# Notes\n\nKey facts and details extracted from chapters.\n';
+  }
+
+  const section = `\n## Chapter ${chapterNumber}\n\n${notes.map(n => `- ${n}`).join('\n')}\n`;
+  await writeFile(notesPath, existing + section, 'utf-8');
+}
+
 // ─── Lore Summaries ───────────────────────────────────────────
 
 export function hashLoreContent(content: string): string {

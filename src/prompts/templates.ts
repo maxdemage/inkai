@@ -330,3 +330,17 @@ export async function buildLoreRelevancePrompt(
     taskDescription,
   });
 }
+
+// ─── Chapter Lore Extraction ─────────────────────────────────
+
+export async function buildChapterLoreExtractionPrompt(
+  chapterContent: string,
+  chapterNumber: number,
+  existingNotes: string,
+): Promise<string> {
+  return loadTemplate('chapter-lore-extraction', {
+    chapterContent,
+    chapterNumber: String(chapterNumber),
+    existingNotes: existingNotes || '(no existing notes)',
+  });
+}
