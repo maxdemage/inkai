@@ -21,6 +21,7 @@ export const statusCommand: Command = {
     keyValue('Genre', `${book.genre}${book.subgenre ? ` / ${book.subgenre}` : ''}`);
     keyValue('Authors', book.authors.join(', '));
     keyValue('Purpose', book.purpose);
+    if (book.summary) keyValue('Summary', book.summary);
     keyValue('Status', statusBadge(book.status));
     keyValue('Chapters', String(chapterCount));
     keyValue('Created', new Date(book.createdAt).toLocaleDateString());

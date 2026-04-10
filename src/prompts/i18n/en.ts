@@ -11,6 +11,7 @@ Type: {{type}}
 Genre: {{genre}}
 Sub-genre: {{subgenre}}
 Purpose: {{purpose}}
+Summary: {{summary}}
 
 Generate 4-6 FOUNDATIONAL questions to establish the core of this book. Focus on:
 1. The main goal/premise of the story — what is this book really about?
@@ -43,6 +44,7 @@ Type: {{type}}
 Genre: {{genre}}
 Sub-genre: {{subgenre}}
 Purpose: {{purpose}}
+Summary: {{summary}}
 
 The author already answered foundational questions:
 {{answersText}}
@@ -80,6 +82,7 @@ Genre: {{genre}}
 Sub-genre: {{subgenre}}
 Authors: {{authors}}
 Purpose: {{purpose}}
+Summary: {{summary}}
 
 Author's answers to development questions:
 {{answersText}}

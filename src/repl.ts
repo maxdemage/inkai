@@ -157,6 +157,9 @@ export async function startREPL(ctx: AppContext): Promise<void> {
   info(`Type ${c.primary('/help')} for available commands.`);
   blank();
 
+  const MAX_HISTORY = 30;
+  const commandHistory: string[] = []; // newest-first for readline
+
   // We re-create the readline interface each prompt cycle because
   // @inquirer/prompts takes over stdin and can close/corrupt an
   // existing readline interface when its prompts finish.
@@ -165,6 +168,8 @@ export async function startREPL(ctx: AppContext): Promise<void> {
       input: process.stdin,
       output: process.stdout,
       terminal: true,
+      history: [...commandHistory],
+      historySize: MAX_HISTORY,
       completer: (line: string) => {
         const commands = getCommandNames();
         const hits = commands.filter(c => c.startsWith(line));
@@ -175,52 +180,40 @@ export async function startREPL(ctx: AppContext): Promise<void> {
     const prefix = getPrompt(ctx.selectedBook?.projectName);
 
     // If we have a pre-filled command, write it into the line buffer
-    if (prefill) {
-      rl.question(prefix, async (input) => {
-        rl.close();
+    const handleInput = async (input: string): Promise<void> => {
+      rl.close();
 
-        const trimmed = input.trim();
-        if (!trimmed) {
-          prompt();
+      const trimmed = input.trim();
+      if (!trimmed) {
+        prompt();
+        return;
+      }
+
+      // Add to history (newest-first, no consecutive dups)
+      if (commandHistory[0] !== trimmed) {
+        commandHistory.unshift(trimmed);
+        if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
+      }
+
+      if (trimmed.startsWith('/')) {
+        await executeCommand(trimmed, ctx);
+      } else {
+        const suggested = await handleNaturalInput(trimmed, ctx);
+        if (suggested) {
+          prompt(suggested);
           return;
         }
+      }
 
-        if (trimmed.startsWith('/')) {
-          await executeCommand(trimmed, ctx);
-        } else {
-          const suggested = await handleNaturalInput(trimmed, ctx);
-          if (suggested) {
-            prompt(suggested);
-            return;
-          }
-        }
+      prompt();
+    };
 
-        prompt();
-      });
+    if (prefill) {
+      rl.question(prefix, handleInput);
       // Simulate typing the prefill into the readline buffer
       rl.write(prefill);
     } else {
-      rl.question(prefix, async (input) => {
-        rl.close();
-
-        const trimmed = input.trim();
-        if (!trimmed) {
-          prompt();
-          return;
-        }
-
-        if (trimmed.startsWith('/')) {
-          await executeCommand(trimmed, ctx);
-        } else {
-          const suggested = await handleNaturalInput(trimmed, ctx);
-          if (suggested) {
-            prompt(suggested);
-            return;
-          }
-        }
-
-        prompt();
-      });
+      rl.question(prefix, handleInput);
     }
 
     // Handle Ctrl+C gracefully

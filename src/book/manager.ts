@@ -36,6 +36,7 @@ export async function createBookProject(
     subgenre: string;
     authors: string[];
     purpose: string;
+    summary: string;
   }
 ): Promise<BookRecord> {
   const existing = await getBookByName(info.projectName);
@@ -62,6 +63,7 @@ export async function createBookProject(
     subgenre: info.subgenre,
     authors: info.authors,
     purpose: info.purpose,
+    summary: info.summary,
     status: 'new',
     chapterCount: 0,
     createdAt: new Date().toISOString(),

@@ -46,6 +46,7 @@ export async function buildLoreQuestionsRound1Prompt(info: {
   genre: string;
   subgenre: string;
   purpose: string;
+  summary: string;
 }): Promise<string> {
   return loadTemplate('lore-questions-round1', {
     title: info.title,
@@ -53,6 +54,7 @@ export async function buildLoreQuestionsRound1Prompt(info: {
     genre: info.genre,
     subgenre: info.subgenre,
     purpose: info.purpose,
+    summary: info.summary,
   });
 }
 
@@ -64,6 +66,7 @@ export async function buildLoreQuestionsRound2Prompt(info: {
   genre: string;
   subgenre: string;
   purpose: string;
+  summary: string;
   round1Answers: Record<string, string>;
 }): Promise<string> {
   return loadTemplate('lore-questions-round2', {
@@ -72,6 +75,7 @@ export async function buildLoreQuestionsRound2Prompt(info: {
     genre: info.genre,
     subgenre: info.subgenre,
     purpose: info.purpose,
+    summary: info.summary,
     answersText: formatAnswers(info.round1Answers),
   });
 }
@@ -85,6 +89,7 @@ export async function buildLoreGenerationPrompt(info: {
   subgenre: string;
   authors: string[];
   purpose: string;
+  summary: string;
   answers: Record<string, string>;
 }): Promise<string> {
   return loadTemplate('lore-generation', {
@@ -94,6 +99,7 @@ export async function buildLoreGenerationPrompt(info: {
     subgenre: info.subgenre,
     authors: info.authors.join(', '),
     purpose: info.purpose,
+    summary: info.summary,
     answersText: formatAnswers(info.answers),
     optionalFilesDescription: getOptionalFilesDescription(info.type),
   });

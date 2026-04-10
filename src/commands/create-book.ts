@@ -87,6 +87,9 @@ export const createBookCommand: Command = {
       default: 'Entertainment',
     });
 
+    info('Provide a short summary of the story — what is this book about?');
+    const summary = await multilineInput('Story summary:');
+
     // ─── Create Project ─────────────────────────────────────
 
     const spinner = ora({ text: 'Creating project...', color: 'cyan' }).start();
@@ -101,6 +104,7 @@ export const createBookCommand: Command = {
         subgenre: subgenre.trim(),
         authors,
         purpose: purpose.trim(),
+        summary: summary.trim(),
       });
       spinner.succeed('Project created');
     } catch (err: unknown) {
@@ -127,6 +131,7 @@ export const createBookCommand: Command = {
         genre: book.genre,
         subgenre: book.subgenre,
         purpose: book.purpose,
+        summary: book.summary,
       });
 
       const response = await chatSmall(ctx.config, [
@@ -188,6 +193,7 @@ export const createBookCommand: Command = {
         genre: book.genre,
         subgenre: book.subgenre,
         purpose: book.purpose,
+        summary: book.summary,
         round1Answers: answers,
       });
 
@@ -244,6 +250,7 @@ export const createBookCommand: Command = {
         subgenre: book.subgenre,
         authors: book.authors,
         purpose: book.purpose,
+        summary: book.summary,
         answers,
       });
 

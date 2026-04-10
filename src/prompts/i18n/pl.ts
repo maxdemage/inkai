@@ -12,6 +12,7 @@ Typ: {{type}}
 Gatunek: {{genre}}
 Podgatunek: {{subgenre}}
 Cel: {{purpose}}
+Streszczenie: {{summary}}
 
 Wygeneruj 4-6 PODSTAWOWYCH pytań, które ustalą fundament tej książki. Skup się na:
 1. Główny cel/założenie historii — o czym naprawdę jest ta książka?
@@ -44,6 +45,7 @@ Typ: {{type}}
 Gatunek: {{genre}}
 Podgatunek: {{subgenre}}
 Cel: {{purpose}}
+Streszczenie: {{summary}}
 
 Autor odpowiedział już na pytania fundamentalne:
 {{answersText}}
@@ -81,6 +83,7 @@ Gatunek: {{genre}}
 Podgatunek: {{subgenre}}
 Autorzy: {{authors}}
 Cel: {{purpose}}
+Streszczenie: {{summary}}
 
 Odpowiedzi autora na pytania rozwojowe:
 {{answersText}}

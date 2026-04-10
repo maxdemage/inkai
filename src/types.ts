@@ -22,6 +22,7 @@ export interface BookRecord {
   subgenre: string;
   authors: string[];
   purpose: string;
+  summary: string;
   status: BookStatus;
   chapterCount: number;
   cachedSummary?: string;
