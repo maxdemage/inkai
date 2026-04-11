@@ -54,6 +54,7 @@ import {
   buildStoryArcGeneratePrompt,
   buildTimelineGeneratePrompt,
   buildCharactersGeneratePrompt,
+  buildCharactersEditPrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
@@ -817,6 +818,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const config = await loadConfig();
       const book = await requireBook(req.params.id, res);
       if (!book) return;
+      const { authorGuidance } = req.body as { authorGuidance?: string };
       sse.send('progress', { message: 'Loading book context...' });
       const [loreContext, chapterSummary, notesContext] = await Promise.all([
         readLoreContext(config, book.projectName),
@@ -829,6 +831,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
         { role: 'user', content: await buildCharactersGeneratePrompt({
           title: book.title, type: book.type, genre: book.genre, subgenre: book.subgenre,
           loreContext, chapterSummary, notesContext,
+          authorGuidance: authorGuidance?.trim() || undefined,
         }) },
       ], { maxTokens: 8192, temperature: 0.5 });
       await writeLoreFiles(config, book.projectName, { 'characters.md': content });
@@ -837,6 +840,44 @@ export async function startServer(webDistPath?: string): Promise<void> {
       }
       await updateBook(book.id, { summaryFresh: false });
       sse.send('done', { content });
+    } catch (err) {
+      sse.send('error', { message: String(err) });
+    }
+    sse.done();
+  });
+
+  app.post('/api/books/:id/characters/extend', async (req, res) => {
+    const sse = startSSE(res);
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const { authorChanges } = req.body as { authorChanges?: string };
+      if (!authorChanges?.trim()) {
+        sse.send('error', { message: 'authorChanges is required' });
+        sse.done();
+        return;
+      }
+      sse.send('progress', { message: 'Loading book context...' });
+      const [loreContext, loreFiles] = await Promise.all([
+        readLoreContext(config, book.projectName),
+        readLoreFiles(config, book.projectName),
+      ]);
+      const currentCharacters = loreFiles['characters.md'] ?? '';
+      sse.send('progress', { message: 'Extending character sheets (writer LLM)...' });
+      const updated = await chatWriter(config, [
+        { role: 'system', content: 'You are an expert character editor. Apply the requested changes and return the complete updated document in markdown.' },
+        { role: 'user', content: await buildCharactersEditPrompt({
+          title: book.title, type: book.type, genre: book.genre,
+          currentCharacters, loreContext, authorChanges: authorChanges.trim(),
+        }) },
+      ], { maxTokens: 8192, temperature: 0.5 });
+      await writeLoreFiles(config, book.projectName, { 'characters.md': updated });
+      if (isGitAvailable() && config.git.enabled && config.git.autoCommit) {
+        await gitCommit(getBookDir(config, book.projectName), `Extend characters for "${book.title}"`);
+      }
+      await updateBook(book.id, { summaryFresh: false });
+      sse.send('done', { content: updated });
     } catch (err) {
       sse.send('error', { message: String(err) });
     }

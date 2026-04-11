@@ -638,6 +638,7 @@ export default function BookPage() {
         <GenerateContentModal
           book={book}
           type={generateType}
+          hasExisting={generateType === 'characters' ? !!charactersContent : undefined}
           onClose={() => setGenerateType(null)}
         />
       )}

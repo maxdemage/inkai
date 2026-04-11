@@ -564,7 +564,10 @@ Sub-genre: {{subgenre}}
 === EXTRACTED NOTES ===
 {{notesContext}}
 
-Generate a structured character document in markdown. For EACH character that has appeared or been mentioned:
+{{#if authorGuidance}}=== AUTHOR GUIDANCE ===
+{{authorGuidance}}
+
+{{/if}}Generate a structured character document in markdown. For EACH character that has appeared or been mentioned:
 
 ### Character Name
 - **Role**: (protagonist, antagonist, mentor, love interest, supporting, etc.)

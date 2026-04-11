@@ -565,7 +565,10 @@ Podgatunek: {{subgenre}}
 === WYODRĘBNIONE NOTATKI ===
 {{notesContext}}
 
-Wygeneruj ustrukturyzowany dokument postaci w markdown. Dla KAŻDEJ postaci, która pojawiła się lub została wspomniana:
+{{#if authorGuidance}}=== WSKAZÓWKI AUTORA ===
+{{authorGuidance}}
+
+{{/if}}Wygeneruj ustrukturyzowany dokument postaci w markdown. Dla KAŻDEJ postaci, która pojawiła się lub została wspomniana:
 
 ### Imię Postaci
 - **Rola**: (protagonista, antagonista, mentor, obiekt miłosny, drugoplanowa, itp.)

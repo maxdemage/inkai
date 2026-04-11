@@ -381,6 +381,7 @@ export async function buildCharactersGeneratePrompt(info: {
   loreContext: string;
   chapterSummary: string;
   notesContext: string;
+  authorGuidance?: string;
 }): Promise<string> {
   return loadTemplate('characters-generate', {
     title: info.title,
@@ -390,6 +391,7 @@ export async function buildCharactersGeneratePrompt(info: {
     loreContext: info.loreContext,
     chapterSummary: info.chapterSummary || 'No chapters written yet.',
     notesContext: info.notesContext || '(no notes)',
+    authorGuidance: info.authorGuidance || '',
   });
 }
 
