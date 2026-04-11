@@ -6,6 +6,7 @@ import { charactersCommand } from './commands/characters.js';
 import { configCommand } from './commands/config.js';
 import { createBookCommand } from './commands/create-book.js';
 import { createChapterCommand } from './commands/create-chapter.js';
+import { deleteChapterCommand } from './commands/delete-chapter.js';
 import { editBasicInfoCommand } from './commands/edit-basic-info.js';
 import { editLoreCommand } from './commands/edit-lore.js';
 import { enhanceLoreCommand } from './commands/enhance-lore.js';
@@ -53,6 +54,7 @@ function registerAllCommands(): void {
   registerCommand(loreReviewCommand);
   registerCommand(readCommand);
   registerCommand(readReviewCommand);
+  registerCommand(deleteChapterCommand);
   registerCommand(renameCommand);
   registerCommand(resetPromptsCommand);
   registerCommand(reviewChapterCommand);

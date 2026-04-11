@@ -169,7 +169,7 @@ function buildMetaXml(title: string, authors: string[]): string {
 </office:document-meta>`;
 }
 
-async function generateOdt(
+export async function generateOdt(
   title: string,
   authors: string[],
   chapters: string[]
@@ -337,7 +337,7 @@ ${items}    </ol>
 </html>`;
 }
 
-async function generateEpub(
+export async function generateEpub(
   title: string,
   authors: string[],
   chapters: string[]

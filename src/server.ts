@@ -29,6 +29,7 @@ import {
   setBookStatus,
   readLoreContext,
   readLoreNotes,
+  deleteChapter,
 } from './book/manager.js';
 import {
   listJobs,
@@ -57,6 +58,7 @@ import {
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
 import { gitCommit, gitInit, isGitAvailable } from './git.js';
+import { generateEpub, generateOdt } from './commands/export.js';
 import type { InkaiConfig, BookType, LoreQuestion, BookRecord } from './types.js';
 
 const PORT = parseInt(process.env.INKAI_PORT ?? '4242', 10);
@@ -376,6 +378,22 @@ export async function startServer(webDistPath?: string): Promise<void> {
     }
   });
 
+  app.delete('/api/books/:id/chapters/:n', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const n = parseInt(req.params.n, 10);
+      if (isNaN(n) || n < 1 || n > book.chapterCount) {
+        res.status(400).json({ error: 'Invalid chapter number' }); return;
+      }
+      await deleteChapter(config, book.id, book.projectName, n, book.chapterCount);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   app.get('/api/books/:id/chapters/:n/review', async (req, res) => {
     try {
       const config = await loadConfig();
@@ -681,6 +699,44 @@ export async function startServer(webDistPath?: string): Promise<void> {
       if (typeof content !== 'string') { res.status(400).json({ error: 'content required' }); return; }
       await writeWritingInstructions(config, book.projectName, content);
       res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXPORT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  app.get('/api/books/:id/export', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const format = req.query.format === 'odt' ? 'odt' : 'epub';
+
+      const chapters: string[] = [];
+      for (let i = 1; i <= book.chapterCount; i++) {
+        const content = await readChapter(config, book.projectName, i);
+        if (content) chapters.push(content);
+      }
+
+      if (chapters.length === 0) {
+        res.status(400).json({ error: 'No chapters to export' });
+        return;
+      }
+
+      const buffer = format === 'epub'
+        ? await generateEpub(book.title, book.authors, chapters)
+        : await generateOdt(book.title, book.authors, chapters);
+
+      const filename = `${book.projectName}.${format}`;
+      const contentType = format === 'epub'
+        ? 'application/epub+zip'
+        : 'application/vnd.oasis.opendocument.text';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }

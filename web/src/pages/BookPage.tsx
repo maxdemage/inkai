@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, FileText, Layers3, BookMarked, Sparkles,
   Eye, Star, RefreshCw, Plus, Pencil, Check, X, Briefcase,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Download, Loader2, Trash2,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
   useBook, useChapters, useLore, useUpdateBook,
-  useArchiveBook, keys,
+  useArchiveBook, useJobs, useDeleteChapter, keys,
 } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateChapterModal from '../components/CreateChapterModal';
@@ -18,6 +18,7 @@ import GenerateContentModal from '../components/GenerateContentModal';
 import ChapterActionModal from '../components/ChapterActionModal';
 import ChapterEditor from '../components/ChapterEditor';
 import type { ChapterMeta, BookStatus } from '../types';
+import { api } from '../api';
 import { useQueryClient } from '@tanstack/react-query';
 
 const STATUSES: { value: BookStatus; label: string; emoji: string }[] = [
@@ -71,13 +72,15 @@ type Tab = 'chapters' | 'lore' | 'summary';
 
 // ── Chapter row ─────────────────────────────────────────────────
 
-function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit }: {
+function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
   ch: ChapterMeta;
   onRead: () => void;
   onReview: (n: number) => void;
   onRewrite: (n: number) => void;
   onEdit: (n: number) => void;
+  onDelete: (n: number) => void;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <div className="flex items-center gap-3 py-3 px-4 hover:bg-white/[0.03] rounded-xl transition-colors group">
       <div className="w-8 h-8 rounded-lg bg-ink-700 flex items-center justify-center text-xs font-mono text-slate-400 shrink-0">
@@ -126,6 +129,32 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit }: {
           >
             <Pencil size={12} />
           </button>
+          {confirmDelete ? (
+            <>
+              <button
+                onClick={() => { onDelete(ch.number); setConfirmDelete(false); }}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-red-500/20 hover:bg-red-500/35 text-red-400 transition-colors"
+                title="Confirm delete"
+              >
+                <Trash2 size={11} /> Delete?
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-500 hover:text-slate-300 transition-colors"
+                title="Cancel"
+              >
+                <X size={11} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg bg-white/[0.03] hover:bg-red-500/15 text-slate-600 hover:text-red-400 transition-colors"
+              title="Delete chapter"
+            >
+              <Trash2 size={11} />
+            </button>
+          )}
         </div>
       ) : (
         <span className="text-xs text-slate-600">—</span>
@@ -167,12 +196,14 @@ function LoreCard({ filename, content, onClick }: {
 export default function BookPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const { data: book, isLoading: bookLoading } = useBook(id!);
   const { data: chapters = [], isLoading: chaptersLoading } = useChapters(id!);
   const { data: loreFiles = {}, isLoading: loreLoading } = useLore(id!);
   const updateBook = useUpdateBook();
   const archiveBook = useArchiveBook();
+  const deleteChapter = useDeleteChapter();
 
   const [tab, setTab] = useState<Tab>('chapters');
   const [showCreateChapter, setShowCreateChapter] = useState(false);
@@ -183,7 +214,28 @@ export default function BookPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [showSummary, setShowSummary] = useState(false);
-  const [editingChapter, setEditingChapter] = useState<number | null>(null);
+  const [editingChapter, setEditingChapter] = useState<number | null>(
+    (location.state as { editChapter?: number } | null)?.editChapter ?? null,
+  );
+  const [showExport, setShowExport] = useState(false);
+  const [jobToast, setJobToast] = useState<{ chapterNumber: number } | null>(null);
+
+  const { data: allJobs = [], refetch: refetchJobs } = useJobs();
+  const bookActiveJobs = allJobs.filter(j => j.bookId === id && (j.status === 'pending' || j.status === 'running'));
+
+  // Poll while this book has active jobs
+  useEffect(() => {
+    if (bookActiveJobs.length === 0) return;
+    const t = setInterval(() => refetchJobs(), 3000);
+    return () => clearInterval(t);
+  }, [bookActiveJobs.length, refetchJobs]);
+
+  // Auto-dismiss toast after 6s
+  useEffect(() => {
+    if (!jobToast) return;
+    const t = setTimeout(() => setJobToast(null), 6000);
+    return () => clearTimeout(t);
+  }, [jobToast]);
 
   if (bookLoading) return <div className="flex items-center justify-center h-64 text-slate-500">Loading…</div>;
   if (!book) return <div className="flex items-center justify-center h-64 text-red-400">Book not found.</div>;
@@ -281,6 +333,36 @@ export default function BookPage() {
               >
                 <Briefcase size={13} /> Jobs
               </button>
+              {book.chapterCount > 0 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExport(o => !o)}
+                    className="btn-ghost-sm flex items-center gap-1.5"
+                    title="Export book"
+                  >
+                    <Download size={13} /> Export
+                  </button>
+                  {showExport && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
+                      <div className="absolute right-0 top-8 z-20 bg-ink-700 border border-white/[0.1] rounded-xl shadow-xl py-1 min-w-40">
+                        <button
+                          onClick={() => { api.books.export(book.id, 'epub'); setShowExport(false); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-colors"
+                        >
+                          <Download size={13} className="text-violet-400" /> EPUB
+                        </button>
+                        <button
+                          onClick={() => { api.books.export(book.id, 'odt'); setShowExport(false); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-colors"
+                        >
+                          <Download size={13} className="text-violet-400" /> ODT
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               {book.status !== 'archived' && (
                 <button
                   onClick={() => archiveBook.mutate(book.id)}
@@ -358,6 +440,29 @@ export default function BookPage() {
                 </button>
               </div>
 
+              {/* Active jobs for this book */}
+              {bookActiveJobs.length > 0 && (
+                <div className="space-y-2">
+                  {bookActiveJobs.map(job => (
+                    <div key={job.id} className="flex items-center gap-3 px-4 py-3 bg-amber-900/15 border border-amber-500/20 rounded-xl">
+                      <Loader2 size={14} className="animate-spin text-amber-400 shrink-0" />
+                      <span className="text-sm text-amber-200 flex-1">
+                        Chapter {job.chapterNumber} — writing in background
+                      </span>
+                      <span className={`text-xs capitalize ${
+                        job.status === 'running' ? 'text-amber-300' : 'text-slate-500'
+                      }`}>{job.status}</span>
+                      <button
+                        onClick={() => navigate('/jobs')}
+                        className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                      >
+                        View →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {chaptersLoading && <div className="text-sm text-slate-500">Loading chapters…</div>}
 
               {chapters.length === 0 && !chaptersLoading && (
@@ -378,6 +483,7 @@ export default function BookPage() {
                       onReview={(n) => setChapterAction({ number: n, action: 'review' })}
                       onRewrite={(n) => setChapterAction({ number: n, action: 'rewrite' })}
                       onEdit={(n) => setEditingChapter(n)}
+                      onDelete={(n) => deleteChapter.mutate({ bookId: book.id, number: n })}
                     />
                   ))}
                 </div>
@@ -515,9 +621,11 @@ export default function BookPage() {
         <CreateChapterModal
           book={book}
           onClose={() => setShowCreateChapter(false)}
-          onJobStarted={(_jobId, _n) => {
+          onJobStarted={(_jobId, n) => {
             qc.invalidateQueries({ queryKey: keys.chapters(book.id) });
             qc.invalidateQueries({ queryKey: keys.jobs });
+            setShowCreateChapter(false);
+            setJobToast({ chapterNumber: n });
           }}
         />
       )}
@@ -549,6 +657,29 @@ export default function BookPage() {
             setChapterAction(null);
           }}
         />
+      )}
+
+      {/* ── Job started toast ──────────────────────────────────── */}
+      {jobToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3.5 bg-ink-700 border border-violet-500/25 rounded-2xl shadow-2xl max-w-xs">
+          <span className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-white">Chapter {jobToast.chapterNumber} queued</p>
+            <p className="text-xs text-slate-400 mt-0.5">Writing in the background…</p>
+            <button
+              onClick={() => { navigate('/jobs'); setJobToast(null); }}
+              className="text-xs text-violet-400 hover:text-violet-300 mt-1.5 transition-colors"
+            >
+              View jobs →
+            </button>
+          </div>
+          <button
+            onClick={() => setJobToast(null)}
+            className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white transition-colors shrink-0"
+          >
+            <X size={11} />
+          </button>
+        </div>
       )}
     </div>
   );

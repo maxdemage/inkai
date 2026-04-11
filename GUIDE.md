@@ -264,6 +264,8 @@ If you don't want to wait for steps 4–6 (writing, QA, saving), you can run the
 
 ## 10. Reading Chapters
 
+### CLI
+
 ```
 /read           # Start from chapter 1
 /read 3         # Start from chapter 3
@@ -279,6 +281,17 @@ The CLI reader supports:
 - **Q** — quit reader
 
 Chapters are displayed with formatted markdown — headings, bold, italic, scene breaks, and bullet points are all rendered in the terminal.
+
+### GUI Reading View
+
+Open any chapter from the Book detail page. The reading view offers:
+
+- **Scroll progress bar** — thin bar under the top chrome showing how far through the chapter you are.
+- **Chapter / Review tabs** — switch between the chapter text and its AI review (if one exists). The review is fetched on demand.
+- **Edit button** (pencil, top-right) — opens the chapter directly in the Manual Editor.
+- **Typography settings** (Type icon) — font size, typeface, background theme, and text color, all saved in the browser.
+- **Lore sidebar** — collapsible panel with every lore file; files containing terms from the chapter text are highlighted.
+- **Lore term highlighting** — click any underlined term in the text to pop up the relevant lore content.
 
 ---
 
@@ -348,6 +361,8 @@ Lists all your book projects with their status and chapter counts.
 
 ## 14. Exporting Your Book
 
+### CLI
+
 ```
 /export                 # Choose format interactively
 /export epub            # Export directly to EPUB
@@ -355,6 +370,10 @@ Lists all your book projects with their status and chapter counts.
 /epub                   # Shortcut for EPUB
 /odt                    # Shortcut for ODT
 ```
+
+### GUI
+
+Click the **Export** button in the book header (visible whenever the book has at least one chapter) and choose **EPUB** or **ODT** from the dropdown. The file is generated server-side and downloaded immediately.
 
 ### EPUB
 Generates an EPUB 3 file suitable for e-readers, Kindle, Apple Books, etc. Includes a title page, table of contents, and per-chapter formatting with proper CSS.

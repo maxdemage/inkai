@@ -2,7 +2,7 @@
 
 ## README Maintenance
 
-Always keep `README.md` and `GUIDE.md` up to date when making changes to the project. This includes:
+Always keep `README.md`, `GUIDE.md`, `GUI.md` up to date when making changes to the project. This includes:
 
 - Adding or removing commands → update the **Commands** table
 - Adding or changing features → update the **Features** list
@@ -10,7 +10,7 @@ Always keep `README.md` and `GUIDE.md` up to date when making changes to the pro
 - Adding new configuration options → document them in the relevant section
 - Changing CLI behavior or flags → reflect it in usage examples
 
-When in doubt, re-read `README.md` and `GUIDE.md` after your changes and ask: "Would a new user understand how to use this with the current documentation?" If not, update it.
+When in doubt, re-read `README.md`, `GUIDE.md`, and `GUI.md` after your changes and ask: "Would a new user understand how to use this with the current documentation?" If not, update it.
 
 
 ## Testing

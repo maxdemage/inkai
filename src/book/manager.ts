@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile, rename, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
@@ -359,4 +359,44 @@ export async function readWritingInstructions(
   const filePath = join(bookDir, 'writing-instructions.md');
   if (!existsSync(filePath)) return null;
   return await readFile(filePath, 'utf-8');
+}
+
+// ─── Delete Chapter ───────────────────────────────────────────
+
+export async function deleteChapter(
+  config: InkaiConfig,
+  bookId: string,
+  projectName: string,
+  chapterNumber: number,
+  totalChapters: number,
+): Promise<void> {
+  const chapDir = getChaptersDir(config, projectName);
+  const plansDir = getChapterPlansDir(config, projectName);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  // Delete target chapter files
+  const filesToDelete = [
+    join(chapDir, `chapter-${pad(chapterNumber)}.md`),
+    join(chapDir, `review_chapter_${pad(chapterNumber)}.md`),
+    join(plansDir, `plan-chapter-${pad(chapterNumber)}.md`),
+  ];
+  for (const f of filesToDelete) {
+    if (existsSync(f)) await unlink(f);
+  }
+
+  // Renumber subsequent chapters
+  for (let i = chapterNumber + 1; i <= totalChapters; i++) {
+    const fromN = pad(i);
+    const toN = pad(i - 1);
+    const moves: [string, string][] = [
+      [join(chapDir, `chapter-${fromN}.md`), join(chapDir, `chapter-${toN}.md`)],
+      [join(chapDir, `review_chapter_${fromN}.md`), join(chapDir, `review_chapter_${toN}.md`)],
+      [join(plansDir, `plan-chapter-${fromN}.md`), join(plansDir, `plan-chapter-${toN}.md`)],
+    ];
+    for (const [from, to] of moves) {
+      if (existsSync(from)) await rename(from, to);
+    }
+  }
+
+  await updateBook(bookId, { chapterCount: totalChapters - 1 });
 }

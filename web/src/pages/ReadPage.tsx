@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose } from 'lucide-react';
-import { useChapter, useReview, useLore, useBook } from '../hooks';
+import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil } from 'lucide-react';
+import { useChapter, useChapters, useReview, useLore, useBook } from '../hooks';
 
 // ── Lore term extraction ────────────────────────────────────────
 
@@ -138,6 +138,62 @@ function LorePopover({ term, onClose }: { term: LoreTerm; onClose: () => void })
   );
 }
 
+// ── Reading settings ───────────────────────────────────────────
+
+const FONT_SIZES = [
+  { label: 'S',  value: '15px' },
+  { label: 'M',  value: '18px' },
+  { label: 'L',  value: '21px' },
+  { label: 'XL', value: '25px' },
+];
+
+const FONTS = [
+  { label: 'Serif',       value: 'Georgia, "Times New Roman", serif' },
+  { label: 'Sans',        value: 'system-ui, sans-serif' },
+  { label: 'Mono',        value: '"Courier New", Courier, monospace' },
+  { label: 'Humanist',    value: 'Palatino, "Book Antiqua", serif' },
+];
+
+const BG_THEMES = [
+  { label: 'Paper',   bg: '#f5f0e8', border: '#d8d0be', topBg: '#f0ebe0' },
+  { label: 'White',   bg: '#ffffff', border: '#e5e7eb', topBg: '#f9fafb' },
+  { label: 'Dusk',    bg: '#1e1b2e', border: '#2d2a40', topBg: '#17152a' },
+  { label: 'Dark',    bg: '#0f0f0f', border: '#262626', topBg: '#0a0a0a' },
+  { label: 'Sepia',   bg: '#f8f1e4', border: '#d4c5a9', topBg: '#f0e8d4' },
+  { label: 'Forest',  bg: '#1a2420', border: '#2a3830', topBg: '#141e1a' },
+];
+
+const TEXT_COLORS = [
+  { label: 'Ink',       value: '#2a2520' },
+  { label: 'Charcoal',  value: '#374151' },
+  { label: 'Slate',     value: '#94a3b8' },
+  { label: 'Cream',     value: '#e8dfc8' },
+  { label: 'White',     value: '#f9fafb' },
+  { label: 'Warm',      value: '#c9a87c' },
+];
+
+interface ReadingSettings {
+  fontSize: string;
+  fontFamily: string;
+  bgTheme: string; // bg hex
+  textColor: string;
+}
+
+const DEFAULT_SETTINGS: ReadingSettings = {
+  fontSize: '18px',
+  fontFamily: FONTS[0].value,
+  bgTheme: BG_THEMES[0].bg,
+  textColor: TEXT_COLORS[0].value,
+};
+
+function loadSettings(): ReadingSettings {
+  try {
+    const raw = localStorage.getItem('inkai-reading-settings');
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return DEFAULT_SETTINGS;
+}
+
 // ── Main reading page ───────────────────────────────────────────
 
 export default function ReadPage() {
@@ -148,15 +204,47 @@ export default function ReadPage() {
 
   const { data: book } = useBook(id!);
   const { data: chapterData, isLoading } = useChapter(id!, chapterNum);
-  const { data: reviewData } = useReview(id!, chapterNum, searchParams.get('tab') === 'review');
+  const { data: chapters = [] } = useChapters(id!);
+  const chapterMeta = chapters.find(c => c.number === chapterNum);
+  const [readingTab, setReadingTab] = useState<'chapter' | 'review'>(
+    searchParams.get('tab') === 'review' ? 'review' : 'chapter',
+  );
+  const { data: reviewData } = useReview(id!, chapterNum, readingTab === 'review');
   const { data: loreFiles = {} } = useLore(id!);
+
+  const hasReview = !!(chapterMeta?.hasReview || reviewData?.content);
 
   const [showLore, setShowLore] = useState(true);
   const [selectedLoreFile, setSelectedLoreFile] = useState<string | null>(null);
   const [activeTerm, setActiveTerm] = useState<LoreTerm | null>(null);
-  const [readingTab, setReadingTab] = useState<'chapter' | 'review'>(
-    searchParams.get('tab') === 'review' ? 'review' : 'chapter',
-  );
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<ReadingSettings>(loadSettings);
+  const [readProgress, setReadProgress] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      setReadProgress(max > 0 ? Math.round((el.scrollTop / max) * 100) : 0);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const updateSetting = <K extends keyof ReadingSettings>(key: K, value: ReadingSettings[K]) => {
+    const next = { ...settings, [key]: value };
+    setSettings(next);
+    localStorage.setItem('inkai-reading-settings', JSON.stringify(next));
+  };
+
+  const theme = BG_THEMES.find(t => t.bg === settings.bgTheme) ?? BG_THEMES[0];
+  const isDark = ['#1e1b2e','#0f0f0f','#1a2420'].includes(theme.bg);
+  const uiText    = isDark ? '#a09888' : '#6b6358';
+  const uiTextHov = isDark ? '#e8e0d0' : '#2a2520';
+  const uiHoverBg = isDark ? 'rgba(255,255,255,0.07)' : '#e0d8c8';
+  const uiBorder  = theme.border;
 
   const loreTerms = useMemo(() => extractLoreTerms(loreFiles), [loreFiles]);
 
@@ -171,18 +259,21 @@ export default function ReadPage() {
   const currentContent = readingTab === 'review' ? reviewData?.content : chapterData?.content;
 
   return (
-    <div className="h-screen flex flex-col bg-[#f5f0e8] overflow-hidden">
-      {/* ── Top bar ──────────────────────────────────────────────── */}
-      <div className="h-12 flex items-center justify-between px-4 bg-[#f0ebe0] border-b border-[#d8d0be] shrink-0 z-20">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme.bg }}>
+      {/* ── Top bar ────────────────────────────────────── */}
+      <div className="h-12 flex items-center justify-between px-4 shrink-0 z-20" style={{ background: theme.topBg, borderBottom: `1px solid ${uiBorder}` }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/books/${id}`)}
-            className="flex items-center gap-1.5 text-xs text-[#6b6358] hover:text-[#2a2520] transition-colors"
+            className="flex items-center gap-1.5 text-xs transition-colors"
+            style={{ color: uiText }}
+            onMouseEnter={e => (e.currentTarget.style.color = uiTextHov)}
+            onMouseLeave={e => (e.currentTarget.style.color = uiText)}
           >
             <ArrowLeft size={13} /> Back
           </button>
-          <span className="text-[#c0b8a8]">·</span>
-          <span className="text-xs font-medium text-[#3a3530]">{book?.title}</span>
+          <span style={{ color: uiBorder }}>·</span>
+          <span className="text-xs font-medium" style={{ color: uiTextHov }}>{book?.title}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -190,71 +281,207 @@ export default function ReadPage() {
           <button
             onClick={() => navigate(`/books/${id}/read/${chapterNum - 1}`)}
             disabled={chapterNum <= 1}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6b6358] hover:text-[#2a2520] hover:bg-[#e0d8c8] disabled:opacity-30 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors"
+            style={{ color: uiText }}
+            onMouseEnter={e => { e.currentTarget.style.background = uiHoverBg; e.currentTarget.style.color = uiTextHov; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = uiText; }}
           >
             <ArrowLeft size={14} />
           </button>
-          <span className="text-xs font-medium text-[#3a3530] min-w-[80px] text-center">
+          <span className="text-xs font-medium min-w-[80px] text-center" style={{ color: uiTextHov }}>
             Chapter {chapterNum}{book ? ` / ${book.chapterCount}` : ''}
           </span>
           <button
             onClick={() => navigate(`/books/${id}/read/${chapterNum + 1}`)}
             disabled={!book || chapterNum >= book.chapterCount}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6b6358] hover:text-[#2a2520] hover:bg-[#e0d8c8] disabled:opacity-30 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors"
+            style={{ color: uiText }}
+            onMouseEnter={e => { e.currentTarget.style.background = uiHoverBg; e.currentTarget.style.color = uiTextHov; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = uiText; }}
           >
             <ArrowRight size={14} />
           </button>
 
           {/* View tabs */}
-          {reviewData?.content && (
-            <div className="flex items-center gap-0.5 bg-[#e8e0cc] rounded-lg p-0.5 ml-2">
+          {hasReview && (
+            <div className="flex items-center gap-0.5 rounded-lg p-0.5 ml-2" style={{ background: uiHoverBg }}>
               <button
                 onClick={() => setReadingTab('chapter')}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  readingTab === 'chapter' ? 'bg-white text-[#2a2520] shadow-sm' : 'text-[#6b6358] hover:text-[#3a3530]'
-                }`}
+                className="px-2.5 py-1 text-xs rounded-md transition-colors"
+                style={readingTab === 'chapter'
+                  ? { background: theme.bg, color: uiTextHov, boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }
+                  : { color: uiText }}
               >
                 Chapter
               </button>
               <button
                 onClick={() => setReadingTab('review')}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  readingTab === 'review' ? 'bg-white text-[#2a2520] shadow-sm' : 'text-[#6b6358] hover:text-[#3a3530]'
-                }`}
+                className="px-2.5 py-1 text-xs rounded-md transition-colors"
+                style={readingTab === 'review'
+                  ? { background: theme.bg, color: uiTextHov, boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }
+                  : { color: uiText }}
               >
                 Review
               </button>
             </div>
           )}
 
+          {/* Typography settings */}
+          <div className="relative ml-1">
+            <button
+              onClick={() => setShowSettings(s => !s)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: showSettings ? uiTextHov : uiText, background: showSettings ? uiHoverBg : 'transparent' }}
+              title="Reading settings"
+            >
+              <Type size={14} />
+            </button>
+            {showSettings && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowSettings(false)} />
+                <div
+                  className="absolute right-0 top-9 z-30 w-64 rounded-2xl shadow-2xl p-4 space-y-4"
+                  style={{ background: theme.topBg, border: `1px solid ${uiBorder}` }}
+                >
+                  {/* Font size */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: uiText }}>Font size</p>
+                    <div className="flex gap-1.5">
+                      {FONT_SIZES.map(s => (
+                        <button
+                          key={s.value}
+                          onClick={() => updateSetting('fontSize', s.value)}
+                          className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                          style={settings.fontSize === s.value
+                            ? { background: isDark ? '#ffffff18' : '#00000014', color: uiTextHov }
+                            : { color: uiText }}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font family */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: uiText }}>Typeface</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {FONTS.map(f => (
+                        <button
+                          key={f.value}
+                          onClick={() => updateSetting('fontFamily', f.value)}
+                          className="py-1.5 rounded-lg text-xs transition-colors text-left px-2.5"
+                          style={{
+                            fontFamily: f.value,
+                            ...(settings.fontFamily === f.value
+                              ? { background: isDark ? '#ffffff18' : '#00000014', color: uiTextHov }
+                              : { color: uiText }),
+                          }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Background */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: uiText }}>Background</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {BG_THEMES.map(t => (
+                        <button
+                          key={t.bg}
+                          onClick={() => updateSetting('bgTheme', t.bg)}
+                          title={t.label}
+                          className="w-7 h-7 rounded-lg transition-all"
+                          style={{
+                            background: t.bg,
+                            border: settings.bgTheme === t.bg ? `2px solid ${uiText}` : `1px solid ${uiBorder}`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Text color */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: uiText }}>Text color</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {TEXT_COLORS.map(c => (
+                        <button
+                          key={c.value}
+                          onClick={() => updateSetting('textColor', c.value)}
+                          title={c.label}
+                          className="w-7 h-7 rounded-lg transition-all"
+                          style={{
+                            background: c.value,
+                            border: settings.textColor === c.value ? `2px solid ${uiText}` : `1px solid ${uiBorder}`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Toggle lore panel */}
           <button
             onClick={() => setShowLore(!showLore)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#6b6358] hover:text-[#2a2520] hover:bg-[#e0d8c8] transition-colors ml-1"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors ml-1"
+            style={{ color: uiText }}
+            onMouseEnter={e => { e.currentTarget.style.background = uiHoverBg; e.currentTarget.style.color = uiTextHov; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = uiText; }}
             title={showLore ? 'Hide lore panel' : 'Show lore panel'}
           >
             {showLore ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
           </button>
+
+          {/* Edit chapter */}
+          {readingTab === 'chapter' && chapterData?.content && (
+            <button
+              onClick={() => navigate(`/books/${id}`, { state: { editChapter: chapterNum } })}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: uiText }}
+              onMouseEnter={e => { e.currentTarget.style.background = uiHoverBg; e.currentTarget.style.color = uiTextHov; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = uiText; }}
+              title="Edit chapter"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
         </div>
       </div>
 
+      {/* ── Read progress bar ──────────────────────────────────── */}
+      <div className="h-0.5 shrink-0" style={{ background: uiHoverBg }}>
+        <div
+          className="h-full transition-all duration-150"
+          style={{ width: `${readProgress}%`, background: uiText, opacity: 0.5 }}
+        />
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        {/* ── Reading area ─────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto">
+        {/* ── Reading area ──────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto" ref={scrollRef}>
           <div className="max-w-2xl mx-auto px-8 py-12">
             {isLoading && (
-              <div className="text-center text-[#8a8070] text-sm">Loading…</div>
+              <div className="text-center text-sm" style={{ color: uiText }}>Loading…</div>
             )}
 
             {!isLoading && !currentContent && (
-              <div className="text-center text-[#8a8070] text-sm py-16">
+              <div className="text-center text-sm py-16" style={{ color: uiText }}>
                 <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
                 {readingTab === 'review' ? 'No review found for this chapter.' : 'Chapter not found.'}
               </div>
             )}
 
             {!isLoading && currentContent && (
-              <div className="reading-content">
+              <div
+                className="reading-content"
+                style={{ fontSize: settings.fontSize, fontFamily: settings.fontFamily, color: settings.textColor }}
+              >
                 {readingTab === 'review' ? (
                   /* Review is always plain — no lore highlighting */
                   <ReactMarkdown>{currentContent}</ReactMarkdown>
