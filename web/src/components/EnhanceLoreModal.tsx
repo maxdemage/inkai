@@ -1,0 +1,134 @@
+import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader2, Sparkles } from 'lucide-react';
+import Modal from './Modal';
+import SSEProgress from './SSEProgress';
+import { api } from '../api';
+import { keys } from '../hooks';
+import type { BookRecord } from '../types';
+
+interface EnhanceQuestion {
+  key: string;
+  question: string;
+  context: string;
+  loreFile: string;
+}
+
+interface Props {
+  book: BookRecord;
+  onClose: () => void;
+}
+
+export default function EnhanceLoreModal({ book, onClose }: Props) {
+  const qc = useQueryClient();
+  const [phase, setPhase] = useState<'loading' | 'questions' | 'applying' | 'done' | 'error'>('loading');
+  const [questions, setQuestions] = useState<EnhanceQuestion[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [error, setError] = useState('');
+  const [changes, setChanges] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.lore.enhanceQuestions(book.id)
+      .then(({ questions: qs }) => {
+        setQuestions(qs);
+        setPhase('questions');
+      })
+      .catch(e => {
+        setError(String(e));
+        setPhase('error');
+      });
+  }, [book.id]);
+
+  const applyEnhancements = () => setPhase('applying');
+
+  return (
+    <Modal
+      title="Enhance Lore"
+      onClose={phase === 'applying' ? undefined : onClose}
+      size="lg"
+    >
+      {phase === 'loading' && (
+        <div className="flex flex-col items-center gap-3 py-10 text-slate-400">
+          <Loader2 size={24} className="animate-spin text-violet-400" />
+          <p className="text-sm">Analysing your lore and generating targeted questions…</p>
+        </div>
+      )}
+
+      {phase === 'questions' && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Answer these AI-generated questions to deepen your world, characters, and story.
+            Leave blank to skip.
+          </p>
+
+          {questions.map(q => (
+            <div key={q.key} className="space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <label className="text-sm font-medium text-slate-300">{q.question}</label>
+                <span className="text-xs text-slate-600 shrink-0">{q.loreFile}</span>
+              </div>
+              {q.context && (
+                <p className="text-xs text-slate-500 italic">{q.context}</p>
+              )}
+              <textarea
+                className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+                rows={2}
+                value={answers[q.key] ?? ''}
+                onChange={e => setAnswers(prev => ({ ...prev, [q.key]: e.target.value }))}
+                placeholder="Optional…"
+              />
+            </div>
+          ))}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={onClose} className="btn-ghost">Cancel</button>
+            <button onClick={applyEnhancements} className="btn-primary flex items-center gap-2">
+              <Sparkles size={14} /> Apply Enhancements
+            </button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'applying' && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Applying your answers to the lore files with AI assistance…</p>
+          <SSEProgress
+            path={`/books/${book.id}/enhance-lore/apply`}
+            method="POST"
+            body={{ answers }}
+            onDone={(d) => {
+              const data = d as { changes?: string[] };
+              setChanges(data.changes ?? []);
+              qc.invalidateQueries({ queryKey: keys.lore(book.id) });
+              setPhase('done');
+            }}
+            onError={(msg) => {
+              setError(msg);
+              setPhase('error');
+            }}
+          />
+        </div>
+      )}
+
+      {phase === 'done' && (
+        <div className="space-y-4 py-2 text-center">
+          <div className="text-4xl">✨</div>
+          <p className="text-sm font-medium text-white">Lore enhanced!</p>
+          {changes.length > 0 && (
+            <ul className="text-sm text-slate-400 text-left space-y-1 max-w-sm mx-auto">
+              {changes.map((c, i) => <li key={i} className="flex gap-2"><span className="text-violet-400">·</span>{c}</li>)}
+            </ul>
+          )}
+          <button onClick={onClose} className="btn-primary">Done</button>
+        </div>
+      )}
+
+      {phase === 'error' && (
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-red-300">{error}</p>
+          <button onClick={onClose} className="btn-ghost">Close</button>
+        </div>
+      )}
+    </Modal>
+  );
+}

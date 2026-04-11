@@ -8,28 +8,59 @@ Inkai is a tool to help you pour your ideas onto documents - nothing more.
 
 See more in MANIFESTO.md
 
+## Want to Help?
+
+Translating prompts, improving writing quality, supporting new book types — see [HOW TO HELP.md](HOW%20TO%20HELP.md) for where contributions matter most.
+
 ## What inkai is not
 
 inkai is not a one prompt wonder magical wand - it will not create everything for you, it is to help you, guide you, and write what you want. Nothing more.
 
 > **New here?** See [GUIDE.md](GUIDE.md) for a detailed step-by-step walkthrough.
+> **Prefer a browser UI?** See [GUI.md](GUI.md) for the full web interface guide.
 
 ## Quick Start
 
 ```bash
-# Install dependencies and build
-npm install && npm run build
+# 1. Install & build (one time) — builds CLI + web frontend
+npm install && npm run build && npm run build:web  && npm link
 
-# Run directly
-node dist/index.js
-
-# Or link globally
-npm link
-inkai
-
-# Run tests
-npm test
+# 2. Start — pick your style:
+inkai serve        # → browser UI at http://localhost:4242  ← recommended
+inkai              # → interactive CLI
 ```
+
+That's it. Open **http://localhost:4242** for the full GUI — no further terminal commands needed.
+
+> To use a different port: `inkai serve --port 8080`
+
+## Web UI (GUI)
+
+inkai includes a full browser-based GUI. Every CLI action is available as a click — no terminal knowledge required after the initial setup.
+
+### Pages at a glance
+
+| Page | What you can do |
+|------|----------------|
+| **Books dashboard** | View all projects as cards with status badges; archive/unarchive |
+| **Create Book wizard** | 4-step guided flow: basic info → AI round-1 questions → AI round-2 questions → live lore generation |
+| **Book detail — Chapters** | Create, read, review, and rewrite chapters; see word counts and review status |
+| **Book detail — Lore** | Edit any lore file inline; enhance lore with AI; generate story arc, timeline, and character sheets |
+| **Book detail — Summary** | Read the rolling chapter summary |
+| **Reading view** | Parchment-style full-screen reader with lore term highlighting and a collapsible lore sidebar |
+| **Jobs** | Monitor background chapter-writing jobs with live log streaming |
+| **Settings** | Configure LLM providers, model tiers, git, and language |
+
+> **Full GUI reference:** [GUI.md](GUI.md)
+
+### Development mode (contributors)
+
+```bash
+inkai serve                  # Terminal 1 — API backend
+cd web && npm run dev        # Terminal 2 — Vite dev server (hot reload)
+```
+
+Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 
 ## Features
 
@@ -65,6 +96,7 @@ npm test
 | `/select [name]` | `/open`, `/use` | Select a book project to work on |
 | `/archive` | — | Archive, restore, or purge book projects |
 | `/jobs` | `/bg`, `/background` | Show background writing jobs (`/jobs clear` to remove finished) |
+| `/serve` | — | Start the web UI server on port 4242 (or `--port N`) |
 | `/reset-prompts` | `/prompts-reset` | Reset prompt files to defaults (asks language) |
 | `/deselect` | `/close`, `/back` | Deselect current book project |
 | `/quit` | `/exit`, `/q` | Exit inkai |
@@ -83,6 +115,7 @@ npm test
 | `/characters` | `/chars` | Show, generate, or edit character sheets with arc state and tensions |
 | `/timeline` | — | Generate a chronology from lore, chapters, and notes — flags impossible sequencing |
 | `/rename` | — | Rename the current book title |
+| `/change-status` | `/set-status` | Change book status (in-progress → completed / review / on-hold / limbo) |
 | `/edit-basic-info` | `/edit-info`, `/basic-info` | Edit basic book information (title, genre, authors, etc.) |
 | `/status` | `/info`, `/stat` | Show current book project status |
 | `/summary` | `/chapters-summary` | Show the chapter summary document |

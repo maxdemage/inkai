@@ -1,6 +1,7 @@
 import * as readline from 'node:readline';
 import { registerCommand, executeCommand, getCommandNames, getAllCommands } from './commands/registry.js';
 import { archiveCommand } from './commands/archive.js';
+import { changeStatusCommand } from './commands/change-status.js';
 import { charactersCommand } from './commands/characters.js';
 import { configCommand } from './commands/config.js';
 import { createBookCommand } from './commands/create-book.js';
@@ -25,6 +26,7 @@ import { statusCommand } from './commands/status.js';
 import { storyArcCommand } from './commands/story-arc.js';
 import { summaryCommand } from './commands/summary.js';
 import { timelineCommand } from './commands/timeline.js';
+import { serveCommand } from './commands/serve.js';
 import { getAllBooks } from './db.js';
 import { chatSmall } from './llm/manager.js';
 import { parseLLMJson } from './llm/parse.js';
@@ -35,6 +37,7 @@ import { getPrompt, info, blank, c } from './ui.js';
 
 function registerAllCommands(): void {
   registerCommand(archiveCommand);
+  registerCommand(changeStatusCommand);
   registerCommand(charactersCommand);
   registerCommand(configCommand);
   registerCommand(createBookCommand);
@@ -59,6 +62,7 @@ function registerAllCommands(): void {
   registerCommand(storyArcCommand);
   registerCommand(summaryCommand);
   registerCommand(timelineCommand);
+  registerCommand(serveCommand);
 
   // Quit command
   registerCommand({

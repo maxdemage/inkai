@@ -12,6 +12,21 @@ import { input, select, password, confirm } from '@inquirer/prompts';
 import type { AppContext, LLMProviderName } from './types.js';
 
 async function main(): Promise<void> {
+  // ─── CLI argument dispatch (e.g. `inkai serve`) ─────────
+
+  const args = process.argv.slice(2);
+  const cmd = args[0];
+
+  if (cmd === 'serve' || cmd === 'web' || cmd === 'ui') {
+    const { serveCommand } = await import('./commands/serve.js');
+    const portFlag = args.indexOf('--port');
+    if (portFlag !== -1 && args[portFlag + 1]) {
+      process.env.INKAI_PORT = args[portFlag + 1];
+    }
+    await serveCommand.execute(args.slice(1), null as never);
+    return;
+  }
+
   // ─── Banner ─────────────────────────────────────────────
 
   showBanner();

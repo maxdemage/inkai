@@ -17,3 +17,9 @@ Let's use this tool to write words for us. Not stories — just words. Let us cr
 ## The Bottom Line
 
 Use Inkai as a tool. Nothing more.
+
+---
+
+## Want to Help?
+
+If you want to contribute — translating prompts, improving writing craft, or adapting the tool for other book formats — see [HOW TO HELP.md](HOW%20TO%20HELP.md).

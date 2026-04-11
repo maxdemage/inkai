@@ -11,7 +11,7 @@ export const BOOK_TYPES: { value: BookType; label: string }[] = [
   { value: 'screenplay', label: 'Screenplay / Script' },
 ];
 
-export type BookStatus = 'new' | 'initial-processing' | 'work-in-progress' | 'completed' | 'archived';
+export type BookStatus = 'new' | 'initial-processing' | 'work-in-progress' | 'completed' | 'archived' | 'on-hold' | 'review' | 'limbo';
 
 export interface BookRecord {
   id: string;

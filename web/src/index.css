@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    background: #06060e;
+    color: #ddddf0;
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #0d0d1a; }
+  ::-webkit-scrollbar-thumb { background: #2c2c6e; border-radius: 999px; }
+
+  ::selection { background: rgba(124,106,247,0.35); }
+}
+
+/* ── Reading mode ──────────────────────────────────────────── */
+.reading-content {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: 1.125rem;
+  line-height: 1.9;
+  color: #1a1a20;
+}
+
+.reading-content p {
+  margin-bottom: 1.25rem;
+  text-indent: 2em;
+}
+
+.reading-content p:first-child { text-indent: 0; }
+
+.reading-content h1, .reading-content h2, .reading-content h3 {
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  text-indent: 0;
+}
+
+.reading-content h1 { font-size: 1.75rem; }
+.reading-content h2 { font-size: 1.375rem; }
+.reading-content h3 { font-size: 1.15rem; }
+
+.reading-content blockquote {
+  border-left: 3px solid #9370db;
+  padding-left: 1.25rem;
+  color: #44445a;
+  font-style: italic;
+  margin: 1.5rem 0;
+}
+
+.reading-content hr {
+  border: none;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.reading-content hr::after {
+  content: '* * *';
+  color: #9370db;
+  font-size: 1rem;
+}
+
+/* ── Lore term highlight ─────────────────────────────────────── */
+.lore-term {
+  border-bottom: 1.5px dashed #7c6af7;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.12s;
+}
+
+.lore-term:hover {
+  background: rgba(124, 106, 247, 0.18);
+}
+
+/* ── Log output ──────────────────────────────────────────────── */
+.log-output {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Prose markdown (lore viewer) ────────────────────────────── */
+.prose-dark { color: #c8c8e8; }
+.prose-dark h1, .prose-dark h2, .prose-dark h3 { color: #e8e8ff; font-weight: 700; margin: 1.25rem 0 0.5rem; }
+.prose-dark h1 { font-size: 1.5rem; }
+.prose-dark h2 { font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.25rem; }
+.prose-dark h3 { font-size: 1.05rem; color: #a890ff; }
+.prose-dark p { margin-bottom: 0.9rem; line-height: 1.75; }
+.prose-dark ul, .prose-dark ol { padding-left: 1.5rem; margin-bottom: 0.9rem; }
+.prose-dark li { margin-bottom: 0.35rem; }
+.prose-dark strong { color: #e0d8ff; }
+.prose-dark em { color: #c4b8f8; }
+.prose-dark blockquote { border-left: 3px solid #5040a0; padding-left: 1rem; color: #8888b0; font-style: italic; margin: 1rem 0; }
+
+/* ── Button utilities ─────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center px-4 py-2 bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-slate-100 text-sm font-medium rounded-xl transition-colors cursor-pointer;
+  }
+  .btn-ghost-sm {
+    @apply inline-flex items-center px-2.5 py-1.5 bg-white/[0.05] hover:bg-white/[0.09] text-slate-400 hover:text-slate-200 text-xs font-medium rounded-lg transition-colors cursor-pointer;
+  }
+}
+.prose-dark code { background: rgba(255,255,255,0.07); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.875em; }
+.prose-dark hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0; }
