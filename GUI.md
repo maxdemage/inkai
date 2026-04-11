@@ -84,14 +84,17 @@ Three tabs covering everything about a single book.
 #### Chapters tab
 
 - Lists every chapter with number, word count, and a `reviewed` badge if a review exists.
-- Hover any row to reveal three action buttons: **Read**, **Review**, **Rewrite**.
-- A **Write Chapter N** button at the bottom opens the chapter creation flow.
+- Hover any row to reveal four action buttons: **Read**, **Review**, **Rewrite**, and a small **pencil** icon to open the chapter in the manual editor.
+- A **Write Chapter N** button at the top-right opens the chapter creation flow.
+- When a background writing job is **active for this book**, an amber status strip appears above the chapter list showing the job status with a "View →" link to the Jobs page. It auto-polls every 3 seconds.
+- After accepting a chapter plan, a **toast notification** appears in the bottom-right ("Chapter N queued / Writing in the background…") and auto-dismisses after 6 seconds.
 - Collapsible **Book Summary** section at the top renders `summary-of-chapters.md`.
 
-**Chapter actions:**
-- **Read** → navigates to the reading view (see below).
-- **Review** → streams an AI literary review (critique, suggestions, grade) using the writer model. Saves `review_chapter_N.md`.
-- **Rewrite** → applies the review to produce a fully rewritten chapter. If no review exists yet, one is generated first.
+**Chapter actions (hover a row):**
+- **Read** → navigates to the reading view.
+- **Review** → streams an AI literary review. Saves `review_chapter_N.md`.
+- **Rewrite** → applies the review to produce a rewritten chapter.
+- **pencil icon** → opens the chapter in the full-panel **Manual Editor** (see below).
 
 #### Lore tab
 
@@ -108,9 +111,32 @@ Three tabs covering everything about a single book.
 
 Expandable panels below the grid let you preview the generated `story-arc.md`, `style-of-writing.md`, `timeline.md`, and `characters.md` without leaving the page.
 
+#### Manual Chapter Editor
+
+Opens as a full-panel takeover when you click the pencil icon on a chapter row or the **Edit** button in the reading view.
+
+- Full-height monospace textarea pre-loaded with the chapter's current content.
+- **Dirty-state tracking** — "Unsaved changes" label appears as soon as you type.
+- **Save** button (disabled until dirty); shows a spinner while saving and a "Saved!" flash on success.
+- Confirmation dialog on close with unsaved changes.
+- Closes and returns to the book detail page.
+
 #### Summary tab
 
 Renders `summary-of-chapters.md` as formatted markdown.
+
+---
+
+### Export
+
+The **Export** button appears in the book header whenever the book has at least one chapter. Clicking it opens a small dropdown:
+
+| Format | Description |
+|--------|-------------|
+| **EPUB** | EPUB 3 file with title page, table of contents, and per-chapter CSS — for e-readers, Kindle, Apple Books |
+| **ODT** | OpenDocument Text file for LibreOffice, Google Docs, or Microsoft Word |
+
+The file is generated server-side and downloaded by the browser immediately.
 
 ---
 
@@ -121,7 +147,7 @@ Opens as a modal from the Chapters tab.
 1. AI suggests a direction for the next chapter (fetch from `/api/books/:id/chapters/suggest`). You can use the suggestion or write your own guidelines.
 2. If it's the first chapter, a **Writing Instructions** section appears — set your preferred style, pacing, perspective, and chapter length. These are saved and reused for all future chapters.
 3. Click **Write Chapter** — the server builds a detailed plan synchronously, then spawns a background worker. You get a job ID and the plan text immediately.
-4. The modal confirms the job was started and links to the **Jobs** page.
+4. The modal closes and a **toast notification** pops up in the bottom-right confirming the job is queued. An active-job strip also appears in the Chapters tab while the job runs.
 
 ---
 
@@ -129,11 +155,26 @@ Opens as a modal from the Chapters tab.
 
 A full-screen, distraction-free reading experience.
 
-- **Parchment background** with Georgia serif font for comfortable long-form reading.
-- **Chapter / Review tabs** — toggle between reading the chapter and reading its AI review.
-- **Prev / Next** navigation buttons with chapter N-of-total display.
-- **Lore sidebar** (collapsible) — lists every lore file. Files that contain terms found in the current chapter are highlighted with a violet dot. Click a file to read its full content in the sidebar.
-- **Lore term highlighting** — key terms extracted from H2/H3 headers and `**bold**` text in lore files are underlined with a dashed violet line in the chapter text. Click any highlighted term to open a floating popover showing the relevant lore content.
+- **Themeable background** — choose from Paper, White, Dusk, Dark, Sepia, or Forest (see Typography Settings below).
+- **Reading progress bar** — a thin bar just below the top chrome fills left-to-right as you scroll through the chapter.
+- **Chapter / Review tabs** — if the chapter has an AI review, a tab switcher appears in the top bar. The review is fetched on demand when you first switch to it.
+- **Prev / Next** navigation with chapter N-of-total display.
+- **Edit chapter button** (pencil icon, top-right) — visible on the Chapter tab only. Navigates back to the book page and immediately opens the chapter in the Manual Editor.
+- **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar.
+- **Lore term highlighting** — H2/H3 headers and `**bold**` terms from lore files are underlined in the text. Click any to open a floating popover with the relevant lore content.
+
+#### Typography Settings (`Type` icon in the top bar)
+
+A panel with four settings, all persisted to `localStorage`:
+
+| Setting | Options |
+|---------|---------|
+| **Font size** | S (15 px) · M (18 px) · L (21 px) · XL (25 px) |
+| **Typeface** | Serif (Georgia) · Sans (system-ui) · Mono (Courier) · Humanist (Palatino) |
+| **Background** | Paper · White · Dusk · Dark · Sepia · Forest |
+| **Text color** | Ink · Charcoal · Slate · Cream · White · Warm |
+
+The top-bar chrome (buttons, borders, navigation) adapts its contrast automatically to the chosen background theme.
 
 ---
 

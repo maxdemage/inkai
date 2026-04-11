@@ -44,10 +44,11 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 |------|----------------|
 | **Books dashboard** | View all projects as cards with status badges; archive/unarchive |
 | **Create Book wizard** | 4-step guided flow: basic info → AI round-1 questions → AI round-2 questions → live lore generation |
-| **Book detail — Chapters** | Create, read, review, and rewrite chapters; see word counts and review status |
+| **Book detail — Chapters** | Create, read, review, rewrite, and manually edit chapters; see word counts and review status; active-job strip with live status; toast on job start |
 | **Book detail — Lore** | Edit any lore file inline; enhance lore with AI; generate story arc, timeline, and character sheets |
 | **Book detail — Summary** | Read the rolling chapter summary |
-| **Reading view** | Parchment-style full-screen reader with lore term highlighting and a collapsible lore sidebar |
+| **Export** | Download all chapters as EPUB or ODT directly from the book header |
+| **Reading view** | Fully themeable full-screen reader — 6 backgrounds, 4 fonts, 4 font sizes, 6 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
 | **Settings** | Configure LLM providers, model tiers, git, and language |
 
@@ -74,10 +75,12 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **6-Step Chapter Pipeline** — plan → write → QA with separate AI agents
 - **Chapter Review** — detailed literary review with improvement suggestions
 - **Chapter Rewriting** — apply review feedback automatically
+- **Manual Chapter Editing** — edit any chapter directly in the GUI with dirty-state tracking and save confirmation
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
-- **Background Writing** — optionally run chapter writing in a detached process that survives exit
+- **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
-- **ODT & EPUB Export** — export all chapters to `.odt` (LibreOffice/Google Docs) or `.epub` (e-readers/Kindle)
+- **GUI Reading View** — fully themeable reader (6 backgrounds, 4 fonts, 4 sizes, 6 text colors, all persisted); scroll progress bar; chapter/review tab toggle; one-click edit
+- **ODT & EPUB Export** — export all chapters to `.odt` or `.epub` from CLI or directly from the GUI
 - **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available

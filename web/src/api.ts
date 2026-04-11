@@ -35,6 +35,14 @@ export const api = {
       title: string; type: string; genre: string; subgenre: string;
       purpose: string; summary: string; round1Answers: Record<string, string>;
     }) => req<{ questions: LoreQuestion[] }>('/books/wizard/round2', { method: 'POST', ...json(data) }),
+    export: (id: string, format: 'epub' | 'odt') => {
+      const a = document.createElement('a');
+      a.href = `${BASE}/books/${id}/export?format=${format}`;
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    },
   },
 
   chapters: {
@@ -43,6 +51,8 @@ export const api = {
       req<{ number: number; content: string }>(`/books/${bookId}/chapters/${n}`),
     update: (bookId: string, n: number, content: string) =>
       req<{ ok: boolean }>(`/books/${bookId}/chapters/${n}`, { method: 'PUT', ...json({ content }) }),
+    delete: (bookId: string, n: number) =>
+      req<{ ok: boolean }>(`/books/${bookId}/chapters/${n}`, { method: 'DELETE' }),
     getReview: (bookId: string, n: number) =>
       req<{ number: number; content: string }>(`/books/${bookId}/chapters/${n}/review`),
     suggest: (bookId: string) =>
