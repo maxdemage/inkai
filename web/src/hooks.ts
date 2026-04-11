@@ -80,6 +80,18 @@ export function useUpdateLore() {
   });
 }
 
+export function useUpdateChapter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bookId, number, content }: { bookId: string; number: number; content: string }) =>
+      api.chapters.update(bookId, number, content),
+    onSuccess: (_r, { bookId, number }) => {
+      qc.invalidateQueries({ queryKey: keys.chapter(bookId, number) });
+      qc.invalidateQueries({ queryKey: keys.chapters(bookId) });
+    },
+  });
+}
+
 export function useDeleteJob() {
   const qc = useQueryClient();
   return useMutation({

@@ -16,6 +16,7 @@ import LoreEditor from '../components/LoreEditor';
 import EnhanceLoreModal from '../components/EnhanceLoreModal';
 import GenerateContentModal from '../components/GenerateContentModal';
 import ChapterActionModal from '../components/ChapterActionModal';
+import ChapterEditor from '../components/ChapterEditor';
 import type { ChapterMeta, BookStatus } from '../types';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -70,11 +71,12 @@ type Tab = 'chapters' | 'lore' | 'summary';
 
 // ── Chapter row ─────────────────────────────────────────────────
 
-function ChapterRow({ ch, onRead, onReview, onRewrite }: {
+function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit }: {
   ch: ChapterMeta;
   onRead: () => void;
   onReview: (n: number) => void;
   onRewrite: (n: number) => void;
+  onEdit: (n: number) => void;
 }) {
   return (
     <div className="flex items-center gap-3 py-3 px-4 hover:bg-white/[0.03] rounded-xl transition-colors group">
@@ -116,6 +118,13 @@ function ChapterRow({ ch, onRead, onReview, onRewrite }: {
             title="AI Rewrite"
           >
             <RefreshCw size={12} /> Rewrite
+          </button>
+          <button
+            onClick={() => onEdit(ch.number)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-500 hover:text-slate-300 transition-colors"
+            title="Edit manually"
+          >
+            <Pencil size={12} />
           </button>
         </div>
       ) : (
@@ -174,6 +183,7 @@ export default function BookPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<number | null>(null);
 
   if (bookLoading) return <div className="flex items-center justify-center h-64 text-slate-500">Loading…</div>;
   if (!book) return <div className="flex items-center justify-center h-64 text-red-400">Book not found.</div>;
@@ -203,6 +213,19 @@ export default function BookPage() {
           filename={editingLore}
           initialContent={loreFiles[editingLore] ?? ''}
           onClose={() => setEditingLore(null)}
+        />
+      </div>
+    );
+  }
+
+  // Editing a chapter — full panel takeover
+  if (editingChapter !== null) {
+    return (
+      <div className="h-full flex flex-col bg-ink-950">
+        <ChapterEditor
+          bookId={book.id}
+          chapterNumber={editingChapter}
+          onClose={() => setEditingChapter(null)}
         />
       </div>
     );
@@ -354,6 +377,7 @@ export default function BookPage() {
                       onRead={() => navigate(`/books/${book.id}/read/${ch.number}`)}
                       onReview={(n) => setChapterAction({ number: n, action: 'review' })}
                       onRewrite={(n) => setChapterAction({ number: n, action: 'rewrite' })}
+                      onEdit={(n) => setEditingChapter(n)}
                     />
                   ))}
                 </div>
