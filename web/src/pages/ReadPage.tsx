@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil } from 'lucide-react';
-import { useChapter, useChapters, useReview, useLore, useBook } from '../hooks';
+import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check } from 'lucide-react';
+import { useChapter, useChapters, useReview, useLore, useBook, useUpdateChapter } from '../hooks';
 
 // ── Lore term extraction ────────────────────────────────────────
 
@@ -106,6 +106,108 @@ function HighlightedPara({ children, terms, onClick }: {
   onClick: (t: LoreTerm) => void;
 }) {
   return <p>{processNode(children, terms, onClick)}</p>;
+}
+
+// ── Inline paragraph editor ────────────────────────────────────
+
+interface ParagraphBlockProps {
+  raw: string;
+  terms: LoreTerm[];
+  onTermClick: (t: LoreTerm) => void;
+  textColor: string;
+  onSave: (newRaw: string) => Promise<void>;
+}
+
+function ParagraphBlock({ raw, terms, onTermClick, textColor, onSave }: ParagraphBlockProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const startEdit = () => {
+    setDraft(raw);
+    setEditing(true);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        // auto-size
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      }
+    }, 0);
+  };
+
+  const cancel = () => { setEditing(false); setDraft(''); };
+
+  const save = async () => {
+    if (draft === raw) { cancel(); return; }
+    setSaving(true);
+    try {
+      await onSave(draft);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void save(); }
+  };
+
+  if (editing) {
+    return (
+      <div className="relative my-1 -mx-3">
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={e => {
+            setDraft(e.target.value);
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
+          onKeyDown={onKeyDown}
+          disabled={saving}
+          className="w-full px-3 py-2 rounded-lg bg-black/10 border border-violet-500/40 text-sm resize-none outline-none focus:border-violet-500/70 transition-colors"
+          style={{ color: textColor, fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit', minHeight: '3em' }}
+          rows={3}
+        />
+        <div className="flex items-center gap-2 mt-1.5 justify-end">
+          <span className="text-[10px] opacity-40" style={{ color: textColor }}>Ctrl+Enter to save · Esc to cancel</span>
+          <button onClick={cancel} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-white/[0.07] hover:bg-white/[0.12] opacity-60 hover:opacity-100 transition-all" style={{ color: textColor }}>
+            <X size={10} /> Cancel
+          </button>
+          <button onClick={() => { void save(); }} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-violet-600/30 hover:bg-violet-600/50 text-violet-200 border border-violet-500/30 transition-all disabled:opacity-50">
+            <Check size={10} /> {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group">
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => (
+            <HighlightedPara terms={terms} onClick={onTermClick}>
+              {children}
+            </HighlightedPara>
+          ),
+        }}
+      >
+        {raw}
+      </ReactMarkdown>
+      <button
+        onClick={startEdit}
+        title="Edit this paragraph"
+        className="absolute right-0 top-0 w-6 h-6 flex items-center justify-center rounded-md bg-black/20 hover:bg-violet-600/40 transition-all opacity-0 group-hover:opacity-100"
+        style={{ color: textColor }}
+      >
+        <Pencil size={11} />
+      </button>
+    </div>
+  );
 }
 
 // ── Lore popover ────────────────────────────────────────────────
@@ -257,6 +359,21 @@ export default function ReadPage() {
   const loreSidebarFiles = Object.entries(loreFiles).filter(([f]) => f !== 'summary-of-chapters.md');
 
   const currentContent = readingTab === 'review' ? reviewData?.content : chapterData?.content;
+
+  const updateChapter = useUpdateChapter();
+  const chapterBlocks = useMemo(
+    () => (chapterData?.content ?? '').split(/\n\n+/),
+    [chapterData?.content],
+  );
+
+  const saveBlock = useCallback(
+    async (blockIndex: number, newRaw: string) => {
+      const updated = [...chapterBlocks];
+      updated[blockIndex] = newRaw;
+      await updateChapter.mutateAsync({ bookId: id!, number: chapterNum, content: updated.join('\n\n') });
+    },
+    [chapterBlocks, id, chapterNum, updateChapter],
+  );
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme.bg }}>
@@ -486,18 +603,19 @@ export default function ReadPage() {
                   /* Review is always plain — no lore highlighting */
                   <ReactMarkdown>{currentContent}</ReactMarkdown>
                 ) : (
-                  /* Chapter — highlight lore terms */
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <HighlightedPara terms={loreTerms} onClick={onTermClick}>
-                          {children}
-                        </HighlightedPara>
-                      ),
-                    }}
-                  >
-                    {currentContent}
-                  </ReactMarkdown>
+                  /* Chapter — highlight lore terms + inline block editing */
+                  <div className="pr-8">
+                    {chapterBlocks.map((block, i) => (
+                      <ParagraphBlock
+                        key={i}
+                        raw={block}
+                        terms={loreTerms}
+                        onTermClick={onTermClick}
+                        textColor={settings.textColor}
+                        onSave={(newRaw) => saveBlock(i, newRaw)}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             )}
