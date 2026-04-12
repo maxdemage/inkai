@@ -60,7 +60,7 @@ import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
 import { gitCommit, gitInit, isGitAvailable } from './git.js';
 import { generateEpub, generateOdt } from './commands/export.js';
-import type { InkaiConfig, BookType, LoreQuestion, BookRecord } from './types.js';
+import type { InkaiConfig, BookType, LoreQuestion, BookRecord, ReviewType, ReviewPersona } from './types.js';
 
 const PORT = parseInt(process.env.INKAI_PORT ?? '4242', 10);
 
@@ -515,6 +515,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const book = await requireBook(req.params.id, res);
       if (!book) return;
       const n = parseInt(req.params.n, 10);
+      const { reviewType, reviewPersona } = req.body as { reviewType?: ReviewType; reviewPersona?: ReviewPersona };
 
       const chapterContent = await readChapter(config, book.projectName, n);
       if (!chapterContent) { sse.send('error', { message: `Chapter ${n} not found` }); sse.done(); return; }
@@ -526,9 +527,14 @@ export async function startServer(webDistPath?: string): Promise<void> {
       ]);
 
       sse.send('progress', { message: `Reviewing chapter ${n} (writer LLM)...` });
+      const { system, user } = await buildChapterReviewPrompt(
+        loreContext, styleGuide, chapterContent, n,
+        reviewType ?? 'full',
+        reviewPersona,
+      );
       const review = await chatWriter(config, [
-        { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-        { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, chapterContent, n) },
+        { role: 'system', content: system },
+        { role: 'user', content: user },
       ], { maxTokens: 4096, temperature: 0.5 });
 
       await writeReview(config, book.projectName, n, review);
@@ -563,9 +569,10 @@ export async function startServer(webDistPath?: string): Promise<void> {
       let review = await readReview(config, book.projectName, n);
       if (!review) {
         sse.send('progress', { message: 'No review found — generating review first...' });
+        const { system: revSystem, user: revUser } = await buildChapterReviewPrompt(loreContext, styleGuide, original, n);
         review = await chatWriter(config, [
-          { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-          { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, original, n) },
+          { role: 'system', content: revSystem },
+          { role: 'user', content: revUser },
         ], { maxTokens: 4096, temperature: 0.5 });
         await writeReview(config, book.projectName, n, review);
       }

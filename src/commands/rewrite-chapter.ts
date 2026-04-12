@@ -59,9 +59,10 @@ export const rewriteChapterCommand: Command = {
       ]);
 
       try {
+        const { system: revSystem, user: revUser } = await buildChapterReviewPrompt(loreContext, styleGuide, originalChapter, chapterNum);
         reviewContent = await chatWriter(ctx.config, [
-          { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-          { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, originalChapter, chapterNum) },
+          { role: 'system', content: revSystem },
+          { role: 'user', content: revUser },
         ], { maxTokens: 4096, temperature: 0.5 });
 
         const { writeReview } = await import('../book/manager.js');

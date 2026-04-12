@@ -4,6 +4,21 @@ export type JobStatus = 'pending' | 'running' | 'done' | 'failed';
 export type LLMProviderName = 'openai' | 'anthropic' | 'gemini';
 export type LLMTier = 'small' | 'medium' | 'writer';
 
+export type ReviewType = 'grammar' | 'standard' | 'full';
+export type ReviewPersona = 'chill' | 'strict' | 'dry';
+
+export const REVIEW_TYPES: { value: ReviewType; label: string; description: string }[] = [
+  { value: 'grammar',  label: 'Grammar & Writing',   description: 'Spelling, grammar, punctuation, sentence structure only' },
+  { value: 'standard', label: 'Style & Consistency', description: 'Writing style, lore accuracy, character consistency' },
+  { value: 'full',     label: 'Full Review',          description: 'Complete editorial review — structure, prose, consistency, suggestions' },
+];
+
+export const REVIEW_PERSONAS: { value: ReviewPersona; label: string; description: string }[] = [
+  { value: 'chill',  label: 'Chill',  description: 'Warm and encouraging — builds on what works' },
+  { value: 'strict', label: 'Strict', description: 'High standards, no sugarcoating' },
+  { value: 'dry',    label: 'Dry/AI', description: 'Clinical, analytical, no emotional framing' },
+];
+
 export interface BookRecord {
   id: string;
   projectName: string;

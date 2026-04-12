@@ -718,4 +718,125 @@ For each issue, explain WHAT conflicts, WHERE it appears (which files/chapters),
 
 Output ONLY the markdown content for timeline.md. Be thorough and precise with time references.`,
 
+// ─── Review Personas ─────────────────────────────────────────
+
+'review-persona-chill': `You are a supportive and encouraging literary editor. You lead with what's working, frame criticism as opportunity, and keep your tone warm and conversational. You care deeply about helping the author grow without deflating their confidence. Your feedback is specific and actionable, not vague praise.`,
+
+'review-persona-strict': `You are a demanding literary editor with high professional standards. You do not soften your critique or sugarcoat problems. You expect professional-grade writing and will call out every weakness directly. Your feedback is blunt, precise, and uncompromising — because you believe the author can handle it and will be better for it.`,
+
+'review-persona-dry': `You are a clinical literary analyst. You provide factual, systematic assessment without emotional framing. Your output is structured, analytical, and free of subjective language. You identify issues, categorize them, and propose corrections in a precise, technical format — like a quality audit report.`,
+
+// ─── Review Types ─────────────────────────────────────────────
+
+'review-type-grammar': `Review Chapter {{chapterNumber}} for grammar, writing mechanics, and language quality only.
+
+=== WRITING STYLE GUIDE ===
+{{styleContext}}
+
+=== CHAPTER {{chapterNumber}} ===
+{{chapterContent}}
+
+Focus strictly on:
+
+## Grammar & Spelling
+- Spelling errors
+- Grammatical mistakes (subject-verb agreement, tense consistency, pronoun clarity)
+- Punctuation errors (commas, semicolons, quotes, dashes)
+
+## Sentence Structure
+- Run-on sentences
+- Sentence fragments (unless stylistic)
+- Awkward or confusing phrasing
+- Repetitive sentence patterns
+
+## Word Choice
+- Redundant or filler words
+- Wrong word usage (homophones, malapropisms)
+- Inconsistent terminology or character name spelling
+
+## Style Guide Compliance
+- Anything that violates the stated style guide (tense, POV, voice)
+
+For each issue: quote the original text, explain the problem, provide a corrected version.
+
+Do NOT comment on plot, lore consistency, or story structure — that is out of scope for this review.`,
+
+'review-type-standard': `Review Chapter {{chapterNumber}} for writing style and story consistency.
+
+=== LORE & WORLD ===
+{{loreContext}}
+
+=== WRITING STYLE GUIDE ===
+{{styleContext}}
+
+=== CHAPTER {{chapterNumber}} ===
+{{chapterContent}}
+
+Focus on:
+
+## Style Adherence
+- Does the prose match the style guide (voice, tense, POV, pacing)?
+- Dialogue quality — natural, distinct character voices?
+- Show vs tell balance?
+- Pacing — any sections that drag or rush?
+
+## Lore & Consistency
+- Any contradictions with established lore (world rules, history, named places)?
+- Character behavior consistent with their established profiles?
+- Timeline consistency with previous chapters?
+- Any facts that contradict the world-building?
+
+## Character Consistency
+- Do characters speak and act in ways that match who they are?
+- Any out-of-character moments?
+
+For each issue found: explain the problem clearly and suggest a fix. Include relevant quotes.
+
+## Summary
+- Overall style grade (A-F)
+- Top 3 consistency issues (if any)
+- Top 2 style strengths`,
+
+'review-type-full': `Review Chapter {{chapterNumber}} with full editorial depth.
+
+=== LORE & WORLD ===
+{{loreContext}}
+
+=== WRITING STYLE GUIDE ===
+{{styleContext}}
+
+=== CHAPTER {{chapterNumber}} ===
+{{chapterContent}}
+
+Provide a thorough editorial review covering every dimension:
+
+## Consistency Check
+- Contradictions with established lore?
+- Character behavior consistent with their profiles?
+- Timeline consistency?
+
+## Prose Quality
+- Style guide adherence?
+- Pacing — too fast or slow in any sections?
+- Dialogue quality — natural, distinct character voices?
+- Show vs tell balance?
+- Sentence variety and rhythm?
+
+## Structure
+- Chapter opening effectiveness
+- Scene transitions
+- Chapter ending / hook quality
+- Internal logic and flow
+
+## Specific Suggestions
+- Line-by-line suggestions (quote the original, suggest revision)
+- Sections to expand or trim
+- Missing elements that would strengthen the chapter
+
+## Overall Assessment
+- Grade (A-F) with justification
+- Top 3 strengths
+- Top 3 areas for improvement
+- Recommended priority fixes before rewrite`,
+
 };

@@ -719,4 +719,125 @@ Dla każdego problemu wyjaśnij CO jest w konflikcie, GDZIE się pojawia (które
 
 Zwróć TYLKO treść markdown dla timeline.md. Bądź dokładny i precyzyjny z odniesieniami czasowymi. Pisz PO POLSKU.`,
 
+// ─── Persony recenzenta ──────────────────────────────────────
+
+'review-persona-chill': `Jesteś wspierającym i zachęcającym redaktorem literackim. Zaczynasz od tego, co działa dobrze, krytykę przedstawiasz jako szansę na rozwój, a ton masz ciepły i konwersacyjny. Zależy Ci na tym, żeby autor rósł bez utraty wiary we własne możliwości. Twoje uwagi są konkretne i praktyczne, nie ogólnikowe pochwały. Pisz PO POLSKU.`,
+
+'review-persona-strict': `Jesteś wymagającym redaktorem literackim o wysokich standardach zawodowych. Nie łagodzisz krytyki ani nie owijasz w bawełnę. Oczekujesz pisania na poziomie profesjonalnym i bezpośrednio wskazujesz każdą słabość. Twoje uwagi są dosadne, precyzyjne i bezkompromisowe — bo wierzysz, że autor poradzi sobie z taką informacją zwrotną i wyjdzie z niej lepszy. Pisz PO POLSKU.`,
+
+'review-persona-dry': `Jesteś klinicznym analitykiem literackim. Dostarczasz rzeczowej, systematycznej oceny bez emocjonalnych komentarzy. Twoje wnioski są ustrukturyzowane, analityczne i wolne od subiektywnego języka. Identyfikujesz problemy, kategoryzujesz je i proponujesz poprawki w precyzyjnym, technicznym formacie — jak raport kontroli jakości. Pisz PO POLSKU.`,
+
+// ─── Typy recenzji ───────────────────────────────────────────
+
+'review-type-grammar': `Zrecenzuj Rozdział {{chapterNumber}} pod kątem gramatyki, mechaniki pisania i jakości językowej. Pisz PO POLSKU.
+
+=== PRZEWODNIK STYLU PISANIA ===
+{{styleContext}}
+
+=== ROZDZIAŁ {{chapterNumber}} ===
+{{chapterContent}}
+
+Skup się wyłącznie na:
+
+## Gramatyka i pisownia
+- Błędy ortograficzne
+- Błędy gramatyczne (zgodność podmiotu z orzeczeniem, spójność czasu, jasność zaimków)
+- Błędy interpunkcyjne (przecinki, średniki, cudzysłowy, myślniki)
+
+## Budowa zdań
+- Zdania za długie lub zbyt skomplikowane
+- Urwane zdania (o ile nie są celowym zabiegiem stylistycznym)
+- Niezgrabne lub mylące sformułowania
+- Powtarzające się struktury zdań
+
+## Dobór słów
+- Zbędne lub wypełniające słowa
+- Błędne użycie słów
+- Niespójna terminologia lub pisownia imion postaci
+
+## Zgodność z przewodnikiem stylu
+- Naruszenia zdefiniowanego stylu (czas, perspektywa, głos narracyjny)
+
+Dla każdego problemu: zacytuj oryginalny tekst, wyjaśnij problem, podaj poprawioną wersję.
+
+NIE komentuj fabuły, spójności lore ani struktury narracyjnej — to wykracza poza zakres tej recenzji.`,
+
+'review-type-standard': `Zrecenzuj Rozdział {{chapterNumber}} pod kątem stylu pisania i spójności fabularnej. Pisz PO POLSKU.
+
+=== LORE I ŚWIAT ===
+{{loreContext}}
+
+=== PRZEWODNIK STYLU PISANIA ===
+{{styleContext}}
+
+=== ROZDZIAŁ {{chapterNumber}} ===
+{{chapterContent}}
+
+Skup się na:
+
+## Zgodność ze stylem
+- Czy proza odpowiada przewodnikowi stylu (głos, czas, perspektywa, tempo)?
+- Jakość dialogów — naturalne, wyraziste głosy postaci?
+- Balans pokazywania vs opowiadania?
+- Tempo — czy są fragmenty, w których akcja się wlecze lub pędzi?
+
+## Lore i spójność
+- Sprzeczności z ustalonym lore (zasady świata, historia, nazwy)?
+- Zachowanie postaci zgodne z ich ustalonymi profilami?
+- Spójność linii czasowej z poprzednimi rozdziałami?
+- Fakty sprzeczne z world-buildingiem?
+
+## Spójność postaci
+- Czy postacie mówią i działają zgodnie z tym, kim są?
+- Czy są momenty niezgodne z charakterem postaci?
+
+Dla każdego znalezionego problemu: wyjaśnij go i zaproponuj poprawkę. Dołącz odpowiednie cytaty.
+
+## Podsumowanie
+- Ogólna ocena stylu (A-F)
+- Top 3 problemy spójności (jeśli są)
+- Top 2 mocne strony stylu`,
+
+'review-type-full': `Zrecenzuj Rozdział {{chapterNumber}} z pełną głębią redakcyjną. Pisz PO POLSKU.
+
+=== LORE I ŚWIAT ===
+{{loreContext}}
+
+=== PRZEWODNIK STYLU PISANIA ===
+{{styleContext}}
+
+=== ROZDZIAŁ {{chapterNumber}} ===
+{{chapterContent}}
+
+Przeprowadź dokładną recenzję redakcyjną obejmującą każdy wymiar:
+
+## Sprawdzenie spójności
+- Sprzeczności z ustalonym lore?
+- Zachowanie postaci zgodne z ich profilami?
+- Spójność linii czasowej?
+
+## Jakość prozy
+- Zgodność ze stylem pisania?
+- Tempo — za szybkie lub za wolne w jakichś sekcjach?
+- Jakość dialogów — naturalne, wyraziste głosy postaci?
+- Balans pokazywania vs opowiadania?
+- Różnorodność i rytm zdań?
+
+## Struktura
+- Skuteczność otwarcia rozdziału
+- Przejścia między scenami
+- Jakość zakończenia / haka
+- Wewnętrzna logika i flow
+
+## Konkretne sugestie
+- Sugestie linia po linii (zacytuj oryginał, zaproponuj poprawkę)
+- Fragmenty do rozwinięcia lub skrócenia
+- Brakujące elementy, które wzmocniłyby rozdział
+
+## Ogólna ocena
+- Ocena (A-F) z uzasadnieniem
+- Top 3 mocne strony
+- Top 3 obszary do poprawy
+- Priorytetowe poprawki przed przepisaniem`,
+
 };

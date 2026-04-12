@@ -1,5 +1,7 @@
+import { select } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
+import { REVIEW_TYPES, REVIEW_PERSONAS } from '../types.js';
 import {
   readLoreContext,
   readStyleGuide,
@@ -37,6 +39,23 @@ export const reviewChapterCommand: Command = {
 
     header(`Review Chapter ${chapterNum}`);
 
+    blank();
+    const reviewType = await select({
+      message: 'Review type:',
+      choices: REVIEW_TYPES.map(t => ({ name: `${t.label} — ${t.description}`, value: t.value })),
+      default: 'full',
+    });
+
+    const reviewPersona = await select({
+      message: 'Reviewer persona:',
+      choices: [
+        { name: 'Default — balanced editorial voice', value: '' },
+        ...REVIEW_PERSONAS.map(p => ({ name: `${p.label} — ${p.description}`, value: p.value })),
+      ],
+      default: '',
+    });
+    blank();
+
     const spinner = ora({ text: 'Loading chapter...', color: 'cyan' }).start();
 
     const chapterContent = await readChapter(ctx.config, book.projectName, chapterNum);
@@ -56,9 +75,14 @@ export const reviewChapterCommand: Command = {
     spinner.text = `Reviewing Chapter ${chapterNum} (writer LLM)...`;
 
     try {
+      const { system, user } = await buildChapterReviewPrompt(
+        loreContext, styleGuide, chapterContent, chapterNum,
+        reviewType,
+        (reviewPersona as import('../types.js').ReviewPersona) || undefined,
+      );
       const review = await chatWriter(ctx.config, [
-        { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-        { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, chapterContent, chapterNum) },
+        { role: 'system', content: system },
+        { role: 'user', content: user },
       ], { maxTokens: 4096, temperature: 0.5 });
 
       const filePath = await writeReview(ctx.config, book.projectName, chapterNum, review);
