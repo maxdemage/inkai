@@ -1,4 +1,4 @@
-import { confirm } from '@inquirer/prompts';
+import { select } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
 import {
@@ -40,16 +40,20 @@ export const charactersCommand: Command = {
 
     const hasExisting = !!loreFiles['characters.md'];
 
-    // ─── Generate if missing ────────────────────────────────
+    // ─── No existing file: ask for guidance then generate ───
 
     if (!hasExisting) {
       blank();
       info('No characters.md found. Generating character sheets from your lore and chapters...');
+      blank();
+      info('Optionally describe what to focus on or add (leave blank to auto-generate):');
+      blank();
+      const authorGuidance = await multilineInput('Author guidance (optional):');
 
       spinner.start('Generating character sheets (writer LLM)...');
 
       try {
-        const content = await generateCharacters(ctx, book, loreContext, chapterSummary, notesContext);
+        const content = await generateCharacters(ctx, book, loreContext, chapterSummary, notesContext, authorGuidance.trim() || undefined);
         await writeLoreFiles(ctx.config, book.projectName, { 'characters.md': content });
         await updateBook(book.id, { summaryFresh: false });
         spinner.succeed('Character sheets generated');
@@ -62,77 +66,107 @@ export const charactersCommand: Command = {
         success('Saved to lore/characters.md');
       } catch (err: unknown) {
         spinner.fail('Failed to generate: ' + (err instanceof Error ? err.message : String(err)));
-        return;
       }
-    } else {
-      // ─── Show existing ────────────────────────────────────
-      blank();
-      boxMessage(loreFiles['characters.md'], 'Characters');
+      return;
     }
 
-    // ─── Ask about changes ──────────────────────────────────
+    // ─── Existing file: show it, then ask what to do ────────
 
     blank();
+    boxMessage(loreFiles['characters.md'], 'Characters');
+    blank();
 
-    const wantChanges = await confirm({
-      message: 'Do you want to make changes to the characters?',
-      default: false,
+    const action = await select({
+      message: 'What do you want to do?',
+      choices: [
+        { name: 'Extend current — add to or update the existing characters', value: 'extend' },
+        { name: 'Generate new file — regenerate from scratch using lore', value: 'generate' },
+        { name: 'Nothing — leave as is', value: 'cancel' },
+      ],
     });
 
-    if (!wantChanges) {
+    if (action === 'cancel') {
       info('Characters unchanged.');
       return;
     }
 
     blank();
-    info('Describe what you want to change — add a character, update arcs, fix details, etc.');
-    blank();
-    const authorChanges = await multilineInput('Describe changes:');
 
-    if (!authorChanges.trim()) {
-      info('No changes described. Characters unchanged.');
-      return;
-    }
+    if (action === 'extend') {
+      // ─── Extend: edit existing with user changes ───────────
 
-    // ─── Apply changes via LLM ──────────────────────────────
-
-    // Re-read in case it was just generated
-    const currentCharacters = (await readLoreFiles(ctx.config, book.projectName))['characters.md'] || '';
-
-    spinner.start('Applying changes (writer LLM)...');
-
-    try {
-      const prompt = await buildCharactersEditPrompt({
-        title: book.title,
-        type: book.type,
-        genre: book.genre,
-        currentCharacters,
-        loreContext,
-        authorChanges: authorChanges.trim(),
-      });
-
-      const updated = await chatWriter(ctx.config, [
-        {
-          role: 'system',
-          content: 'You are an expert character editor. Apply the requested changes and return the complete updated document in markdown.',
-        },
-        { role: 'user', content: prompt },
-      ], { maxTokens: 8192, temperature: 0.5 });
-
-      await writeLoreFiles(ctx.config, book.projectName, { 'characters.md': updated });
-      await updateBook(book.id, { summaryFresh: false });
-      spinner.succeed('Characters updated');
-
-      await commitIfEnabled(ctx, book.projectName, 'Update characters.md');
-
+      info('Describe what you want to add or change — new characters, updated arcs, fix details, etc.');
       blank();
-      divider();
+      const authorChanges = await multilineInput('Describe changes:');
+
+      if (!authorChanges.trim()) {
+        info('No changes described. Characters unchanged.');
+        return;
+      }
+
+      const currentCharacters = loreFiles['characters.md'];
+
+      spinner.start('Extending characters (writer LLM)...');
+
+      try {
+        const prompt = await buildCharactersEditPrompt({
+          title: book.title,
+          type: book.type,
+          genre: book.genre,
+          currentCharacters,
+          loreContext,
+          authorChanges: authorChanges.trim(),
+        });
+
+        const updated = await chatWriter(ctx.config, [
+          {
+            role: 'system',
+            content: 'You are an expert character editor. Apply the requested changes and return the complete updated document in markdown.',
+          },
+          { role: 'user', content: prompt },
+        ], { maxTokens: 8192, temperature: 0.5 });
+
+        await writeLoreFiles(ctx.config, book.projectName, { 'characters.md': updated });
+        await updateBook(book.id, { summaryFresh: false });
+        spinner.succeed('Characters updated');
+
+        await commitIfEnabled(ctx, book.projectName, 'Update characters.md');
+
+        blank();
+        divider();
+        blank();
+        boxMessage(updated, 'Updated Characters');
+        blank();
+        success('Characters saved to lore/characters.md');
+      } catch (err: unknown) {
+        spinner.fail('Failed to update: ' + (err instanceof Error ? err.message : String(err)));
+      }
+    } else {
+      // ─── Generate new: ask for guidance then regenerate ────
+
+      info('Optionally describe what to focus on or add (leave blank to auto-generate from lore):');
       blank();
-      boxMessage(updated, 'Updated Characters');
-      blank();
-      success('Characters saved to lore/characters.md');
-    } catch (err: unknown) {
-      spinner.fail('Failed to update: ' + (err instanceof Error ? err.message : String(err)));
+      const authorGuidance = await multilineInput('Author guidance (optional):');
+
+      spinner.start('Generating character sheets (writer LLM)...');
+
+      try {
+        const content = await generateCharacters(ctx, book, loreContext, chapterSummary, notesContext, authorGuidance.trim() || undefined);
+        await writeLoreFiles(ctx.config, book.projectName, { 'characters.md': content });
+        await updateBook(book.id, { summaryFresh: false });
+        spinner.succeed('Character sheets generated');
+
+        await commitIfEnabled(ctx, book.projectName, 'Generate characters.md');
+
+        blank();
+        divider();
+        blank();
+        boxMessage(content, 'New Characters');
+        blank();
+        success('Saved to lore/characters.md');
+      } catch (err: unknown) {
+        spinner.fail('Failed to generate: ' + (err instanceof Error ? err.message : String(err)));
+      }
     }
   },
 };
@@ -143,6 +177,7 @@ async function generateCharacters(
   loreContext: string,
   chapterSummary: string,
   notesContext: string,
+  authorGuidance?: string,
 ): Promise<string> {
   const prompt = await buildCharactersGeneratePrompt({
     title: book.title,
@@ -152,6 +187,7 @@ async function generateCharacters(
     loreContext,
     chapterSummary,
     notesContext,
+    authorGuidance,
   });
 
   return chatWriter(ctx.config, [

@@ -1,4 +1,4 @@
-import type { BookType } from '../types.js';
+import type { BookType, ReviewType, ReviewPersona } from '../types.js';
 import { loadTemplate } from './loader.js';
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -203,13 +203,24 @@ export async function buildChapterReviewPrompt(
   styleContext: string,
   chapterContent: string,
   chapterNumber: number,
-): Promise<string> {
-  return loadTemplate('chapter-review', {
+  reviewType: ReviewType = 'full',
+  reviewPersona?: ReviewPersona,
+): Promise<{ system: string; user: string }> {
+  const templateName = `review-type-${reviewType}`;
+  const user = await loadTemplate(templateName, {
     loreContext,
     styleContext,
     chapterContent,
     chapterNumber: String(chapterNumber),
   });
+
+  let system = 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.';
+  if (reviewPersona) {
+    const personaText = await loadTemplate(`review-persona-${reviewPersona}`, {});
+    if (personaText.trim()) system = personaText.trim();
+  }
+
+  return { system, user };
 }
 
 // ─── Chapter Rewrite ─────────────────────────────────────────
@@ -381,6 +392,7 @@ export async function buildCharactersGeneratePrompt(info: {
   loreContext: string;
   chapterSummary: string;
   notesContext: string;
+  authorGuidance?: string;
 }): Promise<string> {
   return loadTemplate('characters-generate', {
     title: info.title,
@@ -390,6 +402,7 @@ export async function buildCharactersGeneratePrompt(info: {
     loreContext: info.loreContext,
     chapterSummary: info.chapterSummary || 'No chapters written yet.',
     notesContext: info.notesContext || '(no notes)',
+    authorGuidance: info.authorGuidance || '',
   });
 }
 

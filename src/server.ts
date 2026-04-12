@@ -54,12 +54,13 @@ import {
   buildStoryArcGeneratePrompt,
   buildTimelineGeneratePrompt,
   buildCharactersGeneratePrompt,
+  buildCharactersEditPrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
 import { gitCommit, gitInit, isGitAvailable } from './git.js';
 import { generateEpub, generateOdt } from './commands/export.js';
-import type { InkaiConfig, BookType, LoreQuestion, BookRecord } from './types.js';
+import type { InkaiConfig, BookType, LoreQuestion, BookRecord, ReviewType, ReviewPersona } from './types.js';
 
 const PORT = parseInt(process.env.INKAI_PORT ?? '4242', 10);
 
@@ -514,6 +515,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const book = await requireBook(req.params.id, res);
       if (!book) return;
       const n = parseInt(req.params.n, 10);
+      const { reviewType, reviewPersona } = req.body as { reviewType?: ReviewType; reviewPersona?: ReviewPersona };
 
       const chapterContent = await readChapter(config, book.projectName, n);
       if (!chapterContent) { sse.send('error', { message: `Chapter ${n} not found` }); sse.done(); return; }
@@ -525,9 +527,14 @@ export async function startServer(webDistPath?: string): Promise<void> {
       ]);
 
       sse.send('progress', { message: `Reviewing chapter ${n} (writer LLM)...` });
+      const { system, user } = await buildChapterReviewPrompt(
+        loreContext, styleGuide, chapterContent, n,
+        reviewType ?? 'full',
+        reviewPersona,
+      );
       const review = await chatWriter(config, [
-        { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-        { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, chapterContent, n) },
+        { role: 'system', content: system },
+        { role: 'user', content: user },
       ], { maxTokens: 4096, temperature: 0.5 });
 
       await writeReview(config, book.projectName, n, review);
@@ -562,9 +569,10 @@ export async function startServer(webDistPath?: string): Promise<void> {
       let review = await readReview(config, book.projectName, n);
       if (!review) {
         sse.send('progress', { message: 'No review found — generating review first...' });
+        const { system: revSystem, user: revUser } = await buildChapterReviewPrompt(loreContext, styleGuide, original, n);
         review = await chatWriter(config, [
-          { role: 'system', content: 'You are an expert literary editor. Provide thorough, constructive feedback in markdown.' },
-          { role: 'user', content: await buildChapterReviewPrompt(loreContext, styleGuide, original, n) },
+          { role: 'system', content: revSystem },
+          { role: 'user', content: revUser },
         ], { maxTokens: 4096, temperature: 0.5 });
         await writeReview(config, book.projectName, n, review);
       }
@@ -817,6 +825,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const config = await loadConfig();
       const book = await requireBook(req.params.id, res);
       if (!book) return;
+      const { authorGuidance } = req.body as { authorGuidance?: string };
       sse.send('progress', { message: 'Loading book context...' });
       const [loreContext, chapterSummary, notesContext] = await Promise.all([
         readLoreContext(config, book.projectName),
@@ -829,6 +838,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
         { role: 'user', content: await buildCharactersGeneratePrompt({
           title: book.title, type: book.type, genre: book.genre, subgenre: book.subgenre,
           loreContext, chapterSummary, notesContext,
+          authorGuidance: authorGuidance?.trim() || undefined,
         }) },
       ], { maxTokens: 8192, temperature: 0.5 });
       await writeLoreFiles(config, book.projectName, { 'characters.md': content });
@@ -837,6 +847,44 @@ export async function startServer(webDistPath?: string): Promise<void> {
       }
       await updateBook(book.id, { summaryFresh: false });
       sse.send('done', { content });
+    } catch (err) {
+      sse.send('error', { message: String(err) });
+    }
+    sse.done();
+  });
+
+  app.post('/api/books/:id/characters/extend', async (req, res) => {
+    const sse = startSSE(res);
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const { authorChanges } = req.body as { authorChanges?: string };
+      if (!authorChanges?.trim()) {
+        sse.send('error', { message: 'authorChanges is required' });
+        sse.done();
+        return;
+      }
+      sse.send('progress', { message: 'Loading book context...' });
+      const [loreContext, loreFiles] = await Promise.all([
+        readLoreContext(config, book.projectName),
+        readLoreFiles(config, book.projectName),
+      ]);
+      const currentCharacters = loreFiles['characters.md'] ?? '';
+      sse.send('progress', { message: 'Extending character sheets (writer LLM)...' });
+      const updated = await chatWriter(config, [
+        { role: 'system', content: 'You are an expert character editor. Apply the requested changes and return the complete updated document in markdown.' },
+        { role: 'user', content: await buildCharactersEditPrompt({
+          title: book.title, type: book.type, genre: book.genre,
+          currentCharacters, loreContext, authorChanges: authorChanges.trim(),
+        }) },
+      ], { maxTokens: 8192, temperature: 0.5 });
+      await writeLoreFiles(config, book.projectName, { 'characters.md': updated });
+      if (isGitAvailable() && config.git.enabled && config.git.autoCommit) {
+        await gitCommit(getBookDir(config, book.projectName), `Extend characters for "${book.title}"`);
+      }
+      await updateBook(book.id, { summaryFresh: false });
+      sse.send('done', { content: updated });
     } catch (err) {
       sse.send('error', { message: String(err) });
     }
