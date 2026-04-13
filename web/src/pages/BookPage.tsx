@@ -38,27 +38,27 @@ function StatusPicker({ current, onChange }: {
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.06] transition-colors group"
+        className="flex items-center gap-1.5 px-2 py-1 rounded-lg border app-divider app-ghost-button transition-colors group"
         title="Change status"
       >
         <StatusBadge status={current} />
-        <ChevronDown size={11} className="text-slate-500 group-hover:text-slate-300 transition-colors" />
+        <ChevronDown size={11} className="app-text-faint group-hover:text-[color:var(--text)] transition-colors" />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-8 z-20 bg-ink-700 border border-white/[0.1] rounded-xl shadow-xl py-1 min-w-44">
+          <div className="absolute left-0 top-8 z-20 app-menu rounded-xl py-1 min-w-44">
             {STATUSES.map(s => (
               <button
                 key={s.value}
                 onClick={() => { onChange(s.value); setOpen(false); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-white/[0.07] ${
-                  s.value === current ? 'text-violet-300' : 'text-slate-300'
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-[color:var(--surface-muted)] ${
+                  s.value === current ? 'text-[color:var(--accent-strong)]' : 'app-text'
                 }`}
               >
                 <span>{s.emoji}</span>
                 {s.label}
-                {s.value === current && <span className="ml-auto text-violet-400 text-xs">✓</span>}
+                {s.value === current && <span className="ml-auto text-[color:var(--accent)] text-xs">✓</span>}
               </button>
             ))}
           </div>
@@ -82,20 +82,20 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   return (
-    <div className="flex items-center gap-3 py-3 px-4 hover:bg-white/[0.03] rounded-xl transition-colors group">
-      <div className="w-8 h-8 rounded-lg bg-ink-700 flex items-center justify-center text-xs font-mono text-slate-400 shrink-0">
+    <div className="flex items-center gap-3 py-3 px-4 hover:bg-[color:var(--surface-muted)] rounded-xl transition-colors group">
+      <div className="w-8 h-8 rounded-lg app-panel-strong flex items-center justify-center text-xs font-mono app-text-muted shrink-0">
         {String(ch.number).padStart(2, '0')}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-200">Chapter {ch.number}</span>
+          <span className="text-sm font-medium app-text-primary">Chapter {ch.number}</span>
           {ch.hasReview && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">reviewed</span>
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full app-info">reviewed</span>
           )}
         </div>
         {ch.hasChapter && (
-          <span className="text-xs text-slate-500">{ch.wordCount.toLocaleString()} words</span>
+          <span className="text-xs app-text-faint">{ch.wordCount.toLocaleString()} words</span>
         )}
       </div>
 
@@ -103,28 +103,28 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onRead}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-violet-600/15 hover:bg-violet-600/30 text-violet-300 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg app-accent-soft transition-colors"
             title="Read"
           >
             <BookOpen size={12} /> Read
           </button>
           <button
             onClick={() => onReview(ch.number)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg app-ghost-button transition-colors"
             title="AI Review"
           >
             <Star size={12} /> Review
           </button>
           <button
             onClick={() => onRewrite(ch.number)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg app-ghost-button transition-colors"
             title="AI Rewrite"
           >
             <RefreshCw size={12} /> Rewrite
           </button>
           <button
             onClick={() => onEdit(ch.number)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-500 hover:text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg app-ghost-button app-text-faint hover:text-[color:var(--text)] transition-colors"
             title="Edit manually"
           >
             <Pencil size={12} />
@@ -133,14 +133,14 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
             <>
               <button
                 onClick={() => { onDelete(ch.number); setConfirmDelete(false); }}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-red-500/20 hover:bg-red-500/35 text-red-400 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg app-danger transition-colors"
                 title="Confirm delete"
               >
                 <Trash2 size={11} /> Delete?
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-500 hover:text-slate-300 transition-colors"
+                className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg app-ghost-button app-text-faint hover:text-[color:var(--text)] transition-colors"
                 title="Cancel"
               >
                 <X size={11} />
@@ -149,7 +149,7 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg bg-white/[0.03] hover:bg-red-500/15 text-slate-600 hover:text-red-400 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg app-danger-button transition-colors"
               title="Delete chapter"
             >
               <Trash2 size={11} />
@@ -157,7 +157,7 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
           )}
         </div>
       ) : (
-        <span className="text-xs text-slate-600">—</span>
+        <span className="text-xs app-text-faint">—</span>
       )}
     </div>
   );
@@ -176,16 +176,16 @@ function LoreCard({ filename, content, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="bg-ink-800 border border-white/[0.07] rounded-xl p-4 text-left hover:border-violet-500/30 hover:bg-ink-700 transition-all group"
+      className="app-panel app-panel-hover rounded-xl p-4 text-left group"
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-200">{filename.replace('.md', '')}</span>
-        <span className="text-xs text-slate-600">{wordCount.toLocaleString()}w</span>
+        <span className="text-sm font-medium app-text-primary">{filename.replace('.md', '')}</span>
+        <span className="text-xs app-text-faint">{wordCount.toLocaleString()}w</span>
       </div>
-      <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{preview || '(empty)'}</p>
+      <p className="text-xs app-text-muted leading-relaxed line-clamp-3">{preview || '(empty)'}</p>
       <div className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Pencil size={10} className="text-violet-400" />
-        <span className="text-[10px] text-violet-400">Click to edit</span>
+        <Pencil size={10} className="text-[color:var(--accent)]" />
+        <span className="text-[11px] text-[color:var(--accent)]">Click to edit</span>
       </div>
     </button>
   );
@@ -237,8 +237,8 @@ export default function BookPage() {
     return () => clearTimeout(t);
   }, [jobToast]);
 
-  if (bookLoading) return <div className="flex items-center justify-center h-64 text-slate-500">Loading…</div>;
-  if (!book) return <div className="flex items-center justify-center h-64 text-red-400">Book not found.</div>;
+  if (bookLoading) return <div className="flex items-center justify-center h-64 app-text-faint">Loading…</div>;
+  if (!book) return <div className="flex items-center justify-center h-64 app-text-danger">Book not found.</div>;
 
   const saveTitle = async () => {
     if (!titleDraft.trim() || titleDraft === book.title) { setEditingTitle(false); return; }
@@ -259,7 +259,7 @@ export default function BookPage() {
   // Editing a lore file — full panel takeover
   if (editingLore) {
     return (
-      <div className="h-full flex flex-col bg-ink-950">
+      <div className="h-full flex flex-col app-main">
         <LoreEditor
           bookId={book.id}
           filename={editingLore}
@@ -273,7 +273,7 @@ export default function BookPage() {
   // Editing a chapter — full panel takeover
   if (editingChapter !== null) {
     return (
-      <div className="h-full flex flex-col bg-ink-950">
+      <div className="h-full flex flex-col app-main">
         <ChapterEditor
           bookId={book.id}
           chapterNumber={editingChapter}
@@ -286,28 +286,29 @@ export default function BookPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Book header ─────────────────────────────────────────── */}
-      <div className="px-8 py-6 border-b border-white/[0.06] bg-ink-900/50 shrink-0">
+      <div className="px-8 py-6 border-b app-divider bg-[color:var(--bg-soft)] shrink-0">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {editingTitle ? (
                 <div className="flex items-center gap-2">
                   <input
-                    className="text-2xl font-bold bg-transparent border-b border-violet-500 text-white focus:outline-none py-0.5 w-full max-w-sm"
+                    className="text-2xl font-bold bg-transparent border-b text-[color:var(--text-strong)] py-0.5 w-full max-w-sm"
+                    style={{ borderColor: 'var(--accent)' }}
                     value={titleDraft}
                     onChange={e => setTitleDraft(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
                     autoFocus
                   />
-                  <button onClick={saveTitle} className="text-emerald-400 hover:text-emerald-300 transition-colors"><Check size={16} /></button>
-                  <button onClick={() => setEditingTitle(false)} className="text-slate-500 hover:text-slate-300 transition-colors"><X size={16} /></button>
+                  <button onClick={saveTitle} className="app-text-success transition-colors"><Check size={16} /></button>
+                  <button onClick={() => setEditingTitle(false)} className="app-text-faint hover:text-[color:var(--text)] transition-colors"><X size={16} /></button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 group/title">
-                  <h1 className="text-2xl font-bold text-white truncate">{book.title}</h1>
+                  <h1 className="text-2xl font-bold app-text-primary truncate">{book.title}</h1>
                   <button
                     onClick={() => { setTitleDraft(book.title); setEditingTitle(true); }}
-                    className="opacity-0 group-hover/title:opacity-100 transition-opacity text-slate-500 hover:text-slate-300"
+                    className="opacity-0 group-hover/title:opacity-100 transition-opacity app-text-faint hover:text-[color:var(--text)]"
                   >
                     <Pencil size={14} />
                   </button>
@@ -318,10 +319,10 @@ export default function BookPage() {
                   current={book.status}
                   onChange={status => updateBook.mutate({ id: book.id, data: { status } })}
                 />
-                <span className="text-xs text-slate-500 capitalize">{book.genre}</span>
-                {book.subgenre && <span className="text-xs text-slate-600">· {book.subgenre}</span>}
-                <span className="text-xs text-slate-600">·</span>
-                <span className="text-xs text-slate-500">{book.chapterCount} chapter{book.chapterCount !== 1 ? 's' : ''}</span>
+                <span className="text-xs app-text-muted capitalize">{book.genre}</span>
+                {book.subgenre && <span className="text-xs app-text-faint">· {book.subgenre}</span>}
+                <span className="text-xs app-text-faint">·</span>
+                <span className="text-xs app-text-muted">{book.chapterCount} chapter{book.chapterCount !== 1 ? 's' : ''}</span>
               </div>
             </div>
 
@@ -345,18 +346,18 @@ export default function BookPage() {
                   {showExport && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
-                      <div className="absolute right-0 top-8 z-20 bg-ink-700 border border-white/[0.1] rounded-xl shadow-xl py-1 min-w-40">
+                      <div className="absolute right-0 top-8 z-20 app-menu rounded-xl py-1 min-w-40">
                         <button
                           onClick={() => { api.books.export(book.id, 'epub'); setShowExport(false); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-colors"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm app-ghost-button transition-colors"
                         >
-                          <Download size={13} className="text-violet-400" /> EPUB
+                          <Download size={13} className="text-[color:var(--accent)]" /> EPUB
                         </button>
                         <button
                           onClick={() => { api.books.export(book.id, 'odt'); setShowExport(false); }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.07] transition-colors"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm app-ghost-button transition-colors"
                         >
-                          <Download size={13} className="text-violet-400" /> ODT
+                          <Download size={13} className="text-[color:var(--accent)]" /> ODT
                         </button>
                       </div>
                     </>
@@ -366,7 +367,7 @@ export default function BookPage() {
               {book.status !== 'archived' && (
                 <button
                   onClick={() => archiveBook.mutate(book.id)}
-                  className="btn-ghost-sm text-slate-500 hover:text-amber-400"
+                  className="btn-ghost-sm app-warning-button"
                   title="Archive this book"
                 >
                   Archive
@@ -380,13 +381,13 @@ export default function BookPage() {
             <div className="mt-3">
               <button
                 onClick={() => setShowSummary(!showSummary)}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="flex items-center gap-1 text-xs app-text-faint hover:text-[color:var(--text)] transition-colors"
               >
                 {showSummary ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {showSummary ? 'Hide' : 'Show'} summary
               </button>
               {showSummary && (
-                <p className="mt-2 text-sm text-slate-400 leading-relaxed max-w-2xl">{book.summary}</p>
+                <p className="mt-2 text-sm app-text-muted leading-relaxed max-w-2xl">{book.summary}</p>
               )}
             </div>
           )}
@@ -394,7 +395,7 @@ export default function BookPage() {
       </div>
 
       {/* ── Tab bar ─────────────────────────────────────────────── */}
-      <div className="px-8 border-b border-white/[0.06] shrink-0">
+      <div className="px-8 border-b app-divider shrink-0">
         <div className="max-w-5xl mx-auto flex items-center gap-1">
           {([
             { id: 'chapters', label: 'Chapters', icon: BookOpen },
@@ -406,16 +407,16 @@ export default function BookPage() {
               onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.id
-                  ? 'border-violet-500 text-violet-300'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
+                  ? 'border-[color:var(--accent)] text-[color:var(--accent-strong)]'
+                  : 'border-transparent app-text-faint hover:text-[color:var(--text)]'
               }`}
             >
               <t.icon size={14} /> {t.label}
               {t.id === 'chapters' && (
-                <span className="ml-1 text-xs bg-white/[0.08] rounded-full px-1.5 py-0.5 text-slate-400">{chapters.length}</span>
+                <span className="ml-1 text-xs app-tag rounded-full px-1.5 py-0.5">{chapters.length}</span>
               )}
               {t.id === 'lore' && (
-                <span className="ml-1 text-xs bg-white/[0.08] rounded-full px-1.5 py-0.5 text-slate-400">{displayLoreFiles.length}</span>
+                <span className="ml-1 text-xs app-tag rounded-full px-1.5 py-0.5">{displayLoreFiles.length}</span>
               )}
             </button>
           ))}
@@ -430,10 +431,10 @@ export default function BookPage() {
           {tab === 'chapters' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Chapters</h2>
+                <h2 className="text-sm font-semibold app-text-muted uppercase tracking-wider">Chapters</h2>
                 <button
                   onClick={() => setShowCreateChapter(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-xl transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 app-accent-button text-sm font-medium rounded-xl transition-colors"
                 >
                   <Plus size={14} />
                   Write Chapter {book.chapterCount + 1}
@@ -444,17 +445,15 @@ export default function BookPage() {
               {bookActiveJobs.length > 0 && (
                 <div className="space-y-2">
                   {bookActiveJobs.map(job => (
-                    <div key={job.id} className="flex items-center gap-3 px-4 py-3 bg-amber-900/15 border border-amber-500/20 rounded-xl">
-                      <Loader2 size={14} className="animate-spin text-amber-400 shrink-0" />
-                      <span className="text-sm text-amber-200 flex-1">
+                    <div key={job.id} className="flex items-center gap-3 px-4 py-3 app-warning rounded-xl">
+                      <Loader2 size={14} className="animate-spin shrink-0 app-text-warning" />
+                      <span className="text-sm flex-1">
                         Chapter {job.chapterNumber} — writing in background
                       </span>
-                      <span className={`text-xs capitalize ${
-                        job.status === 'running' ? 'text-amber-300' : 'text-slate-500'
-                      }`}>{job.status}</span>
+                      <span className={`text-xs capitalize ${job.status === 'running' ? 'app-text-warning' : 'app-text-faint'}`}>{job.status}</span>
                       <button
                         onClick={() => navigate('/jobs')}
-                        className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                        className="text-xs app-text-muted hover:text-[color:var(--text)] transition-colors"
                       >
                         View →
                       </button>
@@ -463,10 +462,10 @@ export default function BookPage() {
                 </div>
               )}
 
-              {chaptersLoading && <div className="text-sm text-slate-500">Loading chapters…</div>}
+              {chaptersLoading && <div className="text-sm app-text-faint">Loading chapters…</div>}
 
               {chapters.length === 0 && !chaptersLoading && (
-                <div className="text-center py-12 text-slate-600">
+                <div className="text-center py-12 app-text-faint">
                   <FileText size={32} className="mx-auto mb-3 opacity-40" />
                   <p className="text-sm">No chapters yet.</p>
                   <p className="text-xs mt-1">Click "Write Chapter 1" to get started.</p>
@@ -474,7 +473,7 @@ export default function BookPage() {
               )}
 
               {chapters.length > 0 && (
-                <div className="bg-ink-800 border border-white/[0.06] rounded-2xl divide-y divide-white/[0.04]">
+                <div className="app-panel rounded-2xl divide-y app-divider">
                   {chapters.map(ch => (
                     <ChapterRow
                       key={ch.number}
@@ -495,43 +494,43 @@ export default function BookPage() {
           {tab === 'lore' && (
             <div className="space-y-6">
               {/* Lore files header */}
-              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Lore Files</h2>
+              <h2 className="text-sm font-semibold app-text-muted uppercase tracking-wider">Lore Files</h2>
 
               {/* AI enhancing tools */}
-              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 space-y-3">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Enhancing Tools</h3>
+              <div className="rounded-2xl app-panel px-4 py-3 space-y-3">
+                <h3 className="text-xs font-semibold app-text-faint uppercase tracking-wider">AI Enhancing Tools</h3>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setShowEnhance(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-violet-300 bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/20 rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-accent-soft rounded-xl transition-colors"
                   >
                     <Sparkles size={13} /> Enhance Lore
                   </button>
                   <button
                     onClick={() => setGenerateType('story-arc')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-300 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
                   >
                     <Layers3 size={13} /> Story Arc
                   </button>
                   <button
                     onClick={() => setGenerateType('timeline')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-300 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
                   >
                     <Eye size={13} /> Timeline
                   </button>
                   <button
                     onClick={() => setGenerateType('characters')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-300 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
                   >
                     <Star size={13} /> Characters
                   </button>
                 </div>
               </div>
 
-              {loreLoading && <div className="text-sm text-slate-500">Loading lore…</div>}
+              {loreLoading && <div className="text-sm app-text-faint">Loading lore…</div>}
 
               {displayLoreFiles.length === 0 && !loreLoading && (
-                <div className="text-center py-12 text-slate-600">
+                <div className="text-center py-12 app-text-faint">
                   <Layers3 size={32} className="mx-auto mb-3 opacity-40" />
                   <p className="text-sm">No lore files yet.</p>
                 </div>
@@ -552,23 +551,23 @@ export default function BookPage() {
 
               {/* Quick view panels for key generated content */}
               {storyArcContent && (
-                <div className="mt-6 bg-ink-800 border border-white/[0.06] rounded-2xl p-5">
+                <div className="mt-6 app-panel rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-300">Story Arc</h3>
-                    <button onClick={() => setEditingLore('story-arc.md')} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Edit</button>
+                    <h3 className="text-sm font-semibold app-text">Story Arc</h3>
+                    <button onClick={() => setEditingLore('story-arc.md')} className="text-xs app-link transition-colors">Edit</button>
                   </div>
                   <div className="prose-dark text-sm max-h-48 overflow-y-auto">
                     <ReactMarkdown>{storyArcContent.slice(0, 1000)}</ReactMarkdown>
-                    {storyArcContent.length > 1000 && <p className="text-slate-600 text-xs mt-2">…more in editor</p>}
+                    {storyArcContent.length > 1000 && <p className="app-text-faint text-xs mt-2">…more in editor</p>}
                   </div>
                 </div>
               )}
 
               {writingStyleContent && (
-                <div className="bg-ink-800 border border-white/[0.06] rounded-2xl p-5">
+                <div className="app-panel rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-300">Style of Writing</h3>
-                    <button onClick={() => setEditingLore('style-of-writing.md')} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Edit</button>
+                    <h3 className="text-sm font-semibold app-text">Style of Writing</h3>
+                    <button onClick={() => setEditingLore('style-of-writing.md')} className="text-xs app-link transition-colors">Edit</button>
                   </div>
                   <div className="prose-dark text-sm max-h-48 overflow-y-auto">
                     <ReactMarkdown>{writingStyleContent.slice(0, 800)}</ReactMarkdown>
@@ -577,10 +576,10 @@ export default function BookPage() {
               )}
 
               {timelineContent && (
-                <div className="bg-ink-800 border border-white/[0.06] rounded-2xl p-5">
+                <div className="app-panel rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-300">Timeline</h3>
-                    <button onClick={() => setEditingLore('timeline.md')} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Edit</button>
+                    <h3 className="text-sm font-semibold app-text">Timeline</h3>
+                    <button onClick={() => setEditingLore('timeline.md')} className="text-xs app-link transition-colors">Edit</button>
                   </div>
                   <div className="prose-dark text-sm max-h-48 overflow-y-auto">
                     <ReactMarkdown>{timelineContent.slice(0, 1000)}</ReactMarkdown>
@@ -589,10 +588,10 @@ export default function BookPage() {
               )}
 
               {charactersContent && (
-                <div className="bg-ink-800 border border-white/[0.06] rounded-2xl p-5">
+                <div className="app-panel rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-slate-300">Characters</h3>
-                    <button onClick={() => setEditingLore('characters.md')} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Edit</button>
+                    <h3 className="text-sm font-semibold app-text">Characters</h3>
+                    <button onClick={() => setEditingLore('characters.md')} className="text-xs app-link transition-colors">Edit</button>
                   </div>
                   <div className="prose-dark text-sm max-h-48 overflow-y-auto">
                     <ReactMarkdown>{charactersContent.slice(0, 1000)}</ReactMarkdown>
@@ -605,8 +604,8 @@ export default function BookPage() {
           {/* ── Summary tab ──────────────────────────────────────── */}
           {tab === 'summary' && (
             <div className="space-y-4">
-              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Chapter Summary</h2>
-              <div className="bg-ink-800 border border-white/[0.06] rounded-2xl p-6">
+              <h2 className="text-sm font-semibold app-text-muted uppercase tracking-wider">Chapter Summary</h2>
+              <div className="app-panel rounded-2xl p-6">
                 <div className="prose-dark text-sm">
                   <ReactMarkdown>{chapterSummaryContent}</ReactMarkdown>
                 </div>
@@ -662,21 +661,21 @@ export default function BookPage() {
 
       {/* ── Job started toast ──────────────────────────────────── */}
       {jobToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3.5 bg-ink-700 border border-violet-500/25 rounded-2xl shadow-2xl max-w-xs">
-          <span className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3.5 app-panel-strong rounded-2xl shadow-2xl max-w-xs" style={{ borderColor: 'var(--accent-border)' }}>
+          <span className="w-2 h-2 mt-1.5 rounded-full animate-pulse shrink-0" style={{ background: 'var(--semantic-warning-dot)' }} />
           <div className="flex-1">
-            <p className="text-sm font-medium text-white">Chapter {jobToast.chapterNumber} queued</p>
-            <p className="text-xs text-slate-400 mt-0.5">Writing in the background…</p>
+            <p className="text-sm font-medium app-text-primary">Chapter {jobToast.chapterNumber} queued</p>
+            <p className="text-xs app-text-muted mt-0.5">Writing in the background…</p>
             <button
               onClick={() => { navigate('/jobs'); setJobToast(null); }}
-              className="text-xs text-violet-400 hover:text-violet-300 mt-1.5 transition-colors"
+              className="text-xs app-link mt-1.5 transition-colors"
             >
               View jobs →
             </button>
           </div>
           <button
             onClick={() => setJobToast(null)}
-            className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white transition-colors shrink-0"
+            className="w-5 h-5 rounded flex items-center justify-center app-text-faint hover:text-[color:var(--text)] transition-colors shrink-0"
           >
             <X size={11} />
           </button>

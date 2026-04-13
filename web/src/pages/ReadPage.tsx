@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check } from 'lucide-react';
 import { useChapter, useChapters, useReview, useLore, useBook, useUpdateChapter } from '../hooks';
+import { useTheme } from '../theme';
 
 // ── Lore term extraction ────────────────────────────────────────
 
@@ -168,16 +169,24 @@ function ParagraphBlock({ raw, terms, onTermClick, textColor, onSave }: Paragrap
           }}
           onKeyDown={onKeyDown}
           disabled={saving}
-          className="w-full px-3 py-2 rounded-lg bg-black/10 border border-violet-500/40 text-sm resize-none outline-none focus:border-violet-500/70 transition-colors"
-          style={{ color: textColor, fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit', minHeight: '3em' }}
+          className="w-full px-3 py-2 rounded-lg text-sm resize-none transition-colors"
+          style={{
+            background: 'color-mix(in srgb, var(--surface) 74%, transparent)',
+            border: '1px solid var(--accent-border)',
+            color: textColor,
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            lineHeight: 'inherit',
+            minHeight: '3em',
+          }}
           rows={3}
         />
         <div className="flex items-center gap-2 mt-1.5 justify-end">
-          <span className="text-[10px] opacity-40" style={{ color: textColor }}>Ctrl+Enter to save · Esc to cancel</span>
-          <button onClick={cancel} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-white/[0.07] hover:bg-white/[0.12] opacity-60 hover:opacity-100 transition-all" style={{ color: textColor }}>
+          <span className="text-[10px] opacity-70" style={{ color: textColor }}>Ctrl+Enter to save · Esc to cancel</span>
+          <button onClick={cancel} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg opacity-75 hover:opacity-100 transition-all" style={{ color: textColor, background: 'var(--surface-muted)' }}>
             <X size={10} /> Cancel
           </button>
-          <button onClick={() => { void save(); }} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-violet-600/30 hover:bg-violet-600/50 text-violet-200 border border-violet-500/30 transition-all disabled:opacity-50">
+          <button onClick={() => { void save(); }} disabled={saving} className="flex items-center gap-1 px-2 py-1 text-xs rounded-lg transition-all disabled:opacity-50" style={{ background: 'var(--accent-soft)', color: 'var(--accent-strong)', border: '1px solid var(--accent-border)' }}>
             <Check size={10} /> {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -201,8 +210,8 @@ function ParagraphBlock({ raw, terms, onTermClick, textColor, onSave }: Paragrap
       <button
         onClick={startEdit}
         title="Edit this paragraph"
-        className="absolute right-0 top-0 w-6 h-6 flex items-center justify-center rounded-md bg-black/20 hover:bg-violet-600/40 transition-all opacity-0 group-hover:opacity-100"
-        style={{ color: textColor }}
+        className="absolute right-0 top-0 w-6 h-6 flex items-center justify-center rounded-md transition-all opacity-0 group-hover:opacity-100"
+        style={{ background: 'color-mix(in srgb, var(--bg) 65%, transparent)', color: textColor }}
       >
         <Pencil size={11} />
       </button>
@@ -226,13 +235,14 @@ function LorePopover({ term, onClose }: { term: LoreTerm; onClose: () => void })
   return (
     <div
       ref={ref}
-      className="fixed bottom-6 right-[calc(320px+1.5rem)] z-30 w-72 bg-ink-800 border border-violet-500/30 rounded-2xl shadow-2xl p-4"
+      className="fixed bottom-6 right-[calc(320px+1.5rem)] z-30 w-72 app-panel-strong rounded-2xl shadow-2xl p-4"
+      style={{ borderColor: 'var(--accent-border)' }}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-violet-300 uppercase tracking-wider">{term.filename.replace('.md', '')}</span>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={13} /></button>
+        <span className="text-xs font-semibold text-[color:var(--accent-strong)] uppercase tracking-wider">{term.filename.replace('.md', '')}</span>
+        <button onClick={onClose} className="app-text-faint hover:text-[color:var(--text)]"><X size={13} /></button>
       </div>
-      <h3 className="text-sm font-bold text-white mb-2">{term.term}</h3>
+      <h3 className="text-sm font-bold app-text-primary mb-2">{term.term}</h3>
       <div className="prose-dark text-xs max-h-48 overflow-y-auto">
         <ReactMarkdown>{term.content.slice(0, 800)}</ReactMarkdown>
       </div>
@@ -257,6 +267,7 @@ const FONTS = [
 ];
 
 const BG_THEMES = [
+  { label: 'App Theme', bg: '__app__', border: '', topBg: '' },
   { label: 'Paper',   bg: '#f5f0e8', border: '#d8d0be', topBg: '#f0ebe0' },
   { label: 'White',   bg: '#ffffff', border: '#e5e7eb', topBg: '#f9fafb' },
   { label: 'Dusk',    bg: '#1e1b2e', border: '#2d2a40', topBg: '#17152a' },
@@ -266,6 +277,7 @@ const BG_THEMES = [
 ];
 
 const TEXT_COLORS = [
+  { label: 'Theme',     value: '__app__' },
   { label: 'Ink',       value: '#2a2520' },
   { label: 'Charcoal',  value: '#374151' },
   { label: 'Slate',     value: '#94a3b8' },
@@ -281,6 +293,13 @@ interface ReadingSettings {
   textColor: string;
 }
 
+const LEGACY_DEFAULT_SETTINGS: ReadingSettings = {
+  fontSize: '18px',
+  fontFamily: FONTS[0].value,
+  bgTheme: BG_THEMES[0].bg,
+  textColor: TEXT_COLORS[0].value,
+};
+
 const DEFAULT_SETTINGS: ReadingSettings = {
   fontSize: '18px',
   fontFamily: FONTS[0].value,
@@ -291,7 +310,21 @@ const DEFAULT_SETTINGS: ReadingSettings = {
 function loadSettings(): ReadingSettings {
   try {
     const raw = localStorage.getItem('inkai-reading-settings');
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } as ReadingSettings;
+      const isLegacyDefault =
+        parsed.fontSize === LEGACY_DEFAULT_SETTINGS.fontSize &&
+        parsed.fontFamily === LEGACY_DEFAULT_SETTINGS.fontFamily &&
+        parsed.bgTheme === LEGACY_DEFAULT_SETTINGS.bgTheme &&
+        parsed.textColor === LEGACY_DEFAULT_SETTINGS.textColor;
+
+      if (isLegacyDefault) {
+        localStorage.setItem('inkai-reading-settings', JSON.stringify(DEFAULT_SETTINGS));
+        return DEFAULT_SETTINGS;
+      }
+
+      return parsed;
+    }
   } catch { /* ignore */ }
   return DEFAULT_SETTINGS;
 }
@@ -302,6 +335,7 @@ export default function ReadPage() {
   const { id, n } = useParams<{ id: string; n: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { currentTheme } = useTheme();
   const chapterNum = parseInt(n!, 10);
 
   const { data: book } = useBook(id!);
@@ -341,12 +375,53 @@ export default function ReadPage() {
     localStorage.setItem('inkai-reading-settings', JSON.stringify(next));
   };
 
-  const theme = BG_THEMES.find(t => t.bg === settings.bgTheme) ?? BG_THEMES[0];
-  const isDark = ['#1e1b2e','#0f0f0f','#1a2420'].includes(theme.bg);
-  const uiText    = isDark ? '#a09888' : '#6b6358';
-  const uiTextHov = isDark ? '#e8e0d0' : '#2a2520';
-  const uiHoverBg = isDark ? 'rgba(255,255,255,0.07)' : '#e0d8c8';
+  const appReaderTheme = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        bg: '#ffffff',
+        topBg: '#f9fafb',
+        border: '#e5e7eb',
+        textColor: '#374151',
+        uiText: '#6b7280',
+        uiTextHov: '#111827',
+        uiHoverBg: 'rgba(17,24,39,0.08)',
+        isDark: false,
+      };
+    }
+
+    const styles = window.getComputedStyle(document.documentElement);
+    const bg = styles.getPropertyValue('--reading-bg').trim() || '#ffffff';
+    const topBg = styles.getPropertyValue('--bg-elevated').trim() || '#f9fafb';
+    const border = styles.getPropertyValue('--reading-border').trim() || '#e5e7eb';
+    const textColor = styles.getPropertyValue('--reading-text').trim() || '#374151';
+    const uiText = styles.getPropertyValue('--text-muted').trim() || '#6b7280';
+    const uiTextHov = styles.getPropertyValue('--text-strong').trim() || '#111827';
+    const isDark = document.documentElement.dataset.theme !== 'glacier-paper';
+
+    return {
+      bg,
+      topBg,
+      border,
+      textColor,
+      uiText,
+      uiTextHov,
+      uiHoverBg: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,24,39,0.08)',
+      isDark,
+    };
+  }, [currentTheme.id]);
+
+  const selectedTheme = BG_THEMES.find(t => t.bg === settings.bgTheme) ?? BG_THEMES[0];
+  const theme = settings.bgTheme === '__app__'
+    ? { bg: appReaderTheme.bg, topBg: appReaderTheme.topBg, border: appReaderTheme.border }
+    : selectedTheme;
+  const isDark = settings.bgTheme === '__app__'
+    ? appReaderTheme.isDark
+    : ['#1e1b2e', '#0f0f0f', '#1a2420'].includes(theme.bg);
+  const uiText = settings.bgTheme === '__app__' ? appReaderTheme.uiText : (isDark ? '#a09888' : '#6b6358');
+  const uiTextHov = settings.bgTheme === '__app__' ? appReaderTheme.uiTextHov : (isDark ? '#e8e0d0' : '#2a2520');
+  const uiHoverBg = settings.bgTheme === '__app__' ? appReaderTheme.uiHoverBg : (isDark ? 'rgba(255,255,255,0.07)' : '#e0d8c8');
   const uiBorder  = theme.border;
+  const readerTextColor = settings.textColor === '__app__' ? appReaderTheme.textColor : settings.textColor;
 
   const loreTerms = useMemo(() => extractLoreTerms(loreFiles), [loreFiles]);
 
@@ -597,7 +672,7 @@ export default function ReadPage() {
             {!isLoading && currentContent && (
               <div
                 className="reading-content"
-                style={{ fontSize: settings.fontSize, fontFamily: settings.fontFamily, color: settings.textColor }}
+                style={{ fontSize: settings.fontSize, fontFamily: settings.fontFamily, color: readerTextColor }}
               >
                 {readingTab === 'review' ? (
                   /* Review is always plain — no lore highlighting */
@@ -624,20 +699,20 @@ export default function ReadPage() {
 
         {/* ── Lore sidebar ─────────────────────────────────────── */}
         {showLore && (
-          <aside className="w-80 shrink-0 bg-ink-900 border-l border-white/[0.06] flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/[0.06] shrink-0">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lore</p>
-              <p className="text-[10px] text-slate-600 mt-0.5">Click highlighted terms in text or select a file</p>
+          <aside className="w-80 shrink-0 app-sidebar border-l app-divider flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b app-divider shrink-0">
+              <p className="text-xs font-semibold app-text-muted uppercase tracking-wider">Lore</p>
+              <p className="text-[10px] app-text-faint mt-0.5">Click highlighted terms in text or select a file</p>
             </div>
 
             {selectedLoreFile && selectedLoreContent ? (
               /* Show selected lore file */
               <div className="flex-1 overflow-y-auto">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.04] shrink-0">
-                  <span className="text-xs font-medium text-violet-300">{selectedLoreFile.replace('.md', '')}</span>
+                <div className="flex items-center justify-between px-4 py-2 border-b app-divider shrink-0">
+                  <span className="text-xs font-medium text-[color:var(--accent-strong)]">{selectedLoreFile.replace('.md', '')}</span>
                   <button
                     onClick={() => setSelectedLoreFile(null)}
-                    className="text-slate-500 hover:text-slate-300 transition-colors"
+                    className="app-text-faint hover:text-[color:var(--text)] transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -655,25 +730,28 @@ export default function ReadPage() {
                     <button
                       key={filename}
                       onClick={() => setSelectedLoreFile(filename)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg hover:bg-white/[0.05] transition-colors group"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg app-ghost-button transition-colors group"
                     >
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasTermInChapter ? 'bg-violet-400' : 'bg-slate-700'}`} />
-                      <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors truncate">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: hasTermInChapter ? 'var(--accent)' : 'color-mix(in srgb, var(--text-faint) 75%, var(--bg) 25%)' }}
+                      />
+                      <span className="text-xs app-text-muted group-hover:text-[color:var(--text)] transition-colors truncate">
                         {filename.replace('.md', '')}
                       </span>
                     </button>
                   );
                 })}
                 {loreSidebarFiles.length === 0 && (
-                  <p className="px-3 text-xs text-slate-600 py-4">No lore files found.</p>
+                  <p className="px-3 text-xs app-text-faint py-4">No lore files found.</p>
                 )}
               </div>
             )}
 
             {loreTerms.length > 0 && (
-              <div className="px-4 py-2.5 border-t border-white/[0.04] shrink-0">
-                <p className="text-[10px] text-slate-600">
-                  <span className="inline-block w-2 h-2 rounded-full bg-violet-400 mr-1 align-middle" />
+              <div className="px-4 py-2.5 border-t app-divider shrink-0">
+                <p className="text-[10px] app-text-faint">
+                  <span className="inline-block w-2 h-2 rounded-full bg-[color:var(--accent)] mr-1 align-middle" />
                   {loreTerms.length} terms detected
                 </p>
               </div>

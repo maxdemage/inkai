@@ -72,20 +72,20 @@ export default function GenerateContentModal({ book, type, hasExisting, onClose 
     <Modal title={cfg.title} onClose={phase === 'generating' ? undefined : onClose} size="md">
       {phase === 'confirm' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400 leading-relaxed">{cfg.description}</p>
+          <p className="text-sm app-text-muted leading-relaxed">{cfg.description}</p>
 
           {/* Characters mode selector — only when file already exists */}
           {isCharacters && hasExisting && (
-            <div className="flex rounded-xl overflow-hidden border border-white/[0.08]">
+            <div className="flex rounded-xl overflow-hidden border app-divider">
               <button
                 onClick={() => { setCharactersMode('extend'); setAuthorGuidance(''); }}
-                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${charactersMode === 'extend' ? 'bg-violet-600/30 text-violet-300' : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06]'}`}
+                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${charactersMode === 'extend' ? 'app-accent-soft' : 'app-ghost-button app-text-muted'}`}
               >
                 Extend current
               </button>
               <button
                 onClick={() => { setCharactersMode('generate'); setAuthorGuidance(''); }}
-                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${charactersMode === 'generate' ? 'bg-violet-600/30 text-violet-300' : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06]'}`}
+                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${charactersMode === 'generate' ? 'app-accent-soft' : 'app-ghost-button app-text-muted'}`}
               >
                 Generate new file
               </button>
@@ -95,13 +95,13 @@ export default function GenerateContentModal({ book, type, hasExisting, onClose 
           {/* Guidance / changes textarea for relevant types */}
           {(cfg.guidanceLabel || isCharacters) && (
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium app-text">
                 {isCharacters
                   ? (charactersMode === 'extend' ? 'Describe what to add or change' : 'Author guidance (optional)')
                   : cfg.guidanceLabel}
               </label>
               <textarea
-                className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+                className="w-full app-input rounded-lg px-3 py-2 text-sm resize-none"
                 rows={3}
                 value={authorGuidance}
                 onChange={e => setAuthorGuidance(e.target.value)}
@@ -114,15 +114,15 @@ export default function GenerateContentModal({ book, type, hasExisting, onClose 
                 }
               />
               {isCharacters && charactersMode === 'extend' && !authorGuidance.trim() && (
-                <p className="text-xs text-amber-400">Required for extending — describe what to add or change.</p>
+                <p className="text-xs app-text-warning">Required for extending — describe what to add or change.</p>
               )}
             </div>
           )}
 
           {/* Overwrite warning — only for generate new */}
           {(!isCharacters || charactersMode === 'generate') && (
-            <div className="bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
-              <p className="text-xs text-amber-300">
+            <div className="app-warning rounded-lg p-3">
+              <p className="text-xs">
                 This will overwrite the existing {type === 'story-arc' ? 'story-arc.md' : type === 'timeline' ? 'timeline.md' : 'characters.md'} lore file if it exists.
               </p>
             </div>
@@ -133,7 +133,7 @@ export default function GenerateContentModal({ book, type, hasExisting, onClose 
             <button
               onClick={start}
               disabled={isCharacters && charactersMode === 'extend' && !authorGuidance.trim()}
-              className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-primary disabled:cursor-not-allowed"
             >
               {generateLabel}
             </button>
@@ -162,17 +162,17 @@ export default function GenerateContentModal({ book, type, hasExisting, onClose 
       {phase === 'done' && (
         <div className="space-y-4 text-center py-4">
           <div className="text-4xl">✅</div>
-          <p className="text-sm font-medium text-white">
+          <p className="text-sm font-medium app-text-primary">
             {isCharacters && charactersMode === 'extend' ? 'Extended successfully!' : 'Generated successfully!'}
           </p>
-          <p className="text-xs text-slate-400">Saved to your book's lore files.</p>
+          <p className="text-xs app-text-muted">Saved to your book's lore files.</p>
           <button onClick={onClose} className="btn-primary">Done</button>
         </div>
       )}
 
       {phase === 'error' && (
         <div className="space-y-4 py-2">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm app-text-danger">{error}</p>
           <div className="flex gap-3">
             <button onClick={() => setPhase('confirm')} className="btn-ghost">Try Again</button>
             <button onClick={onClose} className="btn-ghost">Close</button>

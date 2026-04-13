@@ -71,8 +71,8 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
       size="lg"
     >
       {phase === 'loading' && (
-        <div className="flex flex-col items-center gap-3 py-10 text-slate-400">
-          <Loader2 size={24} className="animate-spin text-violet-400" />
+        <div className="flex flex-col items-center gap-3 py-10 app-text-muted">
+          <Loader2 size={24} className="animate-spin text-[color:var(--accent)]" />
           <p className="text-sm">Loading context & AI suggestion…</p>
         </div>
       )}
@@ -81,14 +81,14 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
         <div className="space-y-4">
           {/* AI suggestion */}
           {suggestion && (
-            <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-violet-300 uppercase tracking-wider">
+            <div className="app-accent-soft rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[color:var(--accent-strong)] uppercase tracking-wider">
                 <Sparkles size={12} /> AI Suggestion
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed">{suggestion}</p>
+              <p className="text-sm app-text leading-relaxed">{suggestion}</p>
               <button
                 onClick={() => setGuidelines(suggestion)}
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                className="text-xs app-link transition-colors"
               >
                 Use this suggestion →
               </button>
@@ -97,13 +97,13 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
 
           {/* Guidelines */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
+            <label className="block text-sm font-medium app-text">
               Chapter guidelines
-              <span className="text-red-400 ml-0.5">*</span>
+              <span className="app-text-danger ml-0.5">*</span>
             </label>
-            <p className="text-xs text-slate-500">What should happen in this chapter? Key events, who's involved, tone.</p>
+            <p className="text-xs app-text-faint">What should happen in this chapter? Key events, who's involved, tone.</p>
             <textarea
-              className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+              className="w-full app-input rounded-lg px-3 py-2.5 text-sm resize-none"
               rows={5}
               value={guidelines}
               onChange={e => setGuidelines(e.target.value)}
@@ -115,7 +115,7 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
           <div className="space-y-1.5">
             <button
               onClick={() => setShowInstructions(!showInstructions)}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs app-text-muted hover:text-[color:var(--text)] transition-colors"
             >
               <Info size={12} />
               {showInstructions ? 'Hide' : 'Show'} writing instructions
@@ -123,11 +123,11 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
             </button>
             {showInstructions && (
               <>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs app-text-faint">
                   Guide the AI on chapter length, style, POV, pacing, etc. Saved for all future chapters.
                 </p>
                 <textarea
-                  className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+                  className="w-full app-input rounded-lg px-3 py-2.5 text-sm resize-none"
                   rows={4}
                   value={writingInstructions}
                   onChange={e => setWritingInstructions(e.target.value)}
@@ -138,7 +138,7 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
           </div>
 
           {error && (
-            <p className="text-sm text-red-300 px-1">{error}</p>
+            <p className="text-sm app-text-danger px-1">{error}</p>
           )}
 
           <div className="flex justify-end gap-3 pt-2">
@@ -152,28 +152,28 @@ export default function CreateChapterModal({ book, onClose, onJobStarted }: Prop
 
       {phase === 'creating' && (
         <div className="flex flex-col items-center gap-4 py-8">
-          <Loader2 size={30} className="animate-spin text-violet-400" />
+          <Loader2 size={30} className="animate-spin text-[color:var(--accent)]" />
           <div className="text-center">
-            <p className="text-sm font-medium text-white">Planning Chapter {nextChapter}…</p>
-            <p className="text-xs text-slate-500 mt-1">Building a detailed plan, then spawning background writer</p>
+            <p className="text-sm font-medium app-text-primary">Planning Chapter {nextChapter}…</p>
+            <p className="text-xs app-text-faint mt-1">Building a detailed plan, then spawning background writer</p>
           </div>
         </div>
       )}
 
       {phase === 'done' && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-emerald-400">
+          <div className="flex items-center gap-2 app-text-success">
             <ChevronRight size={16} />
             <span className="text-sm font-medium">Chapter {nextChapter} is being written in the background</span>
           </div>
           {plan && (
-            <div className="bg-ink-900 rounded-xl border border-white/[0.06] p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chapter Plan</p>
-              <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">{plan}</div>
+            <div className="app-panel-strong rounded-xl p-4">
+              <p className="text-xs font-semibold app-text-muted uppercase tracking-wider mb-2">Chapter Plan</p>
+              <div className="text-sm app-text whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">{plan}</div>
             </div>
           )}
-          <p className="text-xs text-slate-500">
-            Check the <strong className="text-slate-300">Jobs</strong> tab to monitor progress. The chapter will appear when writing completes.
+          <p className="text-xs app-text-faint">
+            Check the <strong className="app-text">Jobs</strong> tab to monitor progress. The chapter will appear when writing completes.
           </p>
           <div className="flex justify-end">
             <button onClick={onClose} className="btn-primary">Done</button>

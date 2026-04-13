@@ -14,14 +14,14 @@ import { keys } from '../hooks';
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-slate-300">{label}</label>
+      <label className="block text-sm font-medium app-text">{label}</label>
       {children}
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-xs app-text-faint">{hint}</p>}
     </div>
   );
 }
 
-const inputCls = 'w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors';
+const inputCls = 'w-full app-input rounded-lg px-3 py-2 text-sm';
 const textareaCls = inputCls + ' resize-none';
 
 // ── Step 1: Basic info ───────────────────────────────────────────
@@ -104,7 +104,7 @@ function QuestionStep({
 }) {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-400">{title}</p>
+      <p className="text-sm app-text-muted">{title}</p>
       {questions.map(q => (
         <Field key={q.key} label={q.question}>
           {q.type === 'multiline' ? (
@@ -237,7 +237,7 @@ export default function CreateBookWizard({ onClose }: { onClose: () => void }) {
     <Modal title={`New Book — ${stepLabel[step]}`} onClose={step === 'creating' ? undefined : onClose} size="lg">
       {/* Error banner */}
       {error && (
-        <div className="mb-4 px-3 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-sm text-red-300">
+        <div className="mb-4 px-3 py-2 app-danger rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -256,8 +256,8 @@ export default function CreateBookWizard({ onClose }: { onClose: () => void }) {
 
       {/* Loading states */}
       {(step === 'loading-r1' || step === 'loading-r2') && (
-        <div className="flex flex-col items-center gap-3 py-10 text-slate-400">
-          <Loader2 size={28} className="animate-spin text-violet-400" />
+        <div className="flex flex-col items-center gap-3 py-10 app-text-muted">
+          <Loader2 size={28} className="animate-spin text-[color:var(--accent)]" />
           <p className="text-sm">Generating AI questions…</p>
         </div>
       )}
@@ -305,7 +305,7 @@ export default function CreateBookWizard({ onClose }: { onClose: () => void }) {
       {/* Creating (SSE) */}
       {step === 'creating' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Generating your book project and lore files with AI…</p>
+          <p className="text-sm app-text-muted">Generating your book project and lore files with AI…</p>
           <SSEProgress
             path="/books"
             method="POST"
@@ -329,8 +329,8 @@ export default function CreateBookWizard({ onClose }: { onClose: () => void }) {
         <div className="space-y-4 text-center py-4">
           <div className="text-5xl">🎉</div>
           <div>
-            <p className="text-lg font-semibold text-white">{createdBook.title}</p>
-            <p className="text-sm text-slate-400 mt-1">Your book project has been created with AI-generated lore.</p>
+            <p className="text-lg font-semibold app-text-primary">{createdBook.title}</p>
+            <p className="text-sm app-text-muted mt-1">Your book project has been created with AI-generated lore.</p>
           </div>
           <div className="flex justify-center gap-3">
             <button onClick={onClose} className="btn-ghost">Close</button>
@@ -347,7 +347,7 @@ export default function CreateBookWizard({ onClose }: { onClose: () => void }) {
       {/* Error fallback */}
       {step === 'error' && (
         <div className="space-y-4 py-4">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm app-text-danger">{error}</p>
           <button onClick={() => setStep('round2')} className="btn-ghost">Try Again</button>
         </div>
       )}

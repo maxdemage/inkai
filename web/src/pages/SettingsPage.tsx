@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Save, Loader2, Eye, EyeOff, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useConfig, useUpdateConfig } from '../hooks';
 import type { InkaiConfig, LLMProviderName, LLMTier } from '../types';
+import { useTheme } from '../theme';
 
 const PROVIDERS: { id: LLMProviderName; label: string; placeholder: string }[] = [
   { id: 'openai', label: 'OpenAI', placeholder: 'sk-...' },
@@ -22,18 +23,22 @@ const TIER_LABELS: Record<LLMTier, { label: string; desc: string }> = {
 };
 
 function ApiKeyField({ provId, label, placeholder, value, onChange }: {
-  provId: string; label: string; placeholder: string;
-  value: string; onChange: (v: string) => void;
+  provId: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
 }) {
   const [show, setShow] = useState(false);
   const masked = value === '***';
+
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-slate-300">{label}</label>
+      <label className="block text-sm font-medium app-text">{label}</label>
       <div className="relative">
         <input
           type={show ? 'text' : 'password'}
-          className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 pr-9 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors"
+          className="w-full app-input rounded-lg px-3 py-2 pr-9 text-sm"
           placeholder={masked ? '(key already set — enter new value to change)' : placeholder}
           value={masked ? '' : value}
           onChange={e => onChange(e.target.value)}
@@ -44,13 +49,13 @@ function ApiKeyField({ provId, label, placeholder, value, onChange }: {
         <button
           type="button"
           onClick={() => setShow(!show)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 app-text-faint hover:text-[color:var(--text)] transition-colors"
         >
           {show ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
       </div>
       {masked && (
-        <p className="text-xs text-slate-600">API key is already configured. Leave blank to keep current.</p>
+        <p className="text-xs app-text-faint">API key is already configured. Leave blank to keep current.</p>
       )}
     </div>
   );
@@ -59,17 +64,18 @@ function ApiKeyField({ provId, label, placeholder, value, onChange }: {
 export default function SettingsPage() {
   const { data: config, isLoading } = useConfig();
   const updateConfig = useUpdateConfig();
+  const { themeId, setThemeId, themes } = useTheme();
+  const currentTheme = themes.find(theme => theme.id === themeId) ?? themes[0];
 
-  // Local draft state
   const [apiKeys, setApiKeys] = useState<Partial<Record<LLMProviderName, string>>>({});
   const [tiers, setTiers] = useState<Partial<Record<LLMTier, { provider: LLMProviderName; model: string }>>>({});
   const [git, setGit] = useState<{ enabled: boolean; autoCommit: boolean }>({ enabled: false, autoCommit: true });
   const [language, setLanguage] = useState('en');
   const [saved, setSaved] = useState(false);
+  const [showThemes, setShowThemes] = useState(false);
 
   useEffect(() => {
     if (!config) return;
-    // Show masked keys
     const keys: Partial<Record<LLMProviderName, string>> = {};
     for (const [name, conf] of Object.entries(config.providers)) {
       if (conf?.apiKey) keys[name as LLMProviderName] = '***';
@@ -83,7 +89,6 @@ export default function SettingsPage() {
   const save = async () => {
     const patch: Partial<InkaiConfig> = { git, language };
 
-    // Build providers — only include non-empty, non-masked keys
     const providers: Partial<Record<LLMProviderName, { apiKey: string }>> = {};
     for (const [name, key] of Object.entries(apiKeys)) {
       if (key && key !== '***') providers[name as LLMProviderName] = { apiKey: key };
@@ -97,16 +102,16 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  if (isLoading) return <div className="flex items-center justify-center h-64 text-slate-500">Loading…</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-64 app-text-faint">Loading…</div>;
 
   return (
-    <div className="px-8 py-8 max-w-2xl mx-auto">
+    <div className="px-8 py-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <h1 className="text-2xl font-bold app-text-primary">Settings</h1>
         <button
           onClick={save}
           disabled={updateConfig.isPending}
-          className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 app-accent-button text-sm font-medium rounded-xl transition-colors"
         >
           {updateConfig.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saved ? 'Saved!' : 'Save'}
@@ -114,30 +119,110 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-8">
-        {/* ── API Keys ────────────────────────────────────────── */}
-        <section className="bg-ink-800 border border-white/[0.07] rounded-2xl p-5 space-y-4">
+        <section className="app-panel rounded-2xl p-5 space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-white">LLM Providers</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Configure API keys for the AI providers you want to use.</p>
+            <h2 className="text-base font-semibold app-text-primary">Appearance</h2>
+            <p className="text-sm app-text-muted mt-0.5">
+              Choose a color atmosphere for the Inkai workspace.
+              <br />
+              Theme changes apply instantly and stay saved in this browser.
+            </p>
           </div>
 
-          {PROVIDERS.map(p => (
+          <div className="rounded-2xl border app-divider px-4 py-3 app-panel-strong">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold app-text-primary">{currentTheme.name}</span>
+                  <Check size={14} className="text-[color:var(--accent-strong)] shrink-0" />
+                </div>
+                <p className="text-xs app-text-muted mt-1 leading-relaxed line-clamp-1">{currentTheme.description}</p>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 md:justify-end shrink-0">
+                <div className="flex items-center gap-1.5">
+                  {currentTheme.swatches.map(color => (
+                    <span
+                      key={color}
+                      className="w-4 h-4 rounded-full border"
+                      style={{ backgroundColor: color, borderColor: 'var(--border-strong)' }}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowThemes(prev => !prev)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg app-ghost-button transition-colors"
+                  aria-expanded={showThemes}
+                >
+                  {showThemes ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  {showThemes ? 'Hide Themes' : 'Browse Themes'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {showThemes && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {themes.map(theme => {
+                const isSelected = theme.id === themeId;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setThemeId(theme.id)}
+                    className={`rounded-2xl p-4 text-left transition-all border ${
+                      isSelected ? 'app-nav-link-active shadow-lg' : 'app-panel-hover'
+                    }`}
+                    style={isSelected ? undefined : { borderColor: 'var(--border)', background: 'var(--surface)' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold app-text-primary">{theme.name}</span>
+                          {isSelected && <Check size={14} className="text-[color:var(--accent-strong)]" />}
+                        </div>
+                        <p className="text-xs app-text-muted mt-1 leading-relaxed">{theme.description}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {theme.swatches.map(color => (
+                          <span
+                            key={color}
+                            className="w-4 h-4 rounded-full border"
+                            style={{ backgroundColor: color, borderColor: 'var(--border-strong)' }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="app-panel rounded-2xl p-5 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold app-text-primary">LLM Providers</h2>
+            <p className="text-sm app-text-muted mt-0.5">Configure API keys for the AI providers you want to use.</p>
+          </div>
+
+          {PROVIDERS.map(provider => (
             <ApiKeyField
-              key={p.id}
-              provId={p.id}
-              label={p.label}
-              placeholder={p.placeholder}
-              value={apiKeys[p.id] ?? ''}
-              onChange={v => setApiKeys(prev => ({ ...prev, [p.id]: v }))}
+              key={provider.id}
+              provId={provider.id}
+              label={provider.label}
+              placeholder={provider.placeholder}
+              value={apiKeys[provider.id] ?? ''}
+              onChange={value => setApiKeys(prev => ({ ...prev, [provider.id]: value }))}
             />
           ))}
         </section>
 
-        {/* ── Model tiers ─────────────────────────────────────── */}
-        <section className="bg-ink-800 border border-white/[0.07] rounded-2xl p-5 space-y-4">
+        <section className="app-panel rounded-2xl p-5 space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-white">Model Tiers</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Assign providers and models to each tier.</p>
+            <h2 className="text-base font-semibold app-text-primary">Model Tiers</h2>
+            <p className="text-sm app-text-muted mt-0.5">Assign providers and models to each tier.</p>
           </div>
 
           {(Object.entries(TIER_LABELS) as [LLMTier, typeof TIER_LABELS[LLMTier]][]).map(([tierId, tierInfo]) => {
@@ -145,22 +230,22 @@ export default function SettingsPage() {
             return (
               <div key={tierId} className="space-y-2">
                 <div>
-                  <label className="text-sm font-medium text-slate-300">{tierInfo.label}</label>
-                  <p className="text-xs text-slate-500">{tierInfo.desc}</p>
+                  <label className="text-sm font-medium app-text">{tierInfo.label}</label>
+                  <p className="text-xs app-text-muted">{tierInfo.desc}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <select
-                    className="bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-violet-500/60 transition-colors"
+                    className="app-input rounded-lg px-3 py-2 text-sm"
                     value={current.provider}
                     onChange={e => setTiers(prev => ({
                       ...prev,
                       [tierId]: { ...current, provider: e.target.value as LLMProviderName },
                     }))}
                   >
-                    {PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                    {PROVIDERS.map(provider => <option key={provider.id} value={provider.id}>{provider.label}</option>)}
                   </select>
                   <input
-                    className="bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 transition-colors"
+                    className="app-input rounded-lg px-3 py-2 text-sm"
                     placeholder="Model name"
                     list={`models-${tierId}`}
                     value={current.model}
@@ -170,7 +255,7 @@ export default function SettingsPage() {
                     }))}
                   />
                   <datalist id={`models-${tierId}`}>
-                    {TIER_MODELS[current.provider]?.map(m => <option key={m} value={m} />)}
+                    {TIER_MODELS[current.provider]?.map(model => <option key={model} value={model} />)}
                   </datalist>
                 </div>
               </div>
@@ -178,30 +263,35 @@ export default function SettingsPage() {
           })}
         </section>
 
-        {/* ── General settings ─────────────────────────────────── */}
-        <section className="bg-ink-800 border border-white/[0.07] rounded-2xl p-5 space-y-4">
-          <h2 className="text-base font-semibold text-white">General</h2>
+        <section className="app-panel rounded-2xl p-5 space-y-4">
+          <h2 className="text-base font-semibold app-text-primary">General</h2>
 
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium text-slate-300">Git integration</label>
-              <p className="text-xs text-slate-500">Auto-commit changes to a local git repo</p>
+              <label className="text-sm font-medium app-text">Git integration</label>
+              <p className="text-xs app-text-muted">Auto-commit changes to a local git repo</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={git.autoCommit}
-                onChange={e => setGit(prev => ({ ...prev, autoCommit: e.target.checked }))}
+            <button
+              type="button"
+              onClick={() => setGit(prev => ({ ...prev, autoCommit: !prev.autoCommit }))}
+              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              style={{ background: git.autoCommit ? 'linear-gradient(135deg, var(--accent), var(--accent-strong))' : 'var(--surface-muted)' }}
+              aria-pressed={git.autoCommit}
+            >
+              <span
+                className="inline-block h-5 w-5 transform rounded-full transition-transform"
+                style={{
+                  background: 'var(--accent-contrast)',
+                  transform: git.autoCommit ? 'translateX(22px)' : 'translateX(2px)',
+                }}
               />
-              <div className="w-10 h-5 bg-ink-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
-            </label>
+            </button>
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">Language</label>
+            <label className="block text-sm font-medium app-text">Language</label>
             <select
-              className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-violet-500/60 transition-colors"
+              className="w-full app-input rounded-lg px-3 py-2 text-sm"
               value={language}
               onChange={e => setLanguage(e.target.value)}
             >
@@ -220,8 +310,8 @@ export default function SettingsPage() {
         </section>
 
         {config?.booksDir && (
-          <p className="text-xs text-slate-600">
-            Books directory: <span className="text-slate-500 font-mono">{config.booksDir}</span>
+          <p className="text-xs app-text-faint">
+            Books directory: <span className="app-text-muted font-mono">{config.booksDir}</span>
           </p>
         )}
       </div>
