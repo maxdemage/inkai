@@ -15,4 +15,4 @@ When in doubt, re-read `README.md`, `GUIDE.md`, and `GUI.md` after your changes 
 
 ## Testing
 
-Always run `npm test` after making changes to verify nothing is broken.
+Always run `npm run build && npm test` after making changes to verify nothing is broken.

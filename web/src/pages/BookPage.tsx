@@ -3,17 +3,19 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, FileText, Layers3, BookMarked, Sparkles,
   Eye, Star, RefreshCw, Plus, Pencil, Check, X, Briefcase,
-  ChevronDown, ChevronUp, Download, Loader2, Trash2,
+  ChevronDown, ChevronUp, Download, Loader2, Trash2, ShieldCheck,
+  GitBranch, RefreshCcw, GitCommit,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
   useBook, useChapters, useLore, useUpdateBook,
-  useArchiveBook, useJobs, useDeleteChapter, keys,
+  useArchiveBook, useJobs, useDeleteChapter, useGitStatus, keys,
 } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateChapterModal from '../components/CreateChapterModal';
 import LoreEditor from '../components/LoreEditor';
 import EnhanceLoreModal from '../components/EnhanceLoreModal';
+import LoreReviewModal from '../components/LoreReviewModal';
 import GenerateContentModal from '../components/GenerateContentModal';
 import ChapterActionModal from '../components/ChapterActionModal';
 import ChapterEditor from '../components/ChapterEditor';
@@ -68,7 +70,7 @@ function StatusPicker({ current, onChange }: {
   );
 }
 
-type Tab = 'chapters' | 'lore' | 'summary';
+type Tab = 'chapters' | 'lore' | 'summary' | 'git';
 
 // ── Chapter row ─────────────────────────────────────────────────
 
@@ -163,34 +165,6 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
   );
 }
 
-// ── Lore file card ──────────────────────────────────────────────
-
-function LoreCard({ filename, content, onClick }: {
-  filename: string;
-  content: string;
-  onClick: () => void;
-}) {
-  const preview = content.slice(0, 200).replace(/^#+\s+.+\n?/gm, '').trim();
-  const wordCount = content.split(/\s+/).filter(Boolean).length;
-
-  return (
-    <button
-      onClick={onClick}
-      className="app-panel app-panel-hover rounded-xl p-4 text-left group"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium app-text-primary">{filename.replace('.md', '')}</span>
-        <span className="text-xs app-text-faint">{wordCount.toLocaleString()}w</span>
-      </div>
-      <p className="text-xs app-text-muted leading-relaxed line-clamp-3">{preview || '(empty)'}</p>
-      <div className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Pencil size={10} className="text-[color:var(--accent)]" />
-        <span className="text-[11px] text-[color:var(--accent)]">Click to edit</span>
-      </div>
-    </button>
-  );
-}
-
 // ── Main page ───────────────────────────────────────────────────
 
 export default function BookPage() {
@@ -206,9 +180,17 @@ export default function BookPage() {
   const deleteChapter = useDeleteChapter();
 
   const [tab, setTab] = useState<Tab>('chapters');
+  const { data: gitData, refetch: refetchGit, isFetching: gitFetching } = useGitStatus(book?.id ?? '', tab === 'git' && !!book);
+  const [commitMsg, setCommitMsg] = useState('');
+  const [committing, setCommitting] = useState(false);
+  const [commitResult, setCommitResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
   const [editingLore, setEditingLore] = useState<string | null>(null);
   const [showEnhance, setShowEnhance] = useState(false);
+  const [showLoreReview, setShowLoreReview] = useState(false);
+  const [newLoreFileName, setNewLoreFileName] = useState<string | null>(null); // null=hidden, ''=open
+  const [newLoreFileError, setNewLoreFileError] = useState('');
+  const [creatingLoreFile, setCreatingLoreFile] = useState(false);
   const [generateType, setGenerateType] = useState<'story-arc' | 'timeline' | 'characters' | null>(null);
   const [chapterAction, setChapterAction] = useState<{ number: number; action: 'review' | 'rewrite' } | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -246,10 +228,23 @@ export default function BookPage() {
     setEditingTitle(false);
   };
 
+  const doCommit = async () => {
+    if (committing) return;
+    setCommitting(true);
+    setCommitResult(null);
+    try {
+      const result = await api.git.commit(book.id, commitMsg.trim() || undefined);
+      setCommitResult(result);
+      setCommitMsg('');
+      refetchGit();
+    } catch (e) {
+      setCommitResult({ ok: false, message: String(e) });
+    } finally {
+      setCommitting(false);
+    }
+  };
+
   const chapterSummaryContent = loreFiles['summary-of-chapters.md'] ?? 'No chapters written yet.';
-  const writingStyleContent = loreFiles['style-of-writing.md'];
-  const storyArcContent = loreFiles['story-arc.md'];
-  const timelineContent = loreFiles['timeline.md'];
   const charactersContent = loreFiles['characters.md'];
 
   const displayLoreFiles = Object.entries(loreFiles).filter(
@@ -264,6 +259,8 @@ export default function BookPage() {
           bookId={book.id}
           filename={editingLore}
           initialContent={loreFiles[editingLore] ?? ''}
+          allFiles={loreFiles}
+          onSwitchFile={setEditingLore}
           onClose={() => setEditingLore(null)}
         />
       </div>
@@ -401,6 +398,7 @@ export default function BookPage() {
             { id: 'chapters', label: 'Chapters', icon: BookOpen },
             { id: 'lore', label: 'Lore', icon: Layers3 },
             { id: 'summary', label: 'Summary', icon: BookMarked },
+            { id: 'git', label: 'Git', icon: GitBranch },
           ] as const).map(t => (
             <button
               key={t.id}
@@ -493,111 +491,157 @@ export default function BookPage() {
           {/* ── Lore tab ─────────────────────────────────────────── */}
           {tab === 'lore' && (
             <div className="space-y-6">
-              {/* Lore files header */}
-              <h2 className="text-sm font-semibold app-text-muted uppercase tracking-wider">Lore Files</h2>
 
               {/* AI enhancing tools */}
-              <div className="rounded-2xl app-panel px-4 py-3 space-y-3">
+              <div className="app-panel rounded-2xl px-4 py-3 space-y-3">
                 <h3 className="text-xs font-semibold app-text-faint uppercase tracking-wider">AI Enhancing Tools</h3>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   <button
                     onClick={() => setShowEnhance(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-accent-soft rounded-xl transition-colors"
+                    className="flex flex-col items-start gap-1 px-3 py-2.5 text-left app-accent-soft rounded-xl transition-colors"
                   >
-                    <Sparkles size={13} /> Enhance Lore
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><Sparkles size={13} /> Enhance Lore</span>
+                    <span className="text-xs app-text-faint leading-snug">AI asks you targeted questions, then weaves your answers into the lore files to deepen the world.</span>
+                  </button>
+                  <button
+                    onClick={() => setShowLoreReview(true)}
+                    className="flex flex-col items-start gap-1 px-3 py-2.5 text-left app-ghost-button border app-divider rounded-xl transition-colors"
+                  >
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><ShieldCheck size={13} /> Lore Review</span>
+                    <span className="text-xs app-text-faint leading-snug">AI audits all lore files for contradictions and inconsistencies, then self-corrects them.</span>
                   </button>
                   <button
                     onClick={() => setGenerateType('story-arc')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
+                    className="flex flex-col items-start gap-1 px-3 py-2.5 text-left app-ghost-button border app-divider rounded-xl transition-colors"
                   >
-                    <Layers3 size={13} /> Story Arc
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><Layers3 size={13} /> Story Arc</span>
+                    <span className="text-xs app-text-faint leading-snug">Synthesizes lore and chapter history into a structured arc with plot beats and character development.</span>
                   </button>
                   <button
                     onClick={() => setGenerateType('timeline')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
+                    className="flex flex-col items-start gap-1 px-3 py-2.5 text-left app-ghost-button border app-divider rounded-xl transition-colors"
                   >
-                    <Eye size={13} /> Timeline
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><Eye size={13} /> Timeline</span>
+                    <span className="text-xs app-text-faint leading-snug">Builds a chronological timeline from all lore and chapter data, flagging impossible sequencing.</span>
                   </button>
                   <button
                     onClick={() => setGenerateType('characters')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm app-ghost-button border app-divider rounded-xl transition-colors"
+                    className="flex flex-col items-start gap-1 px-3 py-2.5 text-left app-ghost-button border app-divider rounded-xl transition-colors"
                   >
-                    <Star size={13} /> Characters
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><Star size={13} /> Characters</span>
+                    <span className="text-xs app-text-faint leading-snug">Generates detailed character sheets with arcs, relationships, tensions, and motivations.</span>
                   </button>
                 </div>
               </div>
 
-              {loreLoading && <div className="text-sm app-text-faint">Loading lore…</div>}
-
-              {displayLoreFiles.length === 0 && !loreLoading && (
-                <div className="text-center py-12 app-text-faint">
-                  <Layers3 size={32} className="mx-auto mb-3 opacity-40" />
-                  <p className="text-sm">No lore files yet.</p>
+              {/* Lore files */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold app-text-faint uppercase tracking-wider">Lore Files</h3>
+                  <button
+                    onClick={() => { setNewLoreFileName(''); setNewLoreFileError(''); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs app-ghost-button rounded-lg transition-colors"
+                  >
+                    <Plus size={12} /> New File
+                  </button>
                 </div>
-              )}
 
-              {displayLoreFiles.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {displayLoreFiles.map(([filename, content]) => (
-                    <LoreCard
-                      key={filename}
-                      filename={filename}
-                      content={content}
-                      onClick={() => setEditingLore(filename)}
-                    />
-                  ))}
-                </div>
-              )}
+                {/* Inline new-file form */}
+                {newLoreFileName !== null && (
+                  <div className="app-panel rounded-xl px-4 py-3 space-y-2">
+                    <p className="text-xs app-text-faint">Enter a name for the new lore file (no extension needed).</p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        value={newLoreFileName}
+                        onChange={e => { setNewLoreFileName(e.target.value); setNewLoreFileError(''); }}
+                        onKeyDown={async e => {
+                          if (e.key === 'Escape') { setNewLoreFileName(null); return; }
+                          if (e.key === 'Enter') {
+                            const raw = newLoreFileName.trim();
+                            if (!raw) { setNewLoreFileError('Name is required'); return; }
+                            const safe = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                            if (!safe) { setNewLoreFileError('Name contains only invalid characters'); return; }
+                            const filename = `${safe}.md`;
+                            if (loreFiles[filename] !== undefined) { setNewLoreFileError(`"${filename}" already exists`); return; }
+                            setCreatingLoreFile(true);
+                            try {
+                              await api.lore.create(book.id, filename);
+                              await qc.invalidateQueries({ queryKey: keys.lore(book.id) });
+                              setNewLoreFileName(null);
+                              setEditingLore(filename);
+                            } catch (err) {
+                              setNewLoreFileError(String(err));
+                            } finally {
+                              setCreatingLoreFile(false);
+                            }
+                          }
+                        }}
+                        placeholder="e.g. magic-system"
+                        className="flex-1 app-input rounded-lg px-3 py-2 text-sm outline-none"
+                      />
+                      <button
+                        disabled={creatingLoreFile}
+                        onClick={async () => {
+                          const raw = newLoreFileName.trim();
+                          if (!raw) { setNewLoreFileError('Name is required'); return; }
+                          const safe = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                          if (!safe) { setNewLoreFileError('Name contains only invalid characters'); return; }
+                          const filename = `${safe}.md`;
+                          if (loreFiles[filename] !== undefined) { setNewLoreFileError(`"${filename}" already exists`); return; }
+                          setCreatingLoreFile(true);
+                          try {
+                            await api.lore.create(book.id, filename);
+                            await qc.invalidateQueries({ queryKey: keys.lore(book.id) });
+                            setNewLoreFileName(null);
+                            setEditingLore(filename);
+                          } catch (err) {
+                            setNewLoreFileError(String(err));
+                          } finally {
+                            setCreatingLoreFile(false);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 app-accent-button rounded-lg text-sm transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        {creatingLoreFile ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                        Create
+                      </button>
+                      <button
+                        onClick={() => setNewLoreFileName(null)}
+                        className="px-2.5 py-2 app-ghost-button rounded-lg transition-colors"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                    {newLoreFileError && <p className="text-xs app-text-danger">{newLoreFileError}</p>}
+                  </div>
+                )}
 
-              {/* Quick view panels for key generated content */}
-              {storyArcContent && (
-                <div className="mt-6 app-panel rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold app-text">Story Arc</h3>
-                    <button onClick={() => setEditingLore('story-arc.md')} className="text-xs app-link transition-colors">Edit</button>
-                  </div>
-                  <div className="prose-dark text-sm max-h-48 overflow-y-auto">
-                    <ReactMarkdown>{storyArcContent.slice(0, 1000)}</ReactMarkdown>
-                    {storyArcContent.length > 1000 && <p className="app-text-faint text-xs mt-2">…more in editor</p>}
-                  </div>
-                </div>
-              )}
+                {loreLoading && <div className="text-sm app-text-faint">Loading lore…</div>}
 
-              {writingStyleContent && (
-                <div className="app-panel rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold app-text">Style of Writing</h3>
-                    <button onClick={() => setEditingLore('style-of-writing.md')} className="text-xs app-link transition-colors">Edit</button>
+                {!loreLoading && displayLoreFiles.length === 0 && (
+                  <div className="text-center py-12 app-text-faint">
+                    <Layers3 size={32} className="mx-auto mb-3 opacity-40" />
+                    <p className="text-sm">No lore files yet.</p>
                   </div>
-                  <div className="prose-dark text-sm max-h-48 overflow-y-auto">
-                    <ReactMarkdown>{writingStyleContent.slice(0, 800)}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {timelineContent && (
-                <div className="app-panel rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold app-text">Timeline</h3>
-                    <button onClick={() => setEditingLore('timeline.md')} className="text-xs app-link transition-colors">Edit</button>
+                {displayLoreFiles.length > 0 && (
+                  <div className="divide-y app-divider app-panel rounded-2xl overflow-hidden">
+                    {displayLoreFiles.map(([filename]) => (
+                      <button
+                        key={filename}
+                        onClick={() => setEditingLore(filename)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left app-ghost-button transition-colors group"
+                      >
+                        <span className="text-sm app-text group-hover:text-[color:var(--text-strong)] transition-colors">{filename}</span>
+                        <Pencil size={13} className="app-text-faint group-hover:text-[color:var(--accent)] transition-colors shrink-0" />
+                      </button>
+                    ))}
                   </div>
-                  <div className="prose-dark text-sm max-h-48 overflow-y-auto">
-                    <ReactMarkdown>{timelineContent.slice(0, 1000)}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {charactersContent && (
-                <div className="app-panel rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold app-text">Characters</h3>
-                    <button onClick={() => setEditingLore('characters.md')} className="text-xs app-link transition-colors">Edit</button>
-                  </div>
-                  <div className="prose-dark text-sm max-h-48 overflow-y-auto">
-                    <ReactMarkdown>{charactersContent.slice(0, 1000)}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -610,6 +654,115 @@ export default function BookPage() {
                   <ReactMarkdown>{chapterSummaryContent}</ReactMarkdown>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ── Git tab ──────────────────────────────────────────── */}
+          {tab === 'git' && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold app-text-muted uppercase tracking-wider">Git</h2>
+                <button
+                  onClick={() => refetchGit()}
+                  disabled={gitFetching}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs app-ghost-button transition-colors disabled:opacity-50"
+                >
+                  <RefreshCcw size={12} className={gitFetching ? 'animate-spin' : ''} /> Refresh
+                </button>
+              </div>
+
+              {!gitData && !gitFetching && (
+                <p className="text-sm app-text-faint">Loading…</p>
+              )}
+
+              {gitData && !gitData.available && (
+                <div className="app-panel rounded-2xl p-6 text-sm app-text-faint">
+                  Git is not available or not configured for this project.
+                </div>
+              )}
+
+              {gitData?.available && (
+                <>
+                  {/* Commit form */}
+                  <div className="app-panel rounded-2xl p-4 space-y-3">
+                    <span className="text-xs font-semibold app-text-faint uppercase tracking-wider">Commit</span>
+                    <div className="flex gap-2">
+                      <input
+                        value={commitMsg}
+                        onChange={e => { setCommitMsg(e.target.value); setCommitResult(null); }}
+                        onKeyDown={e => e.key === 'Enter' && !committing && doCommit()}
+                        placeholder="Message (optional — defaults to timestamp)"
+                        className="flex-1 app-input rounded-lg px-3 py-2 text-sm outline-none"
+                      />
+                      <button
+                        onClick={doCommit}
+                        disabled={committing}
+                        className="flex items-center gap-1.5 px-3 py-2 app-accent-button disabled:opacity-50 rounded-lg text-sm transition-colors shrink-0"
+                      >
+                        {committing ? <Loader2 size={14} className="animate-spin" /> : <GitCommit size={14} />}
+                        Commit
+                      </button>
+                    </div>
+                    {commitResult && (
+                      <p className={`text-xs ${commitResult.ok ? 'app-text-success' : 'app-text-danger'}`}>
+                        {commitResult.ok ? `✓ Committed: "${commitResult.message}"` : `✗ ${commitResult.message}`}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Changed files */}
+                  <div className="app-panel rounded-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b app-divider flex items-center gap-2">
+                      <span className="text-xs font-semibold app-text-faint uppercase tracking-wider">Working tree</span>
+                      {gitData.changed.length > 0 && (
+                        <span className="text-xs app-warning rounded-full px-1.5 py-0.5">{gitData.changed.length}</span>
+                      )}
+                    </div>
+                    {gitData.changed.length === 0 ? (
+                      <p className="px-4 py-3 text-sm app-text-faint">Clean — nothing to commit.</p>
+                    ) : (
+                      <div className="divide-y app-divider">
+                        {gitData.changed.map((line, i) => {
+                          const status = line.slice(0, 2).trim();
+                          const file   = line.slice(3);
+                          const color  = status === 'M' ? 'text-[color:var(--semantic-warning-text)]'
+                            : status === 'A' ? 'text-[color:var(--semantic-success-text)]'
+                            : status === 'D' ? 'text-[color:var(--semantic-danger-text)]'
+                            : 'app-text-faint';
+                          return (
+                            <div key={i} className="flex items-center gap-3 px-4 py-2 font-mono">
+                              <span className={`text-xs font-bold w-5 shrink-0 ${color}`}>{status || '?'}</span>
+                              <span className="text-xs app-text truncate">{file}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Commit log */}
+                  <div className="app-panel rounded-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b app-divider">
+                      <span className="text-xs font-semibold app-text-faint uppercase tracking-wider">Recent commits</span>
+                    </div>
+                    {gitData.log.length === 0 ? (
+                      <p className="px-4 py-3 text-sm app-text-faint">No commits yet.</p>
+                    ) : (
+                      <div className="divide-y app-divider">
+                        {gitData.log.map((entry, i) => (
+                          <div key={i} className="flex items-start gap-3 px-4 py-2.5">
+                            <code className="text-[11px] font-mono text-[color:var(--accent)] shrink-0 mt-0.5">{entry.hash}</code>
+                            <span className="flex-1 text-sm app-text leading-snug">{entry.message}</span>
+                            <span className="text-[11px] app-text-faint shrink-0 mt-0.5 whitespace-nowrap">
+                              {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -631,6 +784,10 @@ export default function BookPage() {
 
       {showEnhance && (
         <EnhanceLoreModal book={book} onClose={() => setShowEnhance(false)} />
+      )}
+
+      {showLoreReview && (
+        <LoreReviewModal book={book} onClose={() => setShowLoreReview(false)} />
       )}
 
       {generateType && (

@@ -98,18 +98,23 @@ Three tabs covering everything about a single book.
 
 #### Lore tab
 
-- Grid of lore file cards — click any card to open the full inline **Lore Editor**.
-- **Lore Editor**: full-height text area, dirty-state tracking, Save / Discard buttons, confirmation on unsaved-exit.
-- Action buttons across the top row:
+Two sections:
 
-| Button | What it generates |
-|--------|-------------------|
+**AI Enhancing Tools** — a grid of action cards, each with a description:
+
+| Card | What it generates |
+|------|-------------------|
 | **Enhance Lore** | AI identifies weak spots and asks targeted questions. Apply answers to deepen existing lore files. |
-| **Story Arc** | Generates / regenerates `story-arc.md` — a full narrative arc with act structure, turning points, and thematic threads. |
-| **Timeline** | Generates / regenerates `timeline.md` — a chronology of events from all lore and chapter summaries, with sequencing-conflict flags. |
-| **Characters** | Generates / regenerates `characters.md` — detailed character sheets with current arc state and inter-character tensions. |
+| **Story Arc** | Generates / regenerates `story-arc.md` — full narrative arc with act structure, turning points, and thematic threads. |
+| **Timeline** | Generates / regenerates `timeline.md` — chronology of all events with sequencing-conflict flags. |
+| **Characters** | Generates / regenerates `characters.md` — detailed character sheets with arc state and inter-character tensions. |
+| **Lore Review** | Full lore QA: the writer LLM finds contradictions and gaps across all lore files and applies fixes automatically. |
 
-Expandable panels below the grid let you preview the generated `story-arc.md`, `style-of-writing.md`, `timeline.md`, and `characters.md` without leaving the page.
+**Lore Files** — a scrollable list of every lore file. Click any row to open the **Lore Editor**.
+
+- **Lore Editor**: full-height text area, dirty-state tracking, Save / Discard buttons, confirmation on unsaved-exit.
+- A **right sidebar** lists all lore files; clicking one switches to it (with unsaved-change confirmation).
+- A **search box** at the top of the file list filters by filename and by file content — useful for finding which lore file mentions a specific character or place. Files with no match are hidden; a "No matches" message is shown when the filter is empty.
 
 #### Manual Chapter Editor
 
@@ -160,7 +165,7 @@ A full-screen, distraction-free reading experience.
 - **Chapter / Review tabs** — if the chapter has an AI review, a tab switcher appears in the top bar. The review is fetched on demand when you first switch to it.
 - **Prev / Next** navigation with chapter N-of-total display.
 - **Edit chapter button** (pencil icon, top-right) — visible on the Chapter tab only. Navigates back to the book page and immediately opens the chapter in the Manual Editor.
-- **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar.
+- **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar. A **search box** at the top of the file list filters by filename and file content (the search box is hidden when a file is open).
 - **Lore term highlighting** — H2/H3 headers and `**bold**` terms from lore files are underlined in the text. Click any to open a floating popover with the relevant lore content.
 
 #### Typography Settings (`Type` icon in the top bar)
@@ -193,6 +198,29 @@ Monitor all background chapter-writing jobs.
 - **Read** button on done jobs navigates directly to the finished chapter.
 - **Delete** removes the job record (does not delete the chapter).
 - The page auto-refreshes every 3 seconds while active jobs exist.
+
+---
+
+### Agent
+
+A built-in natural language assistant, available on every page via the **Agent** button in the sidebar navigation.
+
+Click **Agent** to open the panel, then type what you want to do in plain English. The agent sends your request to the server, which uses a small LLM to produce a step-by-step plan and then executes it:
+
+| Step type | What happens |
+|-----------|-------------|
+| **Say** | The agent displays an informational message |
+| **Ask** | The agent asks you a question and waits for your typed answer |
+| **Navigate** | Automatically navigates to the relevant book page |
+| **SSE action** | Runs an AI operation inline with a live progress feed |
+
+**Example requests:**
+- *"Update the characters with a new villain"*
+- *"Generate the story arc for my sci-fi novel"*
+- *"Run a lore review on my current project"*
+- *"Generate the timeline"*
+
+If the intent is ambiguous the agent will ask for clarification. After a plan finishes you can type another request in the same panel — the previous result is cleared and a fresh plan begins.
 
 ---
 

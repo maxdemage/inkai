@@ -1,10 +1,16 @@
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
-import { BookOpen, Briefcase, Settings, Plus, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
+import { BookOpen, Briefcase, Settings, Plus, ChevronRight, Bot } from 'lucide-react';
+import { useState, createContext, useCallback } from 'react';
 import { useBooks, useJobs } from '../hooks';
 import CreateBookWizard from './CreateBookWizard';
+import MiniAgentModal from './MiniAgentModal';
 import StatusBadge from './StatusBadge';
 import type { BookRecord, ChapterJob } from '../types';
+
+interface AgentContextValue {
+  openAgent: (query?: string) => void;
+}
+export const AgentContext = createContext<AgentContextValue>({ openAgent: () => {} });
 
 function SidebarBook({ book }: { book: BookRecord }) {
   const navigate = useNavigate();
@@ -57,6 +63,17 @@ export default function Layout() {
   const { data: books = [] } = useBooks();
   const { data: jobs = [] } = useJobs(5000);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
+  const [agentInitialQuery, setAgentInitialQuery] = useState<string | undefined>();
+
+  const openAgent = useCallback((query?: string) => {
+    setAgentInitialQuery(query);
+    setShowAgent(true);
+  }, []);
+
+  const location = useLocation();
+  const bookIdMatch = location.pathname.match(/^\/books\/([^/]+)/);
+  const currentBookId = bookIdMatch?.[1];
   const activeBooks = books.filter(b => b.status !== 'archived');
   const recentJobs = [...jobs]
     .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
@@ -64,6 +81,7 @@ export default function Layout() {
   const hasActiveJobs = jobs.some(j => j.status === 'running' || j.status === 'pending');
 
   return (
+    <AgentContext.Provider value={{ openAgent }}>
     <div className="app-shell">
       {/* ── Sidebar ─────────────────────────────────────────────── */}
       <aside className="w-60 shrink-0 flex flex-col border-r app-sidebar app-divider overflow-y-auto">
@@ -127,6 +145,17 @@ export default function Layout() {
               }`
             }
           >
+            <BookOpen size={15} /> Dashboard
+          </NavLink>
+          <NavLink
+            to="/books"
+            end
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors app-nav-link ${
+                isActive ? 'app-nav-link-active' : ''
+              }`
+            }
+          >
             <BookOpen size={15} /> Books
           </NavLink>
           <NavLink
@@ -149,6 +178,12 @@ export default function Layout() {
           >
             <Settings size={15} /> Settings
           </NavLink>
+          <button
+            onClick={() => openAgent()}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors app-nav-link w-full"
+          >
+            <Bot size={15} /> Agent
+          </button>
           </nav>
         </div>
       </aside>
@@ -159,6 +194,14 @@ export default function Layout() {
       </main>
 
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
+      {showAgent && (
+        <MiniAgentModal
+          bookId={currentBookId}
+          initialQuery={agentInitialQuery}
+          onClose={() => { setShowAgent(false); setAgentInitialQuery(undefined); }}
+        />
+      )}
     </div>
+    </AgentContext.Provider>
   );
 }

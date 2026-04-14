@@ -1,4 +1,4 @@
-import { confirm } from '@inquirer/prompts';
+import { confirm, input } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
 import {
@@ -7,11 +7,13 @@ import {
   readChapter,
   readReview,
   writeChapter,
+  readChapterSummary,
+  updateChapterSummary,
 } from '../book/manager.js';
-import { chatWriter } from '../llm/manager.js';
+import { chatWriter, chatSmall } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
 import { getBookDir } from '../book/manager.js';
-import { buildChapterReviewPrompt, buildChapterRewritePrompt } from '../prompts/templates.js';
+import { buildChapterReviewPrompt, buildChapterRewritePrompt, buildSummaryUpdatePrompt } from '../prompts/templates.js';
 import { header, success, info, error, warn, blank, c } from '../ui.js';
 
 export const rewriteChapterCommand: Command = {
@@ -76,6 +78,12 @@ export const rewriteChapterCommand: Command = {
       spinner.succeed('Review loaded');
     }
 
+    // Ask for additional author instructions
+    blank();
+    const authorNotes = await input({
+      message: 'Additional instructions for the rewrite (optional — press Enter to skip):',
+    });
+
     // Confirm rewrite
     const proceed = await confirm({
       message: `Rewrite Chapter ${chapterNum}? This will overwrite the current version.`,
@@ -98,12 +106,27 @@ export const rewriteChapterCommand: Command = {
     try {
       const rewrittenChapter = await chatWriter(ctx.config, [
         { role: 'system', content: 'You are an expert fiction writer. Rewrite the chapter incorporating all review feedback. Output only the chapter content in markdown.' },
-        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum) },
+        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum, authorNotes || undefined) },
       ], { maxTokens: 8192, temperature: 0.7 });
 
       const filePath = await writeChapter(ctx.config, book.projectName, chapterNum, rewrittenChapter);
       spinner.succeed(`Chapter ${chapterNum} rewritten`);
       info(`Saved to: ${c.muted(filePath)}`);
+
+      // Update chapter summary
+      try {
+        spinner.start('Updating chapter summary...');
+        const currentSummary = await readChapterSummary(ctx.config, book.projectName);
+        const summaryPrompt = await buildSummaryUpdatePrompt(currentSummary, rewrittenChapter, chapterNum);
+        const updatedSummary = await chatSmall(ctx.config, [
+          { role: 'system', content: 'You are a book assistant. Update the summary document. Output only markdown.' },
+          { role: 'user', content: summaryPrompt },
+        ], { maxTokens: 2000 });
+        await updateChapterSummary(ctx.config, book.projectName, updatedSummary);
+        spinner.succeed('Chapter summary updated');
+      } catch {
+        spinner.warn('Could not update chapter summary (non-fatal)');
+      }
 
       // Git commit
       if (isGitAvailable() && ctx.config.git.enabled && ctx.config.git.autoCommit) {

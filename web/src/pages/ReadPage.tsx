@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check, Search } from 'lucide-react';
 import { useChapter, useChapters, useReview, useLore, useBook, useUpdateChapter } from '../hooks';
 import { useTheme } from '../theme';
 
@@ -352,6 +352,7 @@ export default function ReadPage() {
 
   const [showLore, setShowLore] = useState(true);
   const [selectedLoreFile, setSelectedLoreFile] = useState<string | null>(null);
+  const [loreSearch, setLoreSearch] = useState('');
   const [activeTerm, setActiveTerm] = useState<LoreTerm | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<ReadingSettings>(loadSettings);
@@ -432,6 +433,14 @@ export default function ReadPage() {
 
   const selectedLoreContent = selectedLoreFile ? loreFiles[selectedLoreFile] : null;
   const loreSidebarFiles = Object.entries(loreFiles).filter(([f]) => f !== 'summary-of-chapters.md');
+
+  const loreSearchLower = loreSearch.trim().toLowerCase();
+  const filteredLoreSidebarFiles = loreSearchLower
+    ? loreSidebarFiles.filter(([f, content]) =>
+        f.toLowerCase().includes(loreSearchLower) ||
+        content.toLowerCase().includes(loreSearchLower)
+      )
+    : loreSidebarFiles;
 
   const currentContent = readingTab === 'review' ? reviewData?.content : chapterData?.content;
 
@@ -700,9 +709,23 @@ export default function ReadPage() {
         {/* ── Lore sidebar ─────────────────────────────────────── */}
         {showLore && (
           <aside className="w-80 shrink-0 app-sidebar border-l app-divider flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b app-divider shrink-0">
-              <p className="text-xs font-semibold app-text-muted uppercase tracking-wider">Lore</p>
-              <p className="text-[10px] app-text-faint mt-0.5">Click highlighted terms in text or select a file</p>
+            <div className="px-4 py-3 border-b app-divider shrink-0 space-y-2">
+              <div>
+                <p className="text-xs font-semibold app-text-muted uppercase tracking-wider">Lore</p>
+                <p className="text-[10px] app-text-faint mt-0.5">Click highlighted terms in text or select a file</p>
+              </div>
+              {!selectedLoreFile && (
+                <div className="relative">
+                  <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 app-text-faint pointer-events-none" />
+                  <input
+                    type="text"
+                    value={loreSearch}
+                    onChange={e => setLoreSearch(e.target.value)}
+                    placeholder="Search lore…"
+                    className="w-full bg-[color:var(--bg)] border border-[color:var(--border)] rounded-lg pl-6 pr-2 py-1 text-xs app-text placeholder-[color:var(--text-faint)] focus:outline-none focus:border-[color:var(--accent-border)] transition-colors"
+                  />
+                </div>
+              )}
             </div>
 
             {selectedLoreFile && selectedLoreContent ? (
@@ -724,7 +747,7 @@ export default function ReadPage() {
             ) : (
               /* Show lore file list */
               <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
-                {loreSidebarFiles.map(([filename]) => {
+                {filteredLoreSidebarFiles.map(([filename]) => {
                   const hasTermInChapter = loreTerms.some(t => t.filename === filename);
                   return (
                     <button
@@ -744,6 +767,9 @@ export default function ReadPage() {
                 })}
                 {loreSidebarFiles.length === 0 && (
                   <p className="px-3 text-xs app-text-faint py-4">No lore files found.</p>
+                )}
+                {loreSidebarFiles.length > 0 && filteredLoreSidebarFiles.length === 0 && (
+                  <p className="px-3 text-xs text-slate-600 py-4">No matches.</p>
                 )}
               </div>
             )}

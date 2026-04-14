@@ -1,4 +1,4 @@
-import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion } from './types';
+import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion, GuiAgentPlan, GitStatusResult } from './types';
 
 const BASE = '/api';
 
@@ -64,6 +64,8 @@ export const api = {
 
   lore: {
     list: (bookId: string) => req<Record<string, string>>(`/books/${bookId}/lore`),
+    create: (bookId: string, filename: string) =>
+      req<{ ok: boolean; filename: string }>(`/books/${bookId}/lore`, { method: 'POST', ...json({ filename }) }),
     update: (bookId: string, filename: string, content: string) =>
       req<{ ok: boolean }>(`/books/${bookId}/lore/${filename}`, { method: 'PUT', ...json({ content }) }),
     enhanceQuestions: (bookId: string) =>
@@ -87,6 +89,17 @@ export const api = {
     get: () => req<InkaiConfig>('/config'),
     update: (data: Partial<InkaiConfig>) =>
       req<{ ok: boolean }>('/config', { method: 'PUT', ...json(data) }),
+  },
+
+  agent: {
+    plan: (input: string, bookId?: string) =>
+      req<GuiAgentPlan>('/agent', { method: 'POST', ...json({ input, bookId }) }),
+  },
+
+  git: {
+    status: (bookId: string) => req<GitStatusResult>(`/books/${bookId}/git`),
+    commit: (bookId: string, message?: string) =>
+      req<{ ok: boolean; message: string }>(`/books/${bookId}/git/commit`, { method: 'POST', ...json({ message: message ?? '' }) }),
   },
 };
 

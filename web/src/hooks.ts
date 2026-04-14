@@ -9,6 +9,7 @@ export const keys = {
   review: (bookId: string, n: number) => ['review', bookId, n] as const,
   lore: (bookId: string) => ['lore', bookId] as const,
   writingInstructions: (bookId: string) => ['writing-instructions', bookId] as const,
+  gitStatus: (bookId: string) => ['git', bookId] as const,
   jobs: ['jobs'] as const,
   job: (id: string) => ['jobs', id] as const,
   config: ['config'] as const,
@@ -42,6 +43,9 @@ export const useJob = (id: string, refetchInterval?: number) =>
 
 export const useConfig = () =>
   useQuery({ queryKey: keys.config, queryFn: api.config.get });
+
+export const useGitStatus = (bookId: string, enabled = false) =>
+  useQuery({ queryKey: keys.gitStatus(bookId), queryFn: () => api.git.status(bookId), enabled, staleTime: 10_000 });
 
 export function useUpdateBook() {
   const qc = useQueryClient();

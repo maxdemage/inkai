@@ -6,7 +6,7 @@
 
 Inkai is a tool to help you pour your ideas onto documents - nothing more.
 
-See more in MANIFESTO.md
+See more in [MANIFESTO.md](MANIFESTO.md)
 
 ## Want to Help?
 
@@ -23,7 +23,7 @@ inkai is not a one prompt wonder magical wand - it will not create everything fo
 
 ```bash
 # 1. Install & build (one time) — builds CLI + web frontend
-npm install && npm run build && npm run build:web  && npm link
+npm install && npm run build && npm link
 
 # 2. Start — pick your style:
 inkai serve        # → browser UI at http://localhost:4242  ← recommended
@@ -45,12 +45,13 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Books dashboard** | View all projects as cards with status badges; archive/unarchive |
 | **Create Book wizard** | 4-step guided flow: basic info → AI round-1 questions → AI round-2 questions → live lore generation |
 | **Book detail — Chapters** | Create, read, review, rewrite, and manually edit chapters; see word counts and review status; active-job strip with live status; toast on job start |
-| **Book detail — Lore** | Edit any lore file inline; enhance lore with AI; generate story arc, timeline, and character sheets |
+| **Book detail — Lore** | Edit any lore file inline; keyword search across filenames and file content; enhance lore with AI; generate story arc, timeline, and character sheets |
 | **Book detail — Summary** | Read the rolling chapter summary |
 | **Export** | Download all chapters as EPUB or ODT directly from the book header |
-| **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
+| **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit; collapsible lore sidebar with keyword search |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
 | **Settings** | Configure appearance themes, LLM providers, model tiers, git, and language |
+| **Agent** | Natural-language assistant — type what you want and it plans + executes the steps |
 
 > **Full GUI reference:** [GUI.md](GUI.md)
 
@@ -80,8 +81,10 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
 - **GUI Theme System** — curated dark and light workspace themes with persisted selection and broad styling coverage across the web UI
-- **GUI Reading View** — fully themeable reader (7 backgrounds including App Theme, 4 fonts, 4 sizes, 7 text colors including Theme, all persisted); dark app themes now default to dark reader surfaces
+- **GUI Reading View** — fully themeable reader (7 backgrounds including App Theme, 4 fonts, 4 sizes, 7 text colors including Theme, all persisted); dark app themes now default to dark reader surfaces; lore sidebar with keyword search
+- **Lore File Search** — search across lore filenames and content in both the Lore Editor and the Reading View sidebar
 - **ODT & EPUB Export** — export all chapters to `.odt` or `.epub` from CLI or directly from the GUI
+- **Mini-Agent** — type a plain-English request instead of a command (CLI or GUI); the agent plans the steps, asks follow-up questions if needed, and executes them automatically (e.g. *"update the characters with a new villain and regenerate the timeline"*)
 - **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available

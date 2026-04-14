@@ -48,6 +48,35 @@ export async function gitCommit(cwd: string, message: string): Promise<void> {
   }
 }
 
+export interface GitStatusResult {
+  available: boolean;
+  /** Short-format lines from `git status --short` */
+  changed: string[];
+  /** Log entries from `git log` */
+  log: Array<{ hash: string; date: string; message: string }>;
+}
+
+export async function gitStatus(cwd: string): Promise<GitStatusResult> {
+  if (!gitAvailable) return { available: false, changed: [], log: [] };
+  try {
+    const [statusOut, logOut] = await Promise.all([
+      execFileAsync('git', ['status', '--short'], { cwd }).catch(() => ({ stdout: '' })),
+      execFileAsync('git', ['log', '--pretty=format:%h\x1f%ci\x1f%s', '--max-count=30'], { cwd }).catch(() => ({ stdout: '' })),
+    ]);
+    const changed = (statusOut.stdout as string).split('\n').filter(Boolean);
+    const log = (logOut.stdout as string)
+      .split('\n')
+      .filter(Boolean)
+      .map(line => {
+        const [hash, date, ...msgParts] = line.split('\x1f');
+        return { hash: hash ?? '', date: date ?? '', message: msgParts.join('\x1f') };
+      });
+    return { available: true, changed, log };
+  } catch {
+    return { available: true, changed: [], log: [] };
+  }
+}
+
 export async function isGitRepo(cwd: string): Promise<boolean> {
   if (!gitAvailable) return false;
   try {

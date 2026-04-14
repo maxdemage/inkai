@@ -314,7 +314,10 @@ Be honest but constructive. The goal is to help the author improve.`,
 
 === REVIEW & FEEDBACK ===
 {{reviewContent}}
-
+{{#if authorNotes}}
+=== AUTHOR'S ADDITIONAL INSTRUCTIONS ===
+{{authorNotes}}
+{{/if}}
 Rewrite the chapter addressing ALL the review feedback:
 - Fix any consistency issues
 - Improve prose quality per suggestions
