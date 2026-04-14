@@ -19,6 +19,7 @@ import { loreReviewCommand } from './commands/lore-review.js';
 import { readCommand } from './commands/read.js';
 import { readReviewCommand } from './commands/read-review.js';
 import { renameCommand } from './commands/rename.js';
+import { gitCommitCommand } from './commands/git-commit.js';
 import { resetPromptsCommand } from './commands/reset-prompts.js';
 import { reviewChapterCommand } from './commands/review-chapter.js';
 import { rewriteChapterCommand } from './commands/rewrite-chapter.js';
@@ -56,6 +57,7 @@ function registerAllCommands(): void {
   registerCommand(readReviewCommand);
   registerCommand(deleteChapterCommand);
   registerCommand(renameCommand);
+  registerCommand(gitCommitCommand);
   registerCommand(resetPromptsCommand);
   registerCommand(reviewChapterCommand);
   registerCommand(rewriteChapterCommand);
@@ -77,6 +79,28 @@ function registerAllCommands(): void {
     },
   });
 
+  // Agent history command
+  registerCommand({
+    name: 'agent-history',
+    description: 'Show mini-agent actions from this session',
+    aliases: ['history'],
+    async execute() {
+      if (agentHistory.length === 0) {
+        info('No agent actions in this session yet.');
+        return;
+      }
+      blank();
+      for (const entry of [...agentHistory].reverse()) {
+        const t = entry.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        console.log(`  ${c.accent('⚡')} ${c.value(entry.intent)} ${c.muted(`(${t})`)}`);
+        for (const s of entry.steps) {
+          console.log(`     ${c.muted('›')} ${s}`);
+        }
+        blank();
+      }
+    },
+  });
+
   // Deselect book command
   registerCommand({
     name: 'deselect',
@@ -93,7 +117,26 @@ function registerAllCommands(): void {
   });
 }
 
-// ─── Natural Language Fallback ──────────────────────────────
+// ─── Mini-Agent ──────────────────────────────────────────────
+
+type AgentStep =
+  | { type: 'say'; message: string }
+  | { type: 'ask'; key: string; question: string }
+  | { type: 'select-book'; projectName: string }
+  | { type: 'run'; command: string; passAnswerKey?: string | null };
+
+interface AgentPlan {
+  intent: string;
+  steps: AgentStep[];
+}
+
+interface AgentHistoryEntry {
+  timestamp: Date;
+  intent: string;
+  steps: string[];
+}
+
+const agentHistory: AgentHistoryEntry[] = [];
 
 function buildCommandList(ctx: AppContext): string {
   const cmds = getAllCommands();
@@ -104,15 +147,25 @@ function buildCommandList(ctx: AppContext): string {
   }).join('\n');
 }
 
-async function handleNaturalInput(input: string, ctx: AppContext): Promise<string | null> {
-  // Check if LLM is configured
+async function agentAsk(question: string): Promise<string> {
+  return new Promise(resolve => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    rl.question(`  ${c.primary('?')} ${question} `, answer => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+async function runMiniAgent(input: string, ctx: AppContext): Promise<void> {
   if (!ctx.config.tiers?.small?.provider || !ctx.config.providers[ctx.config.tiers.small.provider]?.apiKey) {
     console.log(c.muted('  Type /help for commands, or prefix with / to run a command.'));
-    return null;
+    return;
   }
 
   const spinner = (await import('ora')).default({ text: 'Thinking...', color: 'cyan' }).start();
 
+  let plan: AgentPlan;
   try {
     const books = await getAllBooks();
     const activeBooks = books.filter(b => b.status !== 'archived');
@@ -125,10 +178,10 @@ async function handleNaturalInput(input: string, ctx: AppContext): Promise<strin
       : 'No books created yet.';
 
     const selectedInfo = ctx.selectedBook
-      ? `Currently selected book: ${ctx.selectedBook.projectName} ("${ctx.selectedBook.title}", ${ctx.selectedBook.type}, ${ctx.selectedBook.genre}, ${ctx.selectedBook.chapterCount} chapters, status: ${ctx.selectedBook.status})`
+      ? `Currently selected book: ${ctx.selectedBook.projectName} ("${ctx.selectedBook.title}", ${ctx.selectedBook.type}, ${ctx.selectedBook.genre}, ${ctx.selectedBook.chapterCount} chapters)`
       : 'No book currently selected.';
 
-    const systemPrompt = `You are inkai's CLI assistant. The user typed something that isn't a command. Help them figure out what command to use.
+    const systemPrompt = `You are inkai's mini-agent. The user typed natural language instead of a slash command. Understand their intent and produce a step-by-step plan.
 
 Available commands:
 ${buildCommandList(ctx)}
@@ -138,34 +191,77 @@ ${bookList}
 
 ${selectedInfo}
 
-Respond with JSON: { "message": "brief helpful explanation", "command": "/suggested-command with-args" }
-- "message": 1-2 sentences max, friendly and concise
-- "command": the exact command string they should run (with / prefix), or null if no command fits
-Keep it short. Don't explain what every command does.`;
+Respond with a JSON plan using this EXACT format:
+{
+  "intent": "One sentence: what you are doing for the user",
+  "steps": [
+    { "type": "say", "message": "..." },
+    { "type": "select-book", "projectName": "exact-project-name" },
+    { "type": "ask", "key": "variable_name", "question": "Question to ask the user?" },
+    { "type": "run", "command": "/command-name", "passAnswerKey": "variable_name_or_null" }
+  ]
+}
+
+Step types:
+- "say": Print a short message to the user (acknowledgment or explanation, 1 sentence max)
+- "select-book": Auto-select a book by its exact projectName. Use when the user mentions a book that isn't currently selected.
+- "ask": Ask the user a focused question. Store their answer under "key". Keep questions short and specific.
+- "run": Execute a CLI command. If "passAnswerKey" is set to a key from a prior "ask" step, that answer will be injected into the command so it can skip its own interactive prompt.
+
+Rules:
+- If a book is mentioned but not selected, add a "select-book" step first
+- Keep plans minimal: 1-4 steps
+- "passAnswerKey" must be null (or omitted) if there is no matching prior "ask" step
+- If intent is completely unclear, use a single "say" step asking for clarification
+- Never invent commands that don't exist in the list above`;
 
     const response = await chatSmall(ctx.config, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: input },
-    ], { jsonMode: true, maxTokens: 200, temperature: 0.3 });
+    ], { jsonMode: true, maxTokens: 400, temperature: 0.3 });
 
-    const parsed = parseLLMJson<{ message: string; command: string | null }>(response, 'CLI assistant');
+    plan = parseLLMJson<AgentPlan>(response, 'mini-agent');
     spinner.stop();
-
-    blank();
-    console.log(`  ${c.value(parsed.message)}`);
-
-    if (parsed.command) {
-      blank();
-      // Show suggested command and prompt with it pre-filled
-      return parsed.command;
-    }
-
-    return null;
   } catch {
     spinner.stop();
     console.log(c.muted('  Type /help for commands, or prefix with / to run a command.'));
-    return null;
+    return;
   }
+
+  blank();
+  console.log(`  ${c.accent('⚡')} ${c.value(plan.intent)}`);
+  blank();
+
+  const vars: Record<string, string> = {};
+  const completedSteps: string[] = [];
+
+  for (const step of plan.steps) {
+    if (step.type === 'say') {
+      console.log(`  ${c.muted('›')} ${step.message}`);
+      completedSteps.push(step.message);
+      blank();
+
+    } else if (step.type === 'ask') {
+      const answer = await agentAsk(step.question);
+      vars[step.key] = answer;
+      completedSteps.push(`Asked: "${step.question}" → "${answer}"`);
+      blank();
+
+    } else if (step.type === 'select-book') {
+      await executeCommand(`/select ${step.projectName}`, ctx);
+      completedSteps.push(`Selected book: ${step.projectName}`);
+
+    } else if (step.type === 'run') {
+      if (step.passAnswerKey && vars[step.passAnswerKey]) {
+        ctx.agentInput = vars[step.passAnswerKey];
+      }
+      await executeCommand(step.command, ctx);
+      ctx.agentInput = undefined;
+      completedSteps.push(`Ran ${step.command}`);
+    }
+  }
+
+  agentHistory.push({ timestamp: new Date(), intent: plan.intent, steps: completedSteps });
 }
 
 // ─── Start REPL ─────────────────────────────────────────────
@@ -218,11 +314,7 @@ export async function startREPL(ctx: AppContext): Promise<void> {
       if (trimmed.startsWith('/')) {
         await executeCommand(trimmed, ctx);
       } else {
-        const suggested = await handleNaturalInput(trimmed, ctx);
-        if (suggested) {
-          prompt(suggested);
-          return;
-        }
+        await runMiniAgent(trimmed, ctx);
       }
 
       prompt();

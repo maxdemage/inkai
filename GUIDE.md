@@ -22,7 +22,8 @@ This guide walks you through the full workflow of using inkai, from first setup 
 14. [Exporting Your Book](#14-exporting-your-book)
 15. [Customising Prompts](#15-customising-prompts)
 16. [Managing Projects](#16-managing-projects)
-17. [Tips & Best Practices](#17-tips--best-practices)
+17. [Mini-Agent](#17-mini-agent)
+18. [Tips & Best Practices](#18-tips--best-practices)
 
 ---
 
@@ -436,7 +437,36 @@ This gives you a full history of every change.
 
 ---
 
-## 17. Tips & Best Practices
+## 17. Mini-Agent
+
+Instead of typing a command, you can type a plain-English request and inkai will plan and execute the steps for you.
+
+### CLI
+
+Just type anything that doesn't start with `/` at the prompt:
+
+```
+Update the characters with a new rivalry between the two leads
+Generate a timeline for my book
+Run a full lore review
+```
+
+The agent:
+1. Sends your request to a small LLM along with your current book context and the list of available commands
+2. Gets back a step-by-step plan (JSON)
+3. Executes the steps: `say` (print a message), `ask` (collect an answer), `select-book` (switch project), `run` (invoke a command, optionally passing a collected answer)
+
+### GUI
+
+Click **Agent** in the sidebar navigation (below Settings). Type your request and press **Enter** or the send button.
+
+The agent walks through the plan interactively — SSE operations stream progress inline, `ask` steps pause for your typed answer, and `navigate` steps move you to the right page automatically.
+
+After a plan finishes you can type another request without reopening the modal.
+
+---
+
+## 18. Tips & Best Practices
 
 1. **Invest time in lore.** The better your lore, the better every chapter will be. Use `/enhance-lore` often.
 

@@ -1,97 +1,179 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Archive, RotateCcw } from 'lucide-react';
-import { useBooks, useArchiveBook, useUnarchiveBook } from '../hooks';
+import { Plus, BookOpen, Archive, RotateCcw, Send, BookMarked, Clock, ChevronDown, ChevronRight } from 'lucide-react';
+import { useBooks, useArchiveBook, useUnarchiveBook, useJobs } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateBookWizard from '../components/CreateBookWizard';
-import type { BookRecord } from '../types';
+import MiniAgentModal from '../components/MiniAgentModal';
+import type { BookRecord, ChapterJob } from '../types';
 
-function BookCard({ book, onArchive, onUnarchive }: {
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function timeAgo(iso?: string): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1)  return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24)   return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+// ── BookRow (compact) ───────────────────────────────────────────────────────
+
+function BookRow({ book, onArchive, onUnarchive }: {
   book: BookRecord;
   onArchive: () => void;
   onUnarchive: () => void;
 }) {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="bg-ink-800 border border-white/[0.07] rounded-2xl p-5 hover:border-white/[0.14] transition-all group relative">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-white truncate">{book.title}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{book.projectName}</p>
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-ink-800 border border-white/[0.06] hover:border-white/[0.12] transition-all group">
+      {/* Title + project */}
+      <div
+        className="flex-1 min-w-0 cursor-pointer"
+        onClick={() => navigate(`/books/${book.id}`)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-white truncate">{book.title}</span>
+          <StatusBadge status={book.status} />
         </div>
-        <div className="relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="w-7 h-7 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 flex items-center justify-center transition-colors text-lg leading-none"
-          >
-            ⋯
-          </button>
-          {showMenu && (
-            <div
-              className="absolute right-0 top-8 bg-ink-700 border border-white/[0.1] rounded-xl shadow-xl z-10 py-1 min-w-40"
-              onBlur={() => setShowMenu(false)}
-            >
-              {book.status !== 'archived' ? (
-                <button
-                  onClick={() => { setShowMenu(false); onArchive(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
-                >
-                  <Archive size={13} /> Archive
-                </button>
-              ) : (
-                <button
-                  onClick={() => { setShowMenu(false); onUnarchive(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
-                >
-                  <RotateCcw size={13} /> Unarchive
-                </button>
-              )}
-            </div>
-          )}
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+          <span>{book.projectName}</span>
+          <span>·</span>
+          <span>{book.chapterCount} ch</span>
+          <span>·</span>
+          <span className="capitalize">{book.genre}</span>
         </div>
       </div>
 
-      {/* Badges */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <StatusBadge status={book.status} />
-        <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400 capitalize">{book.genre}</span>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">{book.type}</span>
-      </div>
-
-      {/* Summary */}
-      {book.summary && (
-        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4">{book.summary}</p>
-      )}
-
-      {/* Stats */}
-      <div className="flex items-center gap-4 mb-4 text-xs text-slate-500">
-        <span>{book.chapterCount} chapter{book.chapterCount !== 1 ? 's' : ''}</span>
-        <span>{(book.authors ?? []).join(', ')}</span>
-        <span>{new Date(book.updatedAt).toLocaleDateString()}</span>
-      </div>
-
-      {/* Action */}
+      {/* Open button */}
       <button
         onClick={() => navigate(`/books/${book.id}`)}
-        className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/20 text-sm text-violet-300 transition-colors group-hover:border-violet-500/40"
+        className="hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/20 text-xs text-violet-300 transition-colors"
       >
-        <BookOpen size={14} /> Open Book
+        <BookOpen size={12} /> Open
       </button>
+
+      {/* ⋯ menu */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          onBlur={() => setTimeout(() => setShowMenu(false), 150)}
+          className="w-7 h-7 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/5 flex items-center justify-center transition-colors text-lg leading-none"
+        >
+          ⋯
+        </button>
+        {showMenu && (
+          <div className="absolute right-0 top-8 bg-ink-700 border border-white/[0.1] rounded-xl shadow-xl z-10 py-1 min-w-36">
+            {book.status !== 'archived' ? (
+              <button
+                onClick={() => { setShowMenu(false); onArchive(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                <Archive size={13} /> Archive
+              </button>
+            ) : (
+              <button
+                onClick={() => { setShowMenu(false); onUnarchive(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                <RotateCcw size={13} /> Unarchive
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
+// ── ArchivedList ────────────────────────────────────────────────────────────
+
+function ArchivedList({ books, onUnarchive }: { books: BookRecord[]; onUnarchive: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  if (books.length === 0) return null;
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-400 transition-colors mb-2"
+      >
+        {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        Archived ({books.length})
+      </button>
+      {open && (
+        <div className="space-y-2 opacity-60">
+          {books.map(book => (
+            <BookRow
+              key={book.id}
+              book={book}
+              onArchive={() => {}}
+              onUnarchive={() => onUnarchive(book.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── LatestChapterRow ─────────────────────────────────────────────────────────
+
+function LatestChapterRow({ job }: { job: ChapterJob }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(`/books/${job.bookId}`)}
+      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-ink-800 border border-white/[0.06] hover:border-white/[0.12] transition-all text-left group"
+    >
+      <div className="w-8 h-8 rounded-lg bg-violet-600/15 border border-violet-500/20 flex items-center justify-center shrink-0 text-violet-400 text-xs font-bold">
+        {job.chapterNumber}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-slate-300 truncate">
+          Chapter {job.chapterNumber}
+          <span className="text-slate-500 font-normal"> · {job.bookTitle}</span>
+        </p>
+        <p className="text-xs text-slate-600 mt-0.5">{job.projectName}</p>
+      </div>
+      <span className="text-xs text-slate-600 shrink-0">{timeAgo(job.finishedAt)}</span>
+    </button>
+  );
+}
+
+// ── Dashboard ───────────────────────────────────────────────────────────────
+
 export default function BooksPage() {
   const { data: books = [], isLoading } = useBooks();
-  const archive = useArchiveBook();
+  const { data: jobs = [] }             = useJobs();
+  const archive   = useArchiveBook();
   const unarchive = useUnarchiveBook();
-  const [showCreate, setShowCreate] = useState(false);
 
-  const active = books.filter(b => b.status !== 'archived');
+  const [showCreate, setShowCreate] = useState(false);
+  const [agentInput, setAgentInput] = useState('');
+  const [agentQuery, setAgentQuery] = useState<string | null>(null);
+
+  const active   = books.filter(b => b.status !== 'archived');
   const archived = books.filter(b => b.status === 'archived');
+
+  // Recent done jobs sorted by newest first, limited to 8
+  const recentChapters = (jobs as ChapterJob[])
+    .filter(j => j.status === 'done' && j.finishedAt)
+    .sort((a, b) => new Date(b.finishedAt!).getTime() - new Date(a.finishedAt!).getTime())
+    .slice(0, 8);
+
+  const handleAgentSubmit = () => {
+    const q = agentInput.trim();
+    if (!q) return;
+    setAgentInput('');
+    setAgentQuery(q);
+  };
 
   if (isLoading) {
     return (
@@ -102,68 +184,101 @@ export default function BooksPage() {
   }
 
   return (
-    <div className="px-8 py-8 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Your Books</h1>
-          <p className="text-sm text-slate-500 mt-1">{active.length} active project{active.length !== 1 ? 's' : ''}</p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-xl transition-colors"
-        >
-          <Plus size={15} /> New Book
-        </button>
-      </div>
+    <div className="px-8 py-8 max-w-3xl mx-auto space-y-10">
 
-      {/* Empty state */}
-      {active.length === 0 && (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">🐙</div>
-          <h2 className="text-lg font-semibold text-white mb-2">No books yet</h2>
-          <p className="text-sm text-slate-500 mb-6">Start your first AI-assisted book project.</p>
+      {/* ── Page title ───────────────────────────────────────────────────── */}
+      <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+
+      {/* ── Section 1: Agent ─────────────────────────────────────────────── */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Agent</h2>
+        <div className="bg-ink-800 border border-white/[0.07] rounded-2xl p-4">
+          <p className="text-xs text-slate-500 mb-3">Ask the agent to do something — generate content, navigate, run tools.</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={agentInput}
+              onChange={e => setAgentInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAgentSubmit()}
+              placeholder="e.g. write chapter 3 for my novel, or review the lore…"
+              className="flex-1 bg-ink-900 border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
+            />
+            <button
+              onClick={handleAgentSubmit}
+              disabled={!agentInput.trim()}
+              className="px-4 py-2.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/35 border border-violet-500/30 text-violet-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send size={15} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section 2: Your Books ─────────────────────────────────────────── */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">Your Books</h2>
           <button
             onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/20 text-xs text-violet-300 transition-colors"
           >
-            <Plus size={15} /> Create Your First Book
+            <Plus size={13} /> New Book
           </button>
         </div>
-      )}
 
-      {/* Active books */}
-      {active.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-          {active.map(book => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onArchive={() => archive.mutate(book.id)}
-              onUnarchive={() => unarchive.mutate(book.id)}
-            />
-          ))}
-        </div>
-      )}
+        {active.length === 0 && archived.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center bg-ink-800 border border-white/[0.07] rounded-2xl">
+            <BookMarked size={32} className="text-slate-600" />
+            <div>
+              <p className="text-slate-400 font-medium">No books yet</p>
+              <p className="text-slate-600 text-sm mt-1">Create your first book to get started</p>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-sm text-violet-300 transition-colors"
+            >
+              <Plus size={15} /> Create Book
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {active.map(book => (
+                <BookRow
+                  key={book.id}
+                  book={book}
+                  onArchive={() => archive.mutate(book.id)}
+                  onUnarchive={() => {}}
+                />
+              ))}
+            </div>
+            <ArchivedList books={archived} onUnarchive={id => unarchive.mutate(id)} />
+          </>
+        )}
+      </section>
 
-      {/* Archived */}
-      {archived.length > 0 && (
-        <>
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Archived</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-50">
-            {archived.map(book => (
-              <BookCard
-                key={book.id}
-                book={book}
-                onArchive={() => {}}
-                onUnarchive={() => unarchive.mutate(book.id)}
-              />
+      {/* ── Section 3: Latest Chapters ───────────────────────────────────── */}
+      {recentChapters.length > 0 && (
+        <section>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+            <Clock size={12} /> Latest Chapters
+          </h2>
+          <div className="space-y-2">
+            {recentChapters.map(job => (
+              <LatestChapterRow key={job.id} job={job} />
             ))}
           </div>
-        </>
+        </section>
       )}
 
+      {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
+      {agentQuery !== null && (
+        <MiniAgentModal
+          initialQuery={agentQuery}
+          onClose={() => setAgentQuery(null)}
+        />
+      )}
     </div>
   );
 }

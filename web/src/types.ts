@@ -80,6 +80,24 @@ export interface InkaiConfig {
   language: string;
 }
 
+// ── Git ────────────────────────────────────────────────────────
+export interface GitLogEntry { hash: string; date: string; message: string; }
+export interface GitStatusResult {
+  available: boolean;
+  changed: string[];
+  log: GitLogEntry[];
+}
+
+// ── Mini Agent ──────────────────────────────────────────────────
+export interface GuiAgentSayStep      { type: 'say';      message: string; }
+export interface GuiAgentAskStep      { type: 'ask';      key: string; question: string; }
+export interface GuiAgentNavigateStep { type: 'navigate'; to: string; description: string; }
+export interface GuiAgentSseStep      { type: 'sse';      endpoint: string; bodyParam?: string; answerKey?: string; }
+
+export type GuiAgentStep = GuiAgentSayStep | GuiAgentAskStep | GuiAgentNavigateStep | GuiAgentSseStep;
+
+export interface GuiAgentPlan { intent: string; steps: GuiAgentStep[]; }
+
 export const BOOK_TYPES: { value: BookType; label: string }[] = [
   { value: 'novel', label: 'Novel' },
   { value: 'prose', label: 'Prose / Short Stories' },

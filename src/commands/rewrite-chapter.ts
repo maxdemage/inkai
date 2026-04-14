@@ -7,11 +7,13 @@ import {
   readChapter,
   readReview,
   writeChapter,
+  readChapterSummary,
+  updateChapterSummary,
 } from '../book/manager.js';
-import { chatWriter } from '../llm/manager.js';
+import { chatWriter, chatSmall } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
 import { getBookDir } from '../book/manager.js';
-import { buildChapterReviewPrompt, buildChapterRewritePrompt } from '../prompts/templates.js';
+import { buildChapterReviewPrompt, buildChapterRewritePrompt, buildSummaryUpdatePrompt } from '../prompts/templates.js';
 import { header, success, info, error, warn, blank, c } from '../ui.js';
 
 export const rewriteChapterCommand: Command = {
@@ -104,6 +106,21 @@ export const rewriteChapterCommand: Command = {
       const filePath = await writeChapter(ctx.config, book.projectName, chapterNum, rewrittenChapter);
       spinner.succeed(`Chapter ${chapterNum} rewritten`);
       info(`Saved to: ${c.muted(filePath)}`);
+
+      // Update chapter summary
+      try {
+        spinner.start('Updating chapter summary...');
+        const currentSummary = await readChapterSummary(ctx.config, book.projectName);
+        const summaryPrompt = await buildSummaryUpdatePrompt(currentSummary, rewrittenChapter, chapterNum);
+        const updatedSummary = await chatSmall(ctx.config, [
+          { role: 'system', content: 'You are a book assistant. Update the summary document. Output only markdown.' },
+          { role: 'user', content: summaryPrompt },
+        ], { maxTokens: 2000 });
+        await updateChapterSummary(ctx.config, book.projectName, updatedSummary);
+        spinner.succeed('Chapter summary updated');
+      } catch {
+        spinner.warn('Could not update chapter summary (non-fatal)');
+      }
 
       // Git commit
       if (isGitAvailable() && ctx.config.git.enabled && ctx.config.git.autoCommit) {

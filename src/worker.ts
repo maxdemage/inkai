@@ -18,7 +18,6 @@ async function run(): Promise<void> {
 
   // Initialise subsystems the worker needs
   await initDB();
-  await initPromptFiles();
 
   const job = await loadJob(jobId);
   if (!job) {
@@ -26,6 +25,7 @@ async function run(): Promise<void> {
   }
 
   const config: InkaiConfig = JSON.parse(job.configSnapshot);
+  await initPromptFiles(config.language ?? 'en');
 
   // Mark running
   job.status = 'running';

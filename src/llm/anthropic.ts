@@ -21,10 +21,18 @@ export class AnthropicProvider implements LLMProvider {
         content: m.content,
       }));
 
+    const systemContent = [
+      systemMsg?.content,
+      options?.jsonMode ? 'Respond with valid JSON only. Do not include any prose or markdown.' : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: options?.maxTokens ?? 4096,
-      ...(systemMsg ? { system: systemMsg.content } : {}),
+      temperature: options?.temperature ?? 0.7,
+      ...(systemContent ? { system: systemContent } : {}),
       messages: conversationMsgs,
     });
 

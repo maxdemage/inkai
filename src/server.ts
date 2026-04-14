@@ -55,10 +55,12 @@ import {
   buildTimelineGeneratePrompt,
   buildCharactersGeneratePrompt,
   buildCharactersEditPrompt,
+  buildLoreReviewPrompt,
+  buildLoreReviewApplyPrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
-import { gitCommit, gitInit, isGitAvailable } from './git.js';
+import { gitCommit, gitInit, isGitAvailable, gitStatus, checkGit } from './git.js';
 import { generateEpub, generateOdt } from './commands/export.js';
 import type { InkaiConfig, BookType, LoreQuestion, BookRecord, ReviewType, ReviewPersona } from './types.js';
 
@@ -122,6 +124,7 @@ async function requireBook(id: string, res: express.Response): Promise<BookRecor
 
 export async function startServer(webDistPath?: string): Promise<void> {
   await initDB();
+  await checkGit();
 
   const app = express();
   app.use(cors({ origin: 'http://localhost:5173' }));
@@ -622,6 +625,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const { content } = req.body;
       if (typeof content !== 'string') { res.status(400).json({ error: 'content required' }); return; }
       await writeLoreFiles(config, book.projectName, { [filename]: content });
+      await updateBook(book.id, { summaryFresh: false });
       if (isGitAvailable() && config.git.enabled && config.git.autoCommit) {
         await gitCommit(getBookDir(config, book.projectName), `Edit lore: ${filename}`);
       }
@@ -889,6 +893,193 @@ export async function startServer(webDistPath?: string): Promise<void> {
       sse.send('error', { message: String(err) });
     }
     sse.done();
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LORE REVIEW
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  app.post('/api/books/:id/lore-review', async (req, res) => {
+    const sse = startSSE(res);
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+
+      sse.send('progress', { message: 'Loading lore files...' });
+      const [loreFiles, chapterSummary] = await Promise.all([
+        readLoreFiles(config, book.projectName),
+        readChapterSummary(config, book.projectName),
+      ]);
+
+      if (Object.keys(loreFiles).length === 0) {
+        sse.send('error', { message: 'No lore files found.' });
+        sse.done();
+        return;
+      }
+
+      sse.send('progress', { message: 'Reviewing lore for contradictions and gaps (writer LLM)...' });
+
+      const reviewPrompt = await buildLoreReviewPrompt({
+        title: book.title, type: book.type, genre: book.genre, subgenre: book.subgenre,
+        loreFiles, chapterSummary,
+      });
+
+      const reviewRaw = await chatWriter(config, [
+        { role: 'system', content: 'You are a senior book editor and world-building consultant. Review lore for issues only. Always respond with valid JSON.' },
+        { role: 'user', content: reviewPrompt },
+      ], { jsonMode: true, maxTokens: 4096, temperature: 0.4 });
+
+      const review = parseLLMJson<{ fileChanges: { file: string; changes: string[] }[]; summary: string }>(reviewRaw, 'lore review');
+
+      if (!review.fileChanges || review.fileChanges.length === 0) {
+        sse.send('done', { review, updatedFiles: {} });
+        sse.done();
+        return;
+      }
+
+      sse.send('progress', { message: `Found ${review.fileChanges.reduce((s, fc) => s + fc.changes.length, 0)} issue(s) across ${review.fileChanges.length} file(s). Applying fixes...` });
+
+      const updatedFiles: Record<string, string> = {};
+      for (const fc of review.fileChanges) {
+        const fileContent = loreFiles[fc.file];
+        if (!fileContent) continue;
+
+        sse.send('progress', { message: `Updating ${fc.file}...` });
+        try {
+          const applyPrompt = await buildLoreReviewApplyPrompt({
+            title: book.title,
+            filename: fc.file,
+            fileContent,
+            changes: fc.changes,
+          });
+          const updated = await chatMedium(config, [
+            { role: 'system', content: 'You are an expert lore editor. Apply the requested changes precisely. Output only the complete updated file in markdown.' },
+            { role: 'user', content: applyPrompt },
+          ], { maxTokens: 8192, temperature: 0.3 });
+          await writeLoreFiles(config, book.projectName, { [fc.file]: updated });
+          updatedFiles[fc.file] = updated;
+        } catch {
+          // non-fatal: skip file on error
+        }
+      }
+
+      await updateBook(book.id, { summaryFresh: false });
+      if (Object.keys(updatedFiles).length > 0 && isGitAvailable() && config.git.enabled && config.git.autoCommit) {
+        await gitCommit(getBookDir(config, book.projectName), `Lore review: updated ${Object.keys(updatedFiles).length} file(s)`);
+      }
+
+      sse.send('done', { review, updatedFiles });
+    } catch (err) {
+      sse.send('error', { message: String(err) });
+    }
+    sse.done();
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MINI AGENT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  app.post('/api/agent', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const { input, bookId } = req.body as { input?: string; bookId?: string };
+      if (!input?.trim()) {
+        res.status(400).json({ error: 'input required' });
+        return;
+      }
+
+      const books = await getAllBooks();
+      const activeBooks = books.filter(b => b.status !== 'archived');
+      const bookList = activeBooks.length > 0
+        ? activeBooks.map(b =>
+            `- id=${b.id} | projectName=${b.projectName} | title="${b.title}" | genre=${b.genre}`)
+          .join('\n')
+        : 'No books yet.';
+
+      const currentBook = bookId ? activeBooks.find(b => b.id === bookId) : null;
+      const currentBookInfo = currentBook
+        ? `Currently viewing: id=${currentBook.id}, title="${currentBook.title}"`
+        : 'Not on a specific book page.';
+
+      const systemPrompt = `You are inkai's GUI mini-agent. Generate a step-by-step plan for the user's request.
+
+Books:
+${bookList}
+
+${currentBookInfo}
+
+Available SSE operations (AI operations that stream progress):
+- Extend/update characters: endpoint=/books/{bookId}/characters/extend, bodyParam=authorChanges
+- Generate new character sheets: endpoint=/books/{bookId}/characters, bodyParam=authorGuidance (optional; omit bodyParam/answerKey if no guidance)
+- Generate/regenerate story arc: endpoint=/books/{bookId}/story-arc, bodyParam=authorGuidance (optional)
+- Generate timeline: endpoint=/books/{bookId}/timeline (no body needed)
+- Run lore review (find & fix contradictions): endpoint=/books/{bookId}/lore-review (no body needed)
+
+Navigation:
+- To a book page: /books/{bookId}
+
+Respond ONLY with JSON in this exact format:
+{
+  "intent": "One sentence: what you are doing for the user",
+  "steps": [
+    { "type": "say", "message": "..." },
+    { "type": "ask", "key": "var_name", "question": "Question?" },
+    { "type": "navigate", "to": "/books/actual-id-here", "description": "Short label" },
+    { "type": "sse", "endpoint": "/books/actual-id-here/characters/extend", "bodyParam": "authorChanges", "answerKey": "var_name" }
+  ]
+}
+
+Rules:
+- Replace {bookId} with the actual book ID from the books list
+- "answerKey" must match a "key" from a prior "ask" step, or omit if no body needed
+- "bodyParam" is the request body field name, or omit if the endpoint needs no body
+- Keep plans concise (1–4 steps)
+- If intent is unclear, use a single "say" step asking for clarification
+- Never invent endpoints not listed above`;
+
+      const raw = await chatSmall(config, [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: input.trim() },
+      ], { jsonMode: true, maxTokens: 1024, temperature: 0.2 });
+
+      const plan = parseLLMJson<{ intent: string; steps: unknown[] }>(raw, 'GUI agent');
+      res.json(plan);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GIT STATUS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  app.get('/api/books/:id/git', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const result = await gitStatus(getBookDir(config, book.projectName));
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.post('/api/books/:id/git/commit', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      if (!isGitAvailable()) { res.status(400).json({ error: 'Git not available' }); return; }
+      const msg = typeof req.body.message === 'string' && req.body.message.trim()
+        ? req.body.message.trim()
+        : `Manual commit — ${new Date().toLocaleString()}`;
+      await gitCommit(getBookDir(config, book.projectName), msg);
+      res.json({ ok: true, message: msg });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

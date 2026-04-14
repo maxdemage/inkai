@@ -46,9 +46,16 @@ export const charactersCommand: Command = {
       blank();
       info('No characters.md found. Generating character sheets from your lore and chapters...');
       blank();
-      info('Optionally describe what to focus on or add (leave blank to auto-generate):');
-      blank();
-      const authorGuidance = await multilineInput('Author guidance (optional):');
+
+      let authorGuidance = ctx.agentInput ?? '';
+      if (!ctx.agentInput) {
+        info('Optionally describe what to focus on or add (leave blank to auto-generate):');
+        blank();
+        authorGuidance = await multilineInput('Author guidance (optional):');
+      } else {
+        info(`Using: ${c.value(authorGuidance)}`);
+        ctx.agentInput = undefined;
+      }
 
       spinner.start('Generating character sheets (writer LLM)...');
 
@@ -76,14 +83,17 @@ export const charactersCommand: Command = {
     boxMessage(loreFiles['characters.md'], 'Characters');
     blank();
 
-    const action = await select({
-      message: 'What do you want to do?',
-      choices: [
-        { name: 'Extend current — add to or update the existing characters', value: 'extend' },
-        { name: 'Generate new file — regenerate from scratch using lore', value: 'generate' },
-        { name: 'Nothing — leave as is', value: 'cancel' },
-      ],
-    });
+    // When the mini-agent pre-filled an answer, skip the action picker and extend directly
+    const action = ctx.agentInput
+      ? 'extend'
+      : await select({
+          message: 'What do you want to do?',
+          choices: [
+            { name: 'Extend current — add to or update the existing characters', value: 'extend' },
+            { name: 'Generate new file — regenerate from scratch using lore', value: 'generate' },
+            { name: 'Nothing — leave as is', value: 'cancel' },
+          ],
+        });
 
     if (action === 'cancel') {
       info('Characters unchanged.');
@@ -95,9 +105,15 @@ export const charactersCommand: Command = {
     if (action === 'extend') {
       // ─── Extend: edit existing with user changes ───────────
 
-      info('Describe what you want to add or change — new characters, updated arcs, fix details, etc.');
-      blank();
-      const authorChanges = await multilineInput('Describe changes:');
+      let authorChanges = ctx.agentInput ?? '';
+      if (!ctx.agentInput) {
+        info('Describe what you want to add or change — new characters, updated arcs, fix details, etc.');
+        blank();
+        authorChanges = await multilineInput('Describe changes:');
+      } else {
+        info(`Using: ${c.value(authorChanges)}`);
+        ctx.agentInput = undefined;
+      }
 
       if (!authorChanges.trim()) {
         info('No changes described. Characters unchanged.');

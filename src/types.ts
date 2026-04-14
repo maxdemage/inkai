@@ -105,6 +105,8 @@ export interface AppContext {
   config: InkaiConfig;
   selectedBook: BookRecord | null;
   gitEnabled: boolean;
+  /** Pre-filled answer injected by the mini-agent so commands can skip their interactive prompts. */
+  agentInput?: string;
 }
 
 export interface Command {

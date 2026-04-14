@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import BooksPage from './pages/BooksPage';
+import AllBooksPage from './pages/AllBooksPage';
 import BookPage from './pages/BookPage';
 import ReadPage from './pages/ReadPage';
 import JobsPage from './pages/JobsPage';
@@ -11,6 +12,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<BooksPage />} />
+        <Route path="/books" element={<AllBooksPage />} />
         <Route path="/books/:id" element={<BookPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

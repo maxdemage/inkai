@@ -1,8 +1,9 @@
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
-import { BookOpen, Briefcase, Settings, Plus, ChevronRight } from 'lucide-react';
+import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
+import { BookOpen, Briefcase, Settings, Plus, ChevronRight, Bot } from 'lucide-react';
 import { useState } from 'react';
 import { useBooks, useJobs } from '../hooks';
 import CreateBookWizard from './CreateBookWizard';
+import MiniAgentModal from './MiniAgentModal';
 import StatusBadge from './StatusBadge';
 import type { BookRecord, ChapterJob } from '../types';
 
@@ -57,10 +58,14 @@ export default function Layout() {
   const { data: books = [] } = useBooks();
   const { data: jobs = [] } = useJobs(5000);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
+  const location = useLocation();
+  const bookIdMatch = location.pathname.match(/^\/books\/([^/]+)/);
+  const currentBookId = bookIdMatch?.[1];
   const activeBooks = books.filter(b => b.status !== 'archived');
   const recentJobs = [...jobs]
     .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
-    .slice(0, 5);
+    .slice(0, 3);
   const hasActiveJobs = jobs.some(j => j.status === 'running' || j.status === 'pending');
 
   return (
@@ -127,6 +132,17 @@ export default function Layout() {
               }`
             }
           >
+            <BookOpen size={15} /> Dashboard
+          </NavLink>
+          <NavLink
+            to="/books"
+            end
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive ? 'bg-violet-600/20 text-violet-300' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+              }`
+            }
+          >
             <BookOpen size={15} /> Books
           </NavLink>
           <NavLink
@@ -149,6 +165,12 @@ export default function Layout() {
           >
             <Settings size={15} /> Settings
           </NavLink>
+          <button
+            onClick={() => setShowAgent(true)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full text-slate-400 hover:bg-white/5 hover:text-slate-200"
+          >
+            <Bot size={15} /> Agent
+          </button>
           </nav>
         </div>
       </aside>
@@ -159,6 +181,7 @@ export default function Layout() {
       </main>
 
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
+      {showAgent && <MiniAgentModal bookId={currentBookId} onClose={() => setShowAgent(false)} />}
     </div>
   );
 }

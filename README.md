@@ -23,7 +23,7 @@ inkai is not a one prompt wonder magical wand - it will not create everything fo
 
 ```bash
 # 1. Install & build (one time) — builds CLI + web frontend
-npm install && npm run build && npm run build:web  && npm link
+npm install && npm run build && npm link
 
 # 2. Start — pick your style:
 inkai serve        # → browser UI at http://localhost:4242  ← recommended
@@ -51,6 +51,7 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Reading view** | Fully themeable full-screen reader — 6 backgrounds, 4 fonts, 4 font sizes, 6 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
 | **Settings** | Configure LLM providers, model tiers, git, and language |
+| **Agent** | Natural-language assistant — type what you want and it plans + executes the steps |
 
 > **Full GUI reference:** [GUI.md](GUI.md)
 
@@ -81,6 +82,7 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
 - **GUI Reading View** — fully themeable reader (6 backgrounds, 4 fonts, 4 sizes, 6 text colors, all persisted); scroll progress bar; chapter/review tab toggle; one-click edit
 - **ODT & EPUB Export** — export all chapters to `.odt` or `.epub` from CLI or directly from the GUI
+- **Mini-Agent** — type a plain-English request instead of a command (CLI or GUI); the agent plans the steps, asks follow-up questions if needed, and executes them automatically (e.g. *"update the characters with a new villain and regenerate the timeline"*)
 - **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
 - **Archive System** — soft-delete projects with 30-day grace period
 - **Git Integration** — auto-commits if git is available
