@@ -535,7 +535,7 @@ export default function BookPage() {
 
               {/* Lore files */}
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lore Files</h3>
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Edit Lore Files</h3>
 
                 {loreLoading && <div className="text-sm text-slate-500">Loading lore…</div>}
 

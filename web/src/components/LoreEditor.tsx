@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, X, Loader2, FileText } from 'lucide-react';
+import { Save, X, Loader2, FileText, Search } from 'lucide-react';
 import { useUpdateLore } from '../hooks';
 
 interface Props {
@@ -39,6 +39,9 @@ export default function LoreEditor({ bookId, filename, initialContent, allFiles,
 
   const isDirty = content !== initialContent;
 
+  const [search, setSearch] = useState('');
+  const searchLower = search.trim().toLowerCase();
+
   const switchTo = (f: string) => {
     if (f === filename) return;
     if (isDirty && !confirm('You have unsaved changes. Discard and switch?')) return;
@@ -46,6 +49,13 @@ export default function LoreEditor({ bookId, filename, initialContent, allFiles,
   };
 
   const fileList = allFiles ? Object.keys(allFiles).sort() : [];
+
+  const filteredFiles = searchLower
+    ? fileList.filter(f =>
+        f.toLowerCase().includes(searchLower) ||
+        (allFiles?.[f] ?? '').toLowerCase().includes(searchLower)
+      )
+    : fileList;
 
   return (
     <div className="flex h-full">
@@ -93,11 +103,24 @@ export default function LoreEditor({ bookId, filename, initialContent, allFiles,
       {/* Sidebar — file list */}
       {fileList.length > 0 && (
         <div className="w-56 shrink-0 border-l border-white/[0.06] flex flex-col">
-          <div className="px-3 py-3 border-b border-white/[0.06]">
+          <div className="px-3 py-3 border-b border-white/[0.06] space-y-2">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lore Files</span>
+            <div className="relative">
+              <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-full bg-ink-900 border border-white/[0.08] rounded-lg pl-6 pr-2 py-1 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
+              />
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto py-1">
-            {fileList.map(f => (
+            {filteredFiles.length === 0 && (
+              <p className="px-3 py-3 text-xs text-slate-600">No matches.</p>
+            )}
+            {filteredFiles.map(f => (
               <button
                 key={f}
                 onClick={() => switchTo(f)}

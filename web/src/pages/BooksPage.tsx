@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Archive, RotateCcw, Send, BookMarked, Clock, ChevronDown, ChevronRight } from 'lucide-react';
 import { useBooks, useArchiveBook, useUnarchiveBook, useJobs } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateBookWizard from '../components/CreateBookWizard';
-import MiniAgentModal from '../components/MiniAgentModal';
+import { AgentContext } from '../components/Layout';
 import type { BookRecord, ChapterJob } from '../types';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -154,10 +154,10 @@ export default function BooksPage() {
   const { data: jobs = [] }             = useJobs();
   const archive   = useArchiveBook();
   const unarchive = useUnarchiveBook();
+  const { openAgent } = useContext(AgentContext);
 
   const [showCreate, setShowCreate] = useState(false);
   const [agentInput, setAgentInput] = useState('');
-  const [agentQuery, setAgentQuery] = useState<string | null>(null);
 
   const active   = books.filter(b => b.status !== 'archived');
   const archived = books.filter(b => b.status === 'archived');
@@ -172,7 +172,7 @@ export default function BooksPage() {
     const q = agentInput.trim();
     if (!q) return;
     setAgentInput('');
-    setAgentQuery(q);
+    openAgent(q);
   };
 
   if (isLoading) {
@@ -191,9 +191,9 @@ export default function BooksPage() {
 
       {/* ── Section 1: Agent ─────────────────────────────────────────────── */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Agent</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">inkai</h2>
         <div className="bg-ink-800 border border-white/[0.07] rounded-2xl p-4">
-          <p className="text-xs text-slate-500 mb-3">Ask the agent to do something — generate content, navigate, run tools.</p>
+          <p className="text-xs text-slate-500 mb-3">Ask inkai to do something — generate content, navigate, run tools.</p>
           <div className="flex gap-2">
             <input
               type="text"
@@ -273,12 +273,6 @@ export default function BooksPage() {
 
       {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
-      {agentQuery !== null && (
-        <MiniAgentModal
-          initialQuery={agentQuery}
-          onClose={() => setAgentQuery(null)}
-        />
-      )}
     </div>
   );
 }
