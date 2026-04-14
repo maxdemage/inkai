@@ -1,45 +1,47 @@
+import type { CSSProperties } from 'react';
 import type { BookStatus } from '../types';
 
-const MAP: Record<BookStatus, { label: string; classes: string; dot: string }> = {
+const MAP: Record<BookStatus, { label: string; style: CSSProperties; dotStyle: CSSProperties; pulse?: boolean }> = {
   'new': {
     label: 'New',
-    classes: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-    dot: 'bg-blue-400',
+    style: { background: 'var(--semantic-info-bg)', color: 'var(--semantic-info-text)', borderColor: 'var(--semantic-info-border)' },
+    dotStyle: { background: 'var(--semantic-info-dot)' },
   },
   'initial-processing': {
     label: 'Setting up',
-    classes: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    dot: 'bg-amber-400 animate-pulse',
+    style: { background: 'var(--semantic-warning-bg)', color: 'var(--semantic-warning-text)', borderColor: 'var(--semantic-warning-border)' },
+    dotStyle: { background: 'var(--semantic-warning-dot)' },
+    pulse: true,
   },
   'work-in-progress': {
     label: 'In progress',
-    classes: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    dot: 'bg-emerald-400',
+    style: { background: 'var(--semantic-success-bg)', color: 'var(--semantic-success-text)', borderColor: 'var(--semantic-success-border)' },
+    dotStyle: { background: 'var(--semantic-success-dot)' },
   },
   'completed': {
     label: 'Completed',
-    classes: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-    dot: 'bg-violet-400',
+    style: { background: 'var(--accent-soft)', color: 'var(--accent-strong)', borderColor: 'var(--accent-border)' },
+    dotStyle: { background: 'var(--accent)' },
   },
   'archived': {
     label: 'Archived',
-    classes: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
-    dot: 'bg-slate-500',
+    style: { background: 'var(--semantic-neutral-bg)', color: 'var(--semantic-neutral-text)', borderColor: 'var(--semantic-neutral-border)' },
+    dotStyle: { background: 'var(--semantic-neutral-dot)' },
   },
   'on-hold': {
     label: 'On hold',
-    classes: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-    dot: 'bg-orange-400',
+    style: { background: 'var(--semantic-orange-bg)', color: 'var(--semantic-orange-text)', borderColor: 'var(--semantic-orange-border)' },
+    dotStyle: { background: 'var(--semantic-orange-dot)' },
   },
   'review': {
     label: 'Under review',
-    classes: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-    dot: 'bg-cyan-400',
+    style: { background: 'var(--semantic-cyan-bg)', color: 'var(--semantic-cyan-text)', borderColor: 'var(--semantic-cyan-border)' },
+    dotStyle: { background: 'var(--semantic-cyan-dot)' },
   },
   'limbo': {
     label: 'Limbo',
-    classes: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
-    dot: 'bg-pink-400',
+    style: { background: 'var(--semantic-pink-bg)', color: 'var(--semantic-pink-text)', borderColor: 'var(--semantic-pink-border)' },
+    dotStyle: { background: 'var(--semantic-pink-dot)' },
   },
 };
 
@@ -50,18 +52,17 @@ export default function StatusBadge({
   status: BookStatus;
   compact?: boolean;
 }) {
-  const s = MAP[status] ?? MAP['new'];
-  if (compact) {
-    return (
-      <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${s.classes}`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-        {s.label}
-      </span>
-    );
-  }
+  const s = MAP[status] ?? MAP.new;
+  const wrapperClass = compact
+    ? 'app-status-pill inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full border'
+    : 'app-status-pill inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border';
+  const dotClass = compact
+    ? `w-1.5 h-1.5 rounded-full ${s.pulse ? 'animate-pulse' : ''}`
+    : `w-2 h-2 rounded-full ${s.pulse ? 'animate-pulse' : ''}`;
+
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${s.classes}`}>
-      <span className={`w-2 h-2 rounded-full ${s.dot}`} />
+    <span className={wrapperClass} style={s.style}>
+      <span className={dotClass} style={s.dotStyle} />
       {s.label}
     </span>
   );

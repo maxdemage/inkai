@@ -48,9 +48,9 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Book detail — Lore** | Edit any lore file inline; enhance lore with AI; generate story arc, timeline, and character sheets |
 | **Book detail — Summary** | Read the rolling chapter summary |
 | **Export** | Download all chapters as EPUB or ODT directly from the book header |
-| **Reading view** | Fully themeable full-screen reader — 6 backgrounds, 4 fonts, 4 font sizes, 6 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
+| **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
-| **Settings** | Configure LLM providers, model tiers, git, and language |
+| **Settings** | Configure appearance themes, LLM providers, model tiers, git, and language |
 
 > **Full GUI reference:** [GUI.md](GUI.md)
 
@@ -79,7 +79,8 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
 - **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
-- **GUI Reading View** — fully themeable reader (6 backgrounds, 4 fonts, 4 sizes, 6 text colors, all persisted); scroll progress bar; chapter/review tab toggle; one-click edit
+- **GUI Theme System** — curated dark and light workspace themes with persisted selection and broad styling coverage across the web UI
+- **GUI Reading View** — fully themeable reader (7 backgrounds including App Theme, 4 fonts, 4 sizes, 7 text colors including Theme, all persisted); dark app themes now default to dark reader surfaces
 - **ODT & EPUB Export** — export all chapters to `.odt` or `.epub` from CLI or directly from the GUI
 - **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
 - **Archive System** — soft-delete projects with 30-day grace period

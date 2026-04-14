@@ -48,15 +48,15 @@ export default function EnhanceLoreModal({ book, onClose }: Props) {
       size="lg"
     >
       {phase === 'loading' && (
-        <div className="flex flex-col items-center gap-3 py-10 text-slate-400">
-          <Loader2 size={24} className="animate-spin text-violet-400" />
+        <div className="flex flex-col items-center gap-3 py-10 app-text-muted">
+          <Loader2 size={24} className="animate-spin text-[color:var(--accent)]" />
           <p className="text-sm">Analysing your lore and generating targeted questions…</p>
         </div>
       )}
 
       {phase === 'questions' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm app-text-muted">
             Answer these AI-generated questions to deepen your world, characters, and story.
             Leave blank to skip.
           </p>
@@ -64,14 +64,14 @@ export default function EnhanceLoreModal({ book, onClose }: Props) {
           {questions.map(q => (
             <div key={q.key} className="space-y-1.5">
               <div className="flex items-start justify-between gap-2">
-                <label className="text-sm font-medium text-slate-300">{q.question}</label>
-                <span className="text-xs text-slate-600 shrink-0">{q.loreFile}</span>
+                <label className="text-sm font-medium app-text">{q.question}</label>
+                <span className="text-xs app-text-faint shrink-0">{q.loreFile}</span>
               </div>
               {q.context && (
-                <p className="text-xs text-slate-500 italic">{q.context}</p>
+                <p className="text-xs app-text-faint italic">{q.context}</p>
               )}
               <textarea
-                className="w-full bg-ink-700 border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+                className="w-full app-input rounded-lg px-3 py-2 text-sm resize-none"
                 rows={2}
                 value={answers[q.key] ?? ''}
                 onChange={e => setAnswers(prev => ({ ...prev, [q.key]: e.target.value }))}
@@ -91,7 +91,7 @@ export default function EnhanceLoreModal({ book, onClose }: Props) {
 
       {phase === 'applying' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Applying your answers to the lore files with AI assistance…</p>
+          <p className="text-sm app-text-muted">Applying your answers to the lore files with AI assistance…</p>
           <SSEProgress
             path={`/books/${book.id}/enhance-lore/apply`}
             method="POST"
@@ -113,10 +113,10 @@ export default function EnhanceLoreModal({ book, onClose }: Props) {
       {phase === 'done' && (
         <div className="space-y-4 py-2 text-center">
           <div className="text-4xl">✨</div>
-          <p className="text-sm font-medium text-white">Lore enhanced!</p>
+          <p className="text-sm font-medium app-text-primary">Lore enhanced!</p>
           {changes.length > 0 && (
-            <ul className="text-sm text-slate-400 text-left space-y-1 max-w-sm mx-auto">
-              {changes.map((c, i) => <li key={i} className="flex gap-2"><span className="text-violet-400">·</span>{c}</li>)}
+            <ul className="text-sm app-text-muted text-left space-y-1 max-w-sm mx-auto">
+              {changes.map((c, i) => <li key={i} className="flex gap-2"><span className="text-[color:var(--accent)]">·</span>{c}</li>)}
             </ul>
           )}
           <button onClick={onClose} className="btn-primary">Done</button>
@@ -125,7 +125,7 @@ export default function EnhanceLoreModal({ book, onClose }: Props) {
 
       {phase === 'error' && (
         <div className="space-y-4 py-2">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm app-text-danger">{error}</p>
           <button onClick={onClose} className="btn-ghost">Close</button>
         </div>
       )}

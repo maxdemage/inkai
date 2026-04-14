@@ -44,9 +44,9 @@ export default function SSEProgress({ path, method = 'POST', body, onDone, onErr
 
   return (
     <div className="space-y-3">
-      <div className="bg-ink-900 rounded-xl border border-white/[0.06] p-4 min-h-20 max-h-60 overflow-y-auto">
+      <div className="app-panel-strong rounded-xl p-4 min-h-20 max-h-60 overflow-y-auto">
         {messages.map((m, i) => (
-          <div key={i} className="flex items-start gap-2 text-sm text-slate-400">
+          <div key={i} className="flex items-start gap-2 text-sm app-text-muted">
             <span className="mt-0.5 shrink-0">›</span>
             <span>{m}</span>
           </div>
@@ -55,19 +55,19 @@ export default function SSEProgress({ path, method = 'POST', body, onDone, onErr
       </div>
 
       {status === 'running' && (
-        <div className="flex items-center gap-2 text-sm text-amber-300">
+        <div className="flex items-center gap-2 text-sm app-text-warning">
           <Loader2 size={14} className="animate-spin" />
           Working — this may take a minute…
         </div>
       )}
       {status === 'done' && (
-        <div className="flex items-center gap-2 text-sm text-emerald-400">
+        <div className="flex items-center gap-2 text-sm app-text-success">
           <CheckCircle2 size={14} />
           Done!
         </div>
       )}
       {status === 'error' && (
-        <div className="flex items-center gap-2 text-sm text-red-400">
+        <div className="flex items-center gap-2 text-sm app-text-danger">
           <XCircle size={14} />
           Error: {errorMsg}
         </div>

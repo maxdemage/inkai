@@ -34,19 +34,19 @@ export default function LoreEditor({ bookId, filename, initialContent, onClose }
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
-        <span className="text-sm font-medium text-slate-200">{filename}</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b app-divider shrink-0">
+        <span className="text-sm font-medium app-text-primary">{filename}</span>
         <div className="flex items-center gap-2">
           {isDirty && (
-            <span className="text-xs text-amber-400">Unsaved changes</span>
+            <span className="text-xs app-text-warning">Unsaved changes</span>
           )}
           {saved && (
-            <span className="text-xs text-emerald-400">Saved!</span>
+            <span className="text-xs app-text-success">Saved!</span>
           )}
           <button
             onClick={save}
             disabled={!isDirty || updateLore.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium app-accent-button disabled:cursor-not-allowed rounded-lg transition-colors"
           >
             {updateLore.isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             Save
@@ -56,7 +56,7 @@ export default function LoreEditor({ bookId, filename, initialContent, onClose }
               if (isDirty && !confirm('Discard changes?')) return;
               onClose();
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center app-icon-button transition-colors"
           >
             <X size={14} />
           </button>
@@ -65,7 +65,7 @@ export default function LoreEditor({ bookId, filename, initialContent, onClose }
 
       {/* Editor */}
       <textarea
-        className="flex-1 w-full bg-transparent px-5 py-4 text-sm text-slate-200 font-mono leading-relaxed resize-none focus:outline-none"
+        className="flex-1 w-full bg-transparent px-5 py-4 text-sm app-text-primary font-mono leading-relaxed resize-none"
         value={content}
         onChange={e => setContent(e.target.value)}
         spellCheck={false}
