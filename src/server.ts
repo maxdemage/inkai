@@ -559,6 +559,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const book = await requireBook(req.params.id, res);
       if (!book) return;
       const n = parseInt(req.params.n, 10);
+      const authorNotes: string | undefined = typeof req.body.authorNotes === 'string' ? req.body.authorNotes : undefined;
 
       sse.send('progress', { message: 'Loading chapter and review...' });
       const original = await readChapter(config, book.projectName, n);
@@ -583,7 +584,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       sse.send('progress', { message: `Rewriting chapter ${n} (writer LLM)...` });
       const rewritten = await chatWriter(config, [
         { role: 'system', content: 'You are an expert fiction writer. Rewrite incorporating all review feedback. Output only chapter content in markdown.' },
-        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, original, review, n) },
+        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, original, review, n, authorNotes) },
       ], { maxTokens: 8192, temperature: 0.7 });
 
       await writeChapter(config, book.projectName, n, rewritten);

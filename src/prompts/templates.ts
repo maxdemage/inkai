@@ -231,6 +231,7 @@ export async function buildChapterRewritePrompt(
   originalChapter: string,
   reviewContent: string,
   chapterNumber: number,
+  authorNotes?: string,
 ): Promise<string> {
   return loadTemplate('chapter-rewrite', {
     loreContext,
@@ -238,6 +239,7 @@ export async function buildChapterRewritePrompt(
     originalChapter,
     reviewContent,
     chapterNumber: String(chapterNumber),
+    ...(authorNotes?.trim() ? { authorNotes: authorNotes.trim() } : {}),
   });
 }
 

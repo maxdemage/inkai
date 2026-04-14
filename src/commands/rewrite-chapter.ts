@@ -1,4 +1,4 @@
-import { confirm } from '@inquirer/prompts';
+import { confirm, input } from '@inquirer/prompts';
 import ora from 'ora';
 import type { Command } from '../types.js';
 import {
@@ -78,6 +78,12 @@ export const rewriteChapterCommand: Command = {
       spinner.succeed('Review loaded');
     }
 
+    // Ask for additional author instructions
+    blank();
+    const authorNotes = await input({
+      message: 'Additional instructions for the rewrite (optional — press Enter to skip):',
+    });
+
     // Confirm rewrite
     const proceed = await confirm({
       message: `Rewrite Chapter ${chapterNum}? This will overwrite the current version.`,
@@ -100,7 +106,7 @@ export const rewriteChapterCommand: Command = {
     try {
       const rewrittenChapter = await chatWriter(ctx.config, [
         { role: 'system', content: 'You are an expert fiction writer. Rewrite the chapter incorporating all review feedback. Output only the chapter content in markdown.' },
-        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum) },
+        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum, authorNotes || undefined) },
       ], { maxTokens: 8192, temperature: 0.7 });
 
       const filePath = await writeChapter(ctx.config, book.projectName, chapterNum, rewrittenChapter);

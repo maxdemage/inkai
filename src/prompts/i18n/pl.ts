@@ -315,7 +315,10 @@ Bądź szczery, ale konstruktywny. Celem jest pomóc autorowi się poprawić.`,
 
 === RECENZJA I UWAGI ===
 {{reviewContent}}
-
+{{#if authorNotes}}
+=== DODATKOWE INSTRUKCJE AUTORA ===
+{{authorNotes}}
+{{/if}}
 Przepisz rozdział uwzględniając WSZYSTKIE uwagi z recenzji:
 - Napraw wszelkie problemy ze spójnością
 - Popraw jakość prozy zgodnie z sugestiami

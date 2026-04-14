@@ -22,6 +22,7 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
   const [error, setError] = useState('');
   const [reviewType, setReviewType] = useState<ReviewType>('full');
   const [reviewPersona, setReviewPersona] = useState<ReviewPersona | ''>('');
+  const [authorNotes, setAuthorNotes] = useState('');
 
   const isReview = action === 'review';
 
@@ -29,6 +30,8 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
   if (isReview) {
     body.reviewType = reviewType;
     if (reviewPersona) body.reviewPersona = reviewPersona;
+  } else {
+    if (authorNotes.trim()) body.authorNotes = authorNotes.trim();
   }
 
   const start = () => setPhase('running');
@@ -96,11 +99,23 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
           )}
 
           {!isReview && (
-            <div className="app-warning rounded-lg p-3">
-              <p className="text-xs">
-                If no review exists yet, a review will be generated first, then the rewrite will proceed.
-              </p>
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold app-text-muted uppercase tracking-wider">Additional instructions <span className="normal-case app-text-faint font-normal">(optional)</span></label>
+                <textarea
+                  className="w-full app-input rounded-xl px-3 py-2 text-sm resize-none outline-none"
+                  rows={3}
+                  value={authorNotes}
+                  onChange={e => setAuthorNotes(e.target.value)}
+                  placeholder="e.g. Make the dialogue more tense. Expand the fight scene. End on a cliffhanger."
+                />
+              </div>
+              <div className="app-warning rounded-lg p-3">
+                <p className="text-xs">
+                  If no review exists yet, a review will be generated first, then the rewrite will proceed.
+                </p>
+              </div>
+            </>
           )}
           <div className="flex justify-end gap-3">
             <button onClick={onClose} className="btn-ghost">Cancel</button>
