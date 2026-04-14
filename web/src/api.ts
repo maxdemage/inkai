@@ -64,6 +64,8 @@ export const api = {
 
   lore: {
     list: (bookId: string) => req<Record<string, string>>(`/books/${bookId}/lore`),
+    create: (bookId: string, filename: string) =>
+      req<{ ok: boolean; filename: string }>(`/books/${bookId}/lore`, { method: 'POST', ...json({ filename }) }),
     update: (bookId: string, filename: string, content: string) =>
       req<{ ok: boolean }>(`/books/${bookId}/lore/${filename}`, { method: 'PUT', ...json({ content }) }),
     enhanceQuestions: (bookId: string) =>

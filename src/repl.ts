@@ -9,6 +9,7 @@ import { createChapterCommand } from './commands/create-chapter.js';
 import { deleteChapterCommand } from './commands/delete-chapter.js';
 import { editBasicInfoCommand } from './commands/edit-basic-info.js';
 import { editLoreCommand } from './commands/edit-lore.js';
+import { createLoreFileCommand } from './commands/create-lore-file.js';
 import { enhanceLoreCommand } from './commands/enhance-lore.js';
 import { exportCommand } from './commands/export.js';
 import { helpCommand } from './commands/help.js';
@@ -46,6 +47,7 @@ function registerAllCommands(): void {
   registerCommand(createChapterCommand);
   registerCommand(editBasicInfoCommand);
   registerCommand(editLoreCommand);
+  registerCommand(createLoreFileCommand);
   registerCommand(enhanceLoreCommand);
   registerCommand(exportCommand);
   registerCommand(helpCommand);

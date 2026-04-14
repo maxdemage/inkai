@@ -11,6 +11,11 @@ All notable changes to inkai are documented here.
 - **Agent mode in Dashboard** — type a plain-English request directly from the dashboard and the agent plans + executes the steps without leaving the page; the modal now lives in `Layout` so navigation steps no longer close it mid-run.
 - **Lore file search in Lore Editor** — a search box above the file list filters by filename and file content; files with no match are hidden; "No matches" message shown when the filter is empty.
 - **Lore file search in Reading View sidebar** — the same keyword search is available in the lore panel on the right-hand side of the reading screen; hidden when a file is open, shows "No matches" when nothing passes the filter.
+- **Git tab in Book page** — view working-tree changes and recent commit history, and commit directly from the browser with a custom message.
+- **Lore Review button restored** — the "Lore Review" AI tool is back in the Lore tab alongside Enhance Lore, Story Arc, Timeline, and Characters.
+
+### Changed
+- **Lore tab layout** — AI Enhancing Tools are now displayed as a card grid with a short description under each button; lore files are listed one per row below the tools panel.
 
 ### Fixed
 - **Agent modal closed immediately on navigation** — `MiniAgentModal` was rendered inside `BooksPage`; any `navigate` step the agent executed would unmount the page and close the modal. Lifted into `Layout` via `AgentContext` so it persists across all route changes.

@@ -6,7 +6,7 @@
 
 Inkai is a tool to help you pour your ideas onto documents - nothing more.
 
-See more in MANIFESTO.md
+See more in [MANIFESTO.md](MANIFESTO.md)
 
 ## Want to Help?
 

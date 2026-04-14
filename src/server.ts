@@ -635,6 +635,31 @@ export async function startServer(webDistPath?: string): Promise<void> {
     }
   });
 
+  // Create new lore file
+  app.post('/api/books/:id/lore', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const { filename } = req.body;
+      if (typeof filename !== 'string' || !filename.endsWith('.md') || filename.includes('/') || filename.includes('..')) {
+        res.status(400).json({ error: 'Invalid filename' }); return;
+      }
+      const existing = await readLoreFiles(config, book.projectName);
+      if (existing[filename] !== undefined) {
+        res.status(409).json({ error: 'File already exists' }); return;
+      }
+      const initial = `# ${filename.replace('.md', '')}\n\n`;
+      await writeLoreFiles(config, book.projectName, { [filename]: initial });
+      if (isGitAvailable() && config.git.enabled && config.git.autoCommit) {
+        await gitCommit(getBookDir(config, book.projectName), `Add lore file: ${filename}`);
+      }
+      res.json({ ok: true, filename });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   // Enhance lore: get questions
   app.post('/api/books/:id/enhance-lore/questions', async (req, res) => {
     try {

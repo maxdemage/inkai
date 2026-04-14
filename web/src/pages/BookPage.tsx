@@ -188,6 +188,9 @@ export default function BookPage() {
   const [editingLore, setEditingLore] = useState<string | null>(null);
   const [showEnhance, setShowEnhance] = useState(false);
   const [showLoreReview, setShowLoreReview] = useState(false);
+  const [newLoreFileName, setNewLoreFileName] = useState<string | null>(null); // null=hidden, ''=open
+  const [newLoreFileError, setNewLoreFileError] = useState('');
+  const [creatingLoreFile, setCreatingLoreFile] = useState(false);
   const [generateType, setGenerateType] = useState<'story-arc' | 'timeline' | 'characters' | null>(null);
   const [chapterAction, setChapterAction] = useState<{ number: number; action: 'review' | 'rewrite' } | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -533,7 +536,86 @@ export default function BookPage() {
 
               {/* Lore files */}
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold app-text-faint uppercase tracking-wider">Lore Files</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold app-text-faint uppercase tracking-wider">Lore Files</h3>
+                  <button
+                    onClick={() => { setNewLoreFileName(''); setNewLoreFileError(''); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs app-ghost-button rounded-lg transition-colors"
+                  >
+                    <Plus size={12} /> New File
+                  </button>
+                </div>
+
+                {/* Inline new-file form */}
+                {newLoreFileName !== null && (
+                  <div className="app-panel rounded-xl px-4 py-3 space-y-2">
+                    <p className="text-xs app-text-faint">Enter a name for the new lore file (no extension needed).</p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        value={newLoreFileName}
+                        onChange={e => { setNewLoreFileName(e.target.value); setNewLoreFileError(''); }}
+                        onKeyDown={async e => {
+                          if (e.key === 'Escape') { setNewLoreFileName(null); return; }
+                          if (e.key === 'Enter') {
+                            const raw = newLoreFileName.trim();
+                            if (!raw) { setNewLoreFileError('Name is required'); return; }
+                            const safe = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                            if (!safe) { setNewLoreFileError('Name contains only invalid characters'); return; }
+                            const filename = `${safe}.md`;
+                            if (loreFiles[filename] !== undefined) { setNewLoreFileError(`"${filename}" already exists`); return; }
+                            setCreatingLoreFile(true);
+                            try {
+                              await api.lore.create(book.id, filename);
+                              await qc.invalidateQueries({ queryKey: keys.lore(book.id) });
+                              setNewLoreFileName(null);
+                              setEditingLore(filename);
+                            } catch (err) {
+                              setNewLoreFileError(String(err));
+                            } finally {
+                              setCreatingLoreFile(false);
+                            }
+                          }
+                        }}
+                        placeholder="e.g. magic-system"
+                        className="flex-1 app-input rounded-lg px-3 py-2 text-sm outline-none"
+                      />
+                      <button
+                        disabled={creatingLoreFile}
+                        onClick={async () => {
+                          const raw = newLoreFileName.trim();
+                          if (!raw) { setNewLoreFileError('Name is required'); return; }
+                          const safe = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                          if (!safe) { setNewLoreFileError('Name contains only invalid characters'); return; }
+                          const filename = `${safe}.md`;
+                          if (loreFiles[filename] !== undefined) { setNewLoreFileError(`"${filename}" already exists`); return; }
+                          setCreatingLoreFile(true);
+                          try {
+                            await api.lore.create(book.id, filename);
+                            await qc.invalidateQueries({ queryKey: keys.lore(book.id) });
+                            setNewLoreFileName(null);
+                            setEditingLore(filename);
+                          } catch (err) {
+                            setNewLoreFileError(String(err));
+                          } finally {
+                            setCreatingLoreFile(false);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 app-accent-button rounded-lg text-sm transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        {creatingLoreFile ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                        Create
+                      </button>
+                      <button
+                        onClick={() => setNewLoreFileName(null)}
+                        className="px-2.5 py-2 app-ghost-button rounded-lg transition-colors"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                    {newLoreFileError && <p className="text-xs app-text-danger">{newLoreFileError}</p>}
+                  </div>
+                )}
 
                 {loreLoading && <div className="text-sm app-text-faint">Loading lore…</div>}
 
