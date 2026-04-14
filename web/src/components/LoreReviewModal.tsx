@@ -36,7 +36,7 @@ export default function LoreReviewModal({ book, onClose }: Props) {
     >
       {phase === 'confirm' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm app-text-muted leading-relaxed">
             AI will review all your lore files for contradictions, gaps, and inconsistencies —
             then apply fixes file by file using the medium LLM.
           </p>
@@ -54,7 +54,7 @@ export default function LoreReviewModal({ book, onClose }: Props) {
 
       {phase === 'reviewing' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">Reviewing all lore files and applying corrections…</p>
+          <p className="text-sm app-text-muted">Reviewing all lore files and applying corrections…</p>
           <SSEProgress
             path={`/books/${book.id}/lore-review`}
             method="POST"
@@ -77,7 +77,7 @@ export default function LoreReviewModal({ book, onClose }: Props) {
         <div className="space-y-4 py-2">
           <div className="text-center">
             <div className="text-3xl mb-2">{review.fileChanges?.length ? '🔍' : '✅'}</div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium app-text-primary">
               {review.fileChanges?.length
                 ? `Updated ${updatedFiles.length} lore file(s)`
                 : 'No issues found — lore is in great shape!'}
@@ -85,7 +85,7 @@ export default function LoreReviewModal({ book, onClose }: Props) {
           </div>
 
           {review.summary && (
-            <div className="bg-ink-900 rounded-xl border border-white/[0.06] px-4 py-3 text-sm text-slate-300 leading-relaxed">
+            <div className="app-panel rounded-xl px-4 py-3 text-sm app-text-muted leading-relaxed">
               {review.summary}
             </div>
           )}
@@ -93,12 +93,12 @@ export default function LoreReviewModal({ book, onClose }: Props) {
           {review.fileChanges?.length > 0 && (
             <div className="space-y-2">
               {review.fileChanges.map(fc => (
-                <div key={fc.file} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2">
-                  <p className="text-xs font-semibold text-violet-400 mb-1">{fc.file}</p>
+                <div key={fc.file} className="app-panel rounded-xl px-3 py-2">
+                  <p className="text-xs font-semibold text-[color:var(--accent)] mb-1">{fc.file}</p>
                   <ul className="space-y-0.5">
                     {fc.changes.map((c, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-slate-400">
-                        <span className="text-slate-600 shrink-0">·</span>
+                      <li key={i} className="flex gap-2 text-xs app-text-muted">
+                        <span className="app-text-faint shrink-0">·</span>
                         {c}
                       </li>
                     ))}
@@ -116,7 +116,7 @@ export default function LoreReviewModal({ book, onClose }: Props) {
 
       {phase === 'error' && (
         <div className="space-y-4 py-2">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm app-text-danger">{error}</p>
           <button onClick={onClose} className="btn-ghost">Close</button>
         </div>
       )}

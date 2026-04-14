@@ -148,6 +148,17 @@ export default function Layout() {
             <BookOpen size={15} /> Dashboard
           </NavLink>
           <NavLink
+            to="/books"
+            end
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors app-nav-link ${
+                isActive ? 'app-nav-link-active' : ''
+              }`
+            }
+          >
+            <BookOpen size={15} /> Books
+          </NavLink>
+          <NavLink
             to="/jobs"
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors app-nav-link ${
