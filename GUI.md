@@ -114,6 +114,7 @@ Two sections:
 
 - **Lore Editor**: full-height text area, dirty-state tracking, Save / Discard buttons, confirmation on unsaved-exit.
 - A **right sidebar** lists all lore files; clicking one switches to it (with unsaved-change confirmation).
+- A **search box** at the top of the file list filters by filename and by file content — useful for finding which lore file mentions a specific character or place. Files with no match are hidden; a "No matches" message is shown when the filter is empty.
 
 #### Manual Chapter Editor
 
@@ -164,7 +165,7 @@ A full-screen, distraction-free reading experience.
 - **Chapter / Review tabs** — if the chapter has an AI review, a tab switcher appears in the top bar. The review is fetched on demand when you first switch to it.
 - **Prev / Next** navigation with chapter N-of-total display.
 - **Edit chapter button** (pencil icon, top-right) — visible on the Chapter tab only. Navigates back to the book page and immediately opens the chapter in the Manual Editor.
-- **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar.
+- **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar. A **search box** at the top of the file list filters by filename and file content (the search box is hidden when a file is open).
 - **Lore term highlighting** — H2/H3 headers and `**bold**` terms from lore files are underlined in the text. Click any to open a floating popover with the relevant lore content.
 
 #### Typography Settings (`Type` icon in the top bar)

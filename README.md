@@ -45,10 +45,10 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Books dashboard** | View all projects as cards with status badges; archive/unarchive |
 | **Create Book wizard** | 4-step guided flow: basic info → AI round-1 questions → AI round-2 questions → live lore generation |
 | **Book detail — Chapters** | Create, read, review, rewrite, and manually edit chapters; see word counts and review status; active-job strip with live status; toast on job start |
-| **Book detail — Lore** | Edit any lore file inline; enhance lore with AI; generate story arc, timeline, and character sheets |
+| **Book detail — Lore** | Edit any lore file inline; keyword search across filenames and file content; enhance lore with AI; generate story arc, timeline, and character sheets |
 | **Book detail — Summary** | Read the rolling chapter summary |
 | **Export** | Download all chapters as EPUB or ODT directly from the book header |
-| **Reading view** | Fully themeable full-screen reader — 6 backgrounds, 4 fonts, 4 font sizes, 6 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit |
+| **Reading view** | Fully themeable full-screen reader — 6 backgrounds, 4 fonts, 4 font sizes, 6 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit; collapsible lore sidebar with keyword search |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
 | **Settings** | Configure LLM providers, model tiers, git, and language |
 | **Agent** | Natural-language assistant — type what you want and it plans + executes the steps |
@@ -80,7 +80,8 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
 - **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
-- **GUI Reading View** — fully themeable reader (6 backgrounds, 4 fonts, 4 sizes, 6 text colors, all persisted); scroll progress bar; chapter/review tab toggle; one-click edit
+- **GUI Reading View** — fully themeable reader (6 backgrounds, 4 fonts, 4 sizes, 6 text colors, all persisted); scroll progress bar; chapter/review tab toggle; one-click edit; lore sidebar with keyword search
+- **Lore File Search** — search across lore filenames and content in both the Lore Editor and the Reading View sidebar
 - **ODT & EPUB Export** — export all chapters to `.odt` or `.epub` from CLI or directly from the GUI
 - **Mini-Agent** — type a plain-English request instead of a command (CLI or GUI); the agent plans the steps, asks follow-up questions if needed, and executes them automatically (e.g. *"update the characters with a new villain and regenerate the timeline"*)
 - **Multi-Language Prompts** — choose your book language on first run (English, Polish); prompts are served in the selected language
