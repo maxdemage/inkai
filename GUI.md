@@ -160,7 +160,7 @@ Opens as a modal from the Chapters tab.
 
 A full-screen, distraction-free reading experience.
 
-- **Themeable background** — choose from Paper, White, Dusk, Dark, Sepia, or Forest (see Typography Settings below).
+- **Themeable background** — choose from App Theme, Paper, White, Dusk, Dark, Sepia, or Forest (see Typography Settings below).
 - **Reading progress bar** — a thin bar just below the top chrome fills left-to-right as you scroll through the chapter.
 - **Chapter / Review tabs** — if the chapter has an AI review, a tab switcher appears in the top bar. The review is fetched on demand when you first switch to it.
 - **Prev / Next** navigation with chapter N-of-total display.
@@ -176,10 +176,10 @@ A panel with four settings, all persisted to `localStorage`:
 |---------|---------|
 | **Font size** | S (15 px) · M (18 px) · L (21 px) · XL (25 px) |
 | **Typeface** | Serif (Georgia) · Sans (system-ui) · Mono (Courier) · Humanist (Palatino) |
-| **Background** | Paper · White · Dusk · Dark · Sepia · Forest |
-| **Text color** | Ink · Charcoal · Slate · Cream · White · Warm |
+| **Background** | App Theme · Paper · White · Dusk · Dark · Sepia · Forest |
+| **Text color** | Theme · Ink · Charcoal · Slate · Cream · White · Warm |
 
-The top-bar chrome (buttons, borders, navigation) adapts its contrast automatically to the chosen background theme.
+The top-bar chrome (buttons, borders, navigation) adapts its contrast automatically to the chosen background theme. When the app is using a dark workspace theme, the reader now defaults to a dark reading surface too.
 
 ---
 
@@ -227,6 +227,12 @@ If the intent is ambiguous the agent will ask for clarification. After a plan fi
 ### Settings (`/settings`)
 
 Configure everything without touching config files.
+
+#### Appearance
+- Compact, collapsible theme picker at the top of Settings
+- Shows the currently selected theme in a summary row by default
+- Expands into a full gallery of curated dark and light workspace themes
+- Theme changes apply instantly and are persisted in the browser
 
 #### LLM Providers
 Enter API keys for OpenAI, Anthropic, and/or Google Gemini. Keys are masked on load — leave the field blank to keep the existing key; enter a new value to replace it.

@@ -41,7 +41,7 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
     >
       {phase === 'confirm' && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm app-text-muted">
             {isReview
               ? `AI will review Chapter ${chapterNumber} against your lore and style guide.`
               : `AI will rewrite Chapter ${chapterNumber} incorporating all critical feedback from the review. The current version will be overwritten.`
@@ -52,16 +52,16 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
             <>
               {/* Review type */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Review type</label>
+                <label className="block text-xs font-semibold app-text-muted uppercase tracking-wider">Review type</label>
                 <div className="space-y-1.5">
                   {REVIEW_TYPES.map(t => (
                     <button
                       key={t.value}
                       onClick={() => setReviewType(t.value)}
-                      className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition-colors ${reviewType === t.value ? 'bg-violet-600/20 border-violet-500/40 text-violet-200' : 'bg-white/[0.03] border-white/[0.08] text-slate-300 hover:bg-white/[0.06]'}`}
+                      className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition-colors ${reviewType === t.value ? 'app-accent-soft' : 'app-ghost-button app-divider'}`}
                     >
                       <span className="font-medium">{t.label}</span>
-                      <span className="text-xs text-slate-500 ml-2">{t.description}</span>
+                      <span className="text-xs app-text-faint ml-2">{t.description}</span>
                     </button>
                   ))}
                 </div>
@@ -69,11 +69,11 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
 
               {/* Reviewer persona */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Reviewer persona</label>
+                <label className="block text-xs font-semibold app-text-muted uppercase tracking-wider">Reviewer persona</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setReviewPersona('')}
-                    className={`px-3 py-1.5 rounded-xl border text-xs transition-colors ${reviewPersona === '' ? 'bg-violet-600/20 border-violet-500/40 text-violet-200' : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06]'}`}
+                    className={`px-3 py-1.5 rounded-xl border text-xs transition-colors ${reviewPersona === '' ? 'app-accent-soft' : 'app-ghost-button app-divider app-text-muted'}`}
                   >
                     Default
                   </button>
@@ -82,22 +82,22 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
                       key={p.value}
                       onClick={() => setReviewPersona(p.value)}
                       title={p.description}
-                      className={`px-3 py-1.5 rounded-xl border text-xs transition-colors ${reviewPersona === p.value ? 'bg-violet-600/20 border-violet-500/40 text-violet-200' : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06]'}`}
+                      className={`px-3 py-1.5 rounded-xl border text-xs transition-colors ${reviewPersona === p.value ? 'app-accent-soft' : 'app-ghost-button app-divider app-text-muted'}`}
                     >
                       {p.label}
                     </button>
                   ))}
                 </div>
                 {reviewPersona && (
-                  <p className="text-xs text-slate-500">{REVIEW_PERSONAS.find(p => p.value === reviewPersona)?.description}</p>
+                  <p className="text-xs app-text-faint">{REVIEW_PERSONAS.find(p => p.value === reviewPersona)?.description}</p>
                 )}
               </div>
             </>
           )}
 
           {!isReview && (
-            <div className="bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
-              <p className="text-xs text-amber-300">
+            <div className="app-warning rounded-lg p-3">
+              <p className="text-xs">
                 If no review exists yet, a review will be generated first, then the rewrite will proceed.
               </p>
             </div>
@@ -133,7 +133,7 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
       {phase === 'done' && (
         <div className="space-y-3 text-center py-4">
           <div className="text-4xl">{isReview ? '📝' : '✨'}</div>
-          <p className="text-sm font-medium text-white">
+          <p className="text-sm font-medium app-text-primary">
             {isReview ? 'Review complete!' : 'Rewrite complete!'}
           </p>
           <div className="flex justify-center gap-3">
@@ -147,7 +147,7 @@ export default function ChapterActionModal({ book, chapterNumber, action, onClos
 
       {phase === 'error' && (
         <div className="space-y-4 py-2">
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm app-text-danger">{error}</p>
           <div className="flex gap-3">
             <button onClick={() => setPhase('confirm')} className="btn-ghost">Try Again</button>
             <button onClick={onClose} className="btn-ghost">Close</button>

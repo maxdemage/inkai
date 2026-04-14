@@ -29,20 +29,20 @@ export default function Modal({ title, onClose, children, size = 'md', noPadding
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 app-overlay backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
     >
       <div
         ref={ref}
-        className={`w-full ${sizeClass} bg-ink-800 border border-white/[0.08] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]`}
+        className={`w-full ${sizeClass} app-panel-strong rounded-2xl shadow-2xl flex flex-col max-h-[90vh]`}
       >
         {title && (
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] shrink-0">
-            <h2 className="text-base font-semibold text-white">{title}</h2>
+          <div className="flex items-center justify-between px-5 py-4 border-b app-divider shrink-0">
+            <h2 className="text-base font-semibold app-text-primary">{title}</h2>
             {onClose && (
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="w-7 h-7 rounded-lg flex items-center justify-center app-icon-button transition-colors"
               >
                 <X size={15} />
               </button>
