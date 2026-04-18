@@ -48,7 +48,7 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Book detail — Lore** | Edit any lore file inline; keyword search across filenames and file content; enhance lore with AI; generate story arc, timeline, and character sheets |
 | **Book detail — Summary** | Read the rolling chapter summary |
 | **Export** | Download all chapters as EPUB or ODT directly from the book header |
-| **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit; collapsible lore sidebar with keyword search |
+| **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit; collapsible lore sidebar with keyword search; per-chapter author notes |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
 | **Settings** | Configure appearance themes, LLM providers, model tiers, git, and language |
 | **Agent** | Natural-language assistant — type what you want and it plans + executes the steps |

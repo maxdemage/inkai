@@ -9,6 +9,7 @@ import {
   writeChapter,
   readChapterSummary,
   updateChapterSummary,
+  readChapterNotes,
 } from '../book/manager.js';
 import { chatWriter, chatSmall } from '../llm/manager.js';
 import { gitCommit, isGitAvailable } from '../git.js';
@@ -103,10 +104,12 @@ export const rewriteChapterCommand: Command = {
       readStyleGuide(ctx.config, book.projectName),
     ]);
 
+    const chapterNotes = await readChapterNotes(ctx.config, book.projectName, chapterNum);
+
     try {
       const rewrittenChapter = await chatWriter(ctx.config, [
         { role: 'system', content: 'You are an expert fiction writer. Rewrite the chapter incorporating all review feedback. Output only the chapter content in markdown.' },
-        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum, authorNotes || undefined) },
+        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, originalChapter, reviewContent, chapterNum, authorNotes || undefined, chapterNotes ?? undefined) },
       ], { maxTokens: 8192, temperature: 0.7 });
 
       const filePath = await writeChapter(ctx.config, book.projectName, chapterNum, rewrittenChapter);

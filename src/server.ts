@@ -29,6 +29,8 @@ import {
   setBookStatus,
   readLoreContext,
   readLoreNotes,
+  readChapterNotes,
+  writeChapterNotes,
   deleteChapter,
 } from './book/manager.js';
 import {
@@ -329,6 +331,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
         const n = String(i).padStart(2, '0');
         const chapterFile = join(chapDir, `chapter-${n}.md`);
         const reviewFile = join(chapDir, `review_chapter_${n}.md`);
+        const notesFile = join(chapDir, `notes_chapter_${n}.md`);
         const planFile = join(plansDir, `plan-chapter-${n}.md`);
 
         let wordCount = 0;
@@ -342,6 +345,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
           number: i,
           hasChapter,
           hasReview: existsSync(reviewFile),
+          hasNotes: existsSync(notesFile),
           hasPlan: existsSync(planFile),
           wordCount,
         });
@@ -407,6 +411,36 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const content = await readReview(config, book.projectName, n);
       if (content === null) { res.status(404).json({ error: 'No review found' }); return; }
       res.json({ number: n, content });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // Chapter notes (author annotations)
+  app.get('/api/books/:id/chapters/:n/notes', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const n = parseInt(req.params.n, 10);
+      const content = await readChapterNotes(config, book.projectName, n);
+      if (content === null) { res.status(404).json({ error: 'No notes found' }); return; }
+      res.json({ number: n, content });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.put('/api/books/:id/chapters/:n/notes', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      const n = parseInt(req.params.n, 10);
+      const { content } = req.body;
+      if (typeof content !== 'string') { res.status(400).json({ error: 'content required' }); return; }
+      await writeChapterNotes(config, book.projectName, n, content);
+      res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }
@@ -565,9 +599,10 @@ export async function startServer(webDistPath?: string): Promise<void> {
       const original = await readChapter(config, book.projectName, n);
       if (!original) { sse.send('error', { message: `Chapter ${n} not found` }); sse.done(); return; }
 
-      const [loreContext, styleGuide] = await Promise.all([
+      const [loreContext, styleGuide, chapterNotes] = await Promise.all([
         readLoreContext(config, book.projectName),
         readStyleGuide(config, book.projectName),
+        readChapterNotes(config, book.projectName, n),
       ]);
 
       let review = await readReview(config, book.projectName, n);
@@ -584,7 +619,7 @@ export async function startServer(webDistPath?: string): Promise<void> {
       sse.send('progress', { message: `Rewriting chapter ${n} (writer LLM)...` });
       const rewritten = await chatWriter(config, [
         { role: 'system', content: 'You are an expert fiction writer. Rewrite incorporating all review feedback. Output only chapter content in markdown.' },
-        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, original, review, n, authorNotes) },
+        { role: 'user', content: await buildChapterRewritePrompt(loreContext, styleGuide, original, review, n, authorNotes, chapterNotes ?? undefined) },
       ], { maxTokens: 8192, temperature: 0.7 });
 
       await writeChapter(config, book.projectName, n, rewritten);

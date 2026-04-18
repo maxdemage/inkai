@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check, Search } from 'lucide-react';
-import { useChapter, useChapters, useReview, useLore, useBook, useUpdateChapter } from '../hooks';
+import { ArrowLeft, ArrowRight, BookOpen, X, PanelRight, PanelRightClose, Type, Pencil, Check, Search, StickyNote } from 'lucide-react';
+import { useChapter, useChapters, useReview, useLore, useBook, useUpdateChapter, useChapterNotes, useUpdateChapterNotes } from '../hooks';
 import { useTheme } from '../theme';
 
 // ── Lore term extraction ────────────────────────────────────────
@@ -358,6 +358,25 @@ export default function ReadPage() {
   const [settings, setSettings] = useState<ReadingSettings>(loadSettings);
   const [readProgress, setReadProgress] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Chapter notes
+  const { data: notesContent = '' } = useChapterNotes(id!, chapterNum);
+  const updateNotes = useUpdateChapterNotes();
+  const [showNotes, setShowNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState('');
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (showNotes) {
+      setNotesDraft(notesContent);
+      setTimeout(() => notesRef.current?.focus(), 0);
+    }
+  }, [showNotes, notesContent]);
+
+  const saveNotes = useCallback(() => {
+    updateNotes.mutate({ bookId: id!, number: chapterNum, content: notesDraft });
+    setShowNotes(false);
+  }, [id, chapterNum, notesDraft, updateNotes]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -789,6 +808,61 @@ export default function ReadPage() {
       {/* ── Lore term popover ────────────────────────────────────── */}
       {activeTerm && !showLore && (
         <LorePopover term={activeTerm} onClose={() => setActiveTerm(null)} />
+      )}
+
+      {/* ── Floating notes button ───────────────────────────────── */}
+      <button
+        onClick={() => setShowNotes(s => !s)}
+        className="fixed bottom-5 left-5 z-30 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105"
+        style={{
+          background: showNotes || notesContent ? 'var(--accent)' : 'var(--surface-muted)',
+          color: showNotes || notesContent ? 'var(--bg)' : 'var(--text-muted)',
+          border: `1px solid ${showNotes || notesContent ? 'var(--accent-strong)' : 'var(--border)'}`,
+        }}
+        title="Chapter notes"
+      >
+        <StickyNote size={18} />
+      </button>
+
+      {/* ── Notes overlay ────────────────────────────────────────── */}
+      {showNotes && (
+        <div
+          className="fixed bottom-20 left-5 z-30 w-80 rounded-2xl shadow-2xl app-panel-strong overflow-hidden"
+          style={{ borderColor: 'var(--accent-border)' }}
+        >
+          <div className="flex items-center justify-between px-4 py-2.5 border-b app-divider">
+            <span className="text-xs font-semibold app-text-primary flex items-center gap-1.5">
+              <StickyNote size={12} className="text-[color:var(--accent)]" /> Chapter {chapterNum} Notes
+            </span>
+            <button onClick={() => setShowNotes(false)} className="app-text-faint hover:text-[color:var(--text)]">
+              <X size={13} />
+            </button>
+          </div>
+          <div className="p-3">
+            <textarea
+              ref={notesRef}
+              value={notesDraft}
+              onChange={e => setNotesDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { e.preventDefault(); setShowNotes(false); }
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveNotes(); }
+              }}
+              placeholder="Write your notes, observations, and ideas for this chapter..."
+              className="w-full rounded-lg text-xs resize-none app-input min-h-[120px] p-2.5"
+              rows={6}
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[10px] app-text-faint">Ctrl+Enter to save · Esc to close</span>
+              <button
+                onClick={saveNotes}
+                disabled={updateNotes.isPending}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg transition-all app-accent-soft"
+              >
+                <Check size={10} /> {updateNotes.isPending ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

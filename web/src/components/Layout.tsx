@@ -128,8 +128,8 @@ export default function Layout() {
                   all →
                 </NavLink>
               </div>
-              <div className="space-y-0.5">
-                {recentJobs.map(j => <SidebarJob key={j.id} job={j} />)}
+              <div className="space-y-0.5 max-h-[5.5rem] overflow-y-auto">
+                {recentJobs.slice(-2).map(j => <SidebarJob key={j.id} job={j} />)}
               </div>
             </div>
           )}

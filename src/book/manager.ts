@@ -340,6 +340,34 @@ export async function readChapterPlan(
   return await readFile(filePath, 'utf-8');
 }
 
+// ─── Chapter Notes ────────────────────────────────────────────
+
+export async function readChapterNotes(
+  config: InkaiConfig,
+  projectName: string,
+  chapterNumber: number
+): Promise<string | null> {
+  const chapDir = getChaptersDir(config, projectName);
+  const filename = `notes_chapter_${String(chapterNumber).padStart(2, '0')}.md`;
+  const filePath = join(chapDir, filename);
+  if (!existsSync(filePath)) return null;
+  return await readFile(filePath, 'utf-8');
+}
+
+export async function writeChapterNotes(
+  config: InkaiConfig,
+  projectName: string,
+  chapterNumber: number,
+  content: string
+): Promise<string> {
+  const chapDir = getChaptersDir(config, projectName);
+  await mkdir(chapDir, { recursive: true });
+  const filename = `notes_chapter_${String(chapterNumber).padStart(2, '0')}.md`;
+  const filePath = join(chapDir, filename);
+  await writeFile(filePath, content, 'utf-8');
+  return filePath;
+}
+
 // ─── Writing Instructions ─────────────────────────────────────
 
 export async function writeWritingInstructions(
@@ -378,6 +406,7 @@ export async function deleteChapter(
   const filesToDelete = [
     join(chapDir, `chapter-${pad(chapterNumber)}.md`),
     join(chapDir, `review_chapter_${pad(chapterNumber)}.md`),
+    join(chapDir, `notes_chapter_${pad(chapterNumber)}.md`),
     join(plansDir, `plan-chapter-${pad(chapterNumber)}.md`),
   ];
   for (const f of filesToDelete) {
@@ -391,6 +420,7 @@ export async function deleteChapter(
     const moves: [string, string][] = [
       [join(chapDir, `chapter-${fromN}.md`), join(chapDir, `chapter-${toN}.md`)],
       [join(chapDir, `review_chapter_${fromN}.md`), join(chapDir, `review_chapter_${toN}.md`)],
+      [join(chapDir, `notes_chapter_${fromN}.md`), join(chapDir, `notes_chapter_${toN}.md`)],
       [join(plansDir, `plan-chapter-${fromN}.md`), join(plansDir, `plan-chapter-${toN}.md`)],
     ];
     for (const [from, to] of moves) {

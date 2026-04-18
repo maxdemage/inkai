@@ -279,6 +279,7 @@ The CLI reader supports:
 - **Page Up / Page Down** — scroll by page
 - **N** — next chapter
 - **P** — previous chapter
+- **E** — edit chapter notes (opens multiline input for author annotations)
 - **Q** — quit reader
 
 Chapters are displayed with formatted markdown — headings, bold, italic, scene breaks, and bullet points are all rendered in the terminal.
@@ -293,6 +294,7 @@ Open any chapter from the Book detail page. The reading view offers:
 - **Typography settings** (Type icon) — font size, typeface, background theme, and text color, all saved in the browser.
 - **Lore sidebar** — collapsible panel with every lore file; files containing terms from the chapter text are highlighted.
 - **Lore term highlighting** — click any underlined term in the text to pop up the relevant lore content.
+- **Chapter notes** — floating button in the bottom-left lets you write sticky-note annotations for the current chapter; these are saved and fed into the rewrite prompt automatically.
 
 ---
 

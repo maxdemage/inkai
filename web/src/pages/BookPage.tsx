@@ -95,6 +95,9 @@ function ChapterRow({ ch, onRead, onReview, onRewrite, onEdit, onDelete }: {
           {ch.hasReview && (
             <span className="text-[11px] px-1.5 py-0.5 rounded-full app-info">reviewed</span>
           )}
+          {ch.hasNotes && (
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full app-tag" title="Has author notes">notes</span>
+          )}
         </div>
         {ch.hasChapter && (
           <span className="text-xs app-text-faint">{ch.wordCount.toLocaleString()} words</span>
