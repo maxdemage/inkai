@@ -167,6 +167,7 @@ A full-screen, distraction-free reading experience.
 - **Edit chapter button** (pencil icon, top-right) — visible on the Chapter tab only. Navigates back to the book page and immediately opens the chapter in the Manual Editor.
 - **Lore sidebar** (collapsible, `PanelRight` icon) — lists every lore file; files containing terms found in the chapter are highlighted with a violet dot. Click a file to read it in the sidebar. A **search box** at the top of the file list filters by filename and file content (the search box is hidden when a file is open).
 - **Lore term highlighting** — H2/H3 headers and `**bold**` terms from lore files are underlined in the text. Click any to open a floating popover with the relevant lore content.
+- **Chapter notes** — a floating sticky-note button sits in the bottom-left corner. Click to open a small overlay with a textarea for writing author annotations. Notes are saved per chapter and automatically fed into the rewrite prompt. The button is highlighted when notes exist for the current chapter.
 
 #### Typography Settings (`Type` icon in the top bar)
 

@@ -319,6 +319,11 @@ Bądź szczery, ale konstruktywny. Celem jest pomóc autorowi się poprawić.`,
 === DODATKOWE INSTRUKCJE AUTORA ===
 {{authorNotes}}
 {{/if}}
+{{#if chapterNotes}}
+=== NOTATKI AUTORA DO ROZDZIAŁU ===
+Autor dołączył następujące notatki i adnotacje do tego rozdziału. Uwzględnij te obserwacje podczas przepisywania:
+{{chapterNotes}}
+{{/if}}
 Przepisz rozdział uwzględniając WSZYSTKIE uwagi z recenzji:
 - Napraw wszelkie problemy ze spójnością
 - Popraw jakość prozy zgodnie z sugestiami

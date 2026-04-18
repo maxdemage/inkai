@@ -1,7 +1,8 @@
 import type { Command } from '../types.js';
-import { readChapter } from '../book/manager.js';
+import { readChapter, readChapterNotes, writeChapterNotes } from '../book/manager.js';
 import { startReader } from '../reader.js';
 import type { ReaderPage } from '../reader.js';
+import { multilineInput } from '../multiline.js';
 import { header, error, info, success, blank } from '../ui.js';
 
 export const readCommand: Command = {
@@ -48,7 +49,25 @@ export const readCommand: Command = {
       return;
     }
 
-    await startReader(pages);
+    await startReader(pages, {
+      onNotes: async (pageIndex) => {
+        const chapterNumber = startChapter + pageIndex;
+        const existing = await readChapterNotes(ctx.config, book.projectName, chapterNumber) || '';
+        console.log('');
+        if (existing) {
+          info(`Current notes for Chapter ${chapterNumber}:`);
+          console.log(existing);
+          console.log('');
+        }
+        const notes = await multilineInput(`Notes for Chapter ${chapterNumber} (replaces existing)`);
+        if (notes.trim()) {
+          await writeChapterNotes(ctx.config, book.projectName, chapterNumber, notes);
+          success(`Notes saved for Chapter ${chapterNumber}`);
+        } else if (existing) {
+          info('Empty input — keeping existing notes.');
+        }
+      },
+    });
 
     success('Exited reader.');
     blank();

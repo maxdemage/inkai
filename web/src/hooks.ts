@@ -7,6 +7,7 @@ export const keys = {
   chapters: (bookId: string) => ['chapters', bookId] as const,
   chapter: (bookId: string, n: number) => ['chapter', bookId, n] as const,
   review: (bookId: string, n: number) => ['review', bookId, n] as const,
+  chapterNotes: (bookId: string, n: number) => ['chapter-notes', bookId, n] as const,
   lore: (bookId: string) => ['lore', bookId] as const,
   writingInstructions: (bookId: string) => ['writing-instructions', bookId] as const,
   gitStatus: (bookId: string) => ['git', bookId] as const,
@@ -28,6 +29,25 @@ export const useChapter = (bookId: string, n: number) =>
 
 export const useReview = (bookId: string, n: number, enabled = false) =>
   useQuery({ queryKey: keys.review(bookId, n), queryFn: () => api.chapters.getReview(bookId, n), enabled });
+
+export const useChapterNotes = (bookId: string, n: number) =>
+  useQuery({
+    queryKey: keys.chapterNotes(bookId, n),
+    queryFn: () => api.chapters.getNotes(bookId, n).then(r => r.content).catch(() => ''),
+    enabled: !!bookId && n > 0,
+  });
+
+export function useUpdateChapterNotes() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bookId, number, content }: { bookId: string; number: number; content: string }) =>
+      api.chapters.updateNotes(bookId, number, content),
+    onSuccess: (_r, { bookId, number }) => {
+      qc.invalidateQueries({ queryKey: keys.chapterNotes(bookId, number) });
+      qc.invalidateQueries({ queryKey: keys.chapters(bookId) });
+    },
+  });
+}
 
 export const useLore = (bookId: string) =>
   useQuery({ queryKey: keys.lore(bookId), queryFn: () => api.lore.list(bookId), enabled: !!bookId });

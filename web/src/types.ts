@@ -42,6 +42,7 @@ export interface ChapterMeta {
   number: number;
   hasChapter: boolean;
   hasReview: boolean;
+  hasNotes: boolean;
   hasPlan: boolean;
   wordCount: number;
 }

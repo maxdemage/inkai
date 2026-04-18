@@ -19,6 +19,7 @@ function renderPage(
   pageIndex: number,
   totalPages: number,
   hasPrevNext: boolean,
+  hasNotes: boolean,
 ): void {
   process.stdout.write('\x1B[2J\x1B[H');
 
@@ -56,8 +57,11 @@ function renderPage(
   const nav = hasPrevNext
     ? chalk.cyan('N') + chalk.dim(' next  ') + chalk.cyan('P') + chalk.dim(' prev  ')
     : '';
+  const notesHint = hasNotes
+    ? chalk.yellow('E') + chalk.dim(' notes  ')
+    : '';
   console.log(
-    chalk.dim('  ↑/↓ scroll  ') + nav + chalk.cyan('Q') + chalk.dim(' quit') + scrollInfo
+    chalk.dim('  ↑/↓ scroll  ') + nav + notesHint + chalk.cyan('Q') + chalk.dim(' quit') + scrollInfo
   );
 }
 
@@ -111,7 +115,12 @@ export function formatMarkdown(raw: string): string[] {
   return lines;
 }
 
-export async function startReader(pages: ReaderPage[]): Promise<void> {
+export interface ReaderOptions {
+  /** Called when user presses 'e' to edit notes. Receives the current page index. */
+  onNotes?: (pageIndex: number) => Promise<void>;
+}
+
+export async function startReader(pages: ReaderPage[], options?: ReaderOptions): Promise<void> {
   if (pages.length === 0) return;
 
   let currentPage = 0;
@@ -125,6 +134,7 @@ export async function startReader(pages: ReaderPage[]): Promise<void> {
 
   loadPage(0);
   const hasPrevNext = pages.length > 1;
+  const hasNotes = !!options?.onNotes;
 
   return new Promise<void>((resolve) => {
     const stdin = process.stdin;
@@ -135,7 +145,7 @@ export async function startReader(pages: ReaderPage[]): Promise<void> {
     const getViewHeight = () => Math.max(5, (process.stdout.rows || 24) - 5);
 
     const draw = () => {
-      renderPage(lines, scrollOffset, getViewHeight(), pages[currentPage].title, currentPage, pages.length, hasPrevNext);
+      renderPage(lines, scrollOffset, getViewHeight(), pages[currentPage].title, currentPage, pages.length, hasPrevNext, hasNotes);
     };
 
     draw();
@@ -209,6 +219,21 @@ export async function startReader(pages: ReaderPage[]): Promise<void> {
           loadPage(currentPage);
           draw();
         }
+        return;
+      }
+
+      if (hasNotes && (key === 'e' || key === 'E')) {
+        // Temporarily restore terminal for notes editing
+        stdin.removeListener('data', onKeypress);
+        stdin.setRawMode(false);
+        try {
+          await options!.onNotes!(currentPage);
+        } catch { /* ignore */ }
+        // readline.close() pauses stdin — must resume before going back to raw mode
+        stdin.resume();
+        stdin.setRawMode(true);
+        stdin.on('data', onKeypress);
+        draw();
         return;
       }
     };

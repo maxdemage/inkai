@@ -55,6 +55,10 @@ export const api = {
       req<{ ok: boolean }>(`/books/${bookId}/chapters/${n}`, { method: 'DELETE' }),
     getReview: (bookId: string, n: number) =>
       req<{ number: number; content: string }>(`/books/${bookId}/chapters/${n}/review`),
+    getNotes: (bookId: string, n: number) =>
+      req<{ number: number; content: string }>(`/books/${bookId}/chapters/${n}/notes`),
+    updateNotes: (bookId: string, n: number, content: string) =>
+      req<{ ok: boolean }>(`/books/${bookId}/chapters/${n}/notes`, { method: 'PUT', ...json({ content }) }),
     suggest: (bookId: string) =>
       req<{ suggestion: string }>(`/books/${bookId}/chapters/suggest`, { method: 'POST' }),
     create: (bookId: string, data: { guidelines: string; writingInstructions?: string }) =>

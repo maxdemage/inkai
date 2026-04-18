@@ -4,6 +4,20 @@ All notable changes to inkai are documented here.
 
 ---
 
+## 0.7.0 — 2026-04-18
+
+### Added
+- **Chapter notes** — per-chapter author annotations ("sticky notes") that persist alongside chapters.
+  - **CLI**: press `E` during reading to open a multiline notes editor for the current chapter.
+  - **GUI**: floating sticky-note button in bottom-left of the reading view opens a textarea overlay; notes auto-save.
+  - **Chapter list**: a "notes" badge appears next to chapters that have notes.
+  - **Rewrite integration**: chapter notes are automatically included in the rewrite prompt alongside the review and author direction.
+
+### Changed
+- **Sidebar jobs section** — now shows only the two most recent jobs and is scrollable, keeping the left panel compact.
+
+---
+
 ## 0.6.0 — 2026-04-14
 
 ### Added
@@ -13,6 +27,11 @@ All notable changes to inkai are documented here.
 - **Lore file search in Reading View sidebar** — the same keyword search is available in the lore panel on the right-hand side of the reading screen; hidden when a file is open, shows "No matches" when nothing passes the filter.
 - **Git tab in Book page** — view working-tree changes and recent commit history, and commit directly from the browser with a custom message.
 - **Lore Review button restored** — the "Lore Review" AI tool is back in the Lore tab alongside Enhance Lore, Story Arc, Timeline, and Characters.
+- **Chapter notes** — per-chapter author annotations ("sticky notes") that persist alongside chapters.
+  - **CLI**: press `E` during reading to open a multiline notes editor for the current chapter.
+  - **GUI**: floating sticky-note button in bottom-left of the reading view opens a textarea overlay; notes auto-save.
+  - **Chapter list**: a "notes" badge appears next to chapters that have notes.
+  - **Rewrite integration**: chapter notes are automatically included in the rewrite prompt alongside the review and author direction.
 
 ### Changed
 - **Lore tab layout** — AI Enhancing Tools are now displayed as a card grid with a short description under each button; lore files are listed one per row below the tools panel.

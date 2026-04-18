@@ -318,6 +318,11 @@ Be honest but constructive. The goal is to help the author improve.`,
 === AUTHOR'S ADDITIONAL INSTRUCTIONS ===
 {{authorNotes}}
 {{/if}}
+{{#if chapterNotes}}
+=== AUTHOR'S CHAPTER NOTES ===
+The author has attached the following notes and annotations for this chapter. Consider these observations when rewriting:
+{{chapterNotes}}
+{{/if}}
 Rewrite the chapter addressing ALL the review feedback:
 - Fix any consistency issues
 - Improve prose quality per suggestions
