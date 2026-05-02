@@ -1,9 +1,10 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Archive, RotateCcw, Send, BookMarked, Clock, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, BookOpen, Archive, RotateCcw, Send, BookMarked, Clock, ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 import { useBooks, useArchiveBook, useUnarchiveBook, useJobs } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateBookWizard from '../components/CreateBookWizard';
+import CreateBookFromIdeaModal from '../components/CreateBookFromIdeaModal';
 import { AgentContext } from '../components/Layout';
 import type { BookRecord, ChapterJob } from '../types';
 
@@ -159,6 +160,7 @@ export default function BooksPage() {
   const { openAgent } = useContext(AgentContext);
 
   const [showCreate, setShowCreate] = useState(false);
+  const [showIdea, setShowIdea] = useState(false);
   const [agentInput, setAgentInput] = useState('');
 
   const active   = books.filter(b => b.status !== 'archived');
@@ -218,13 +220,22 @@ export default function BooksPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold uppercase tracking-widest app-text-faint">Your Books</h2>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg app-accent-soft text-xs transition-colors"
-            style={{ color: 'var(--accent-strong)' }}
-          >
-            <Plus size={13} /> New Book
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowIdea(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg app-accent-soft text-xs transition-colors"
+              style={{ color: 'var(--accent-strong)' }}
+            >
+              <Lightbulb size={12} /> From Idea
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg app-accent-soft text-xs transition-colors"
+              style={{ color: 'var(--accent-strong)' }}
+            >
+              <Plus size={13} /> New Book
+            </button>
+          </div>
         </div>
 
         {active.length === 0 && archived.length === 0 ? (
@@ -274,6 +285,7 @@ export default function BooksPage() {
 
       {/* ── Modals ───────────────────────────────────────────────────────── */}
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
+      {showIdea && <CreateBookFromIdeaModal onClose={() => setShowIdea(false)} />}
     </div>
   );
 }

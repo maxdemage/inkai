@@ -73,7 +73,27 @@ You can reconfigure at any time with `/config` (or `/settings`, `/setup`):
 
 ## 3. Creating a Book
 
-Run `/create-book` (or `/new`, `/create`).
+Run `/create-book` (or `/new`, `/create`) for the guided wizard, or `/create-book-from-idea` (or `/idea`) for the quick idea-driven flow.
+
+### Quick start: Idea-driven flow (`/idea`)
+
+If you'd rather skip the wizard and just dump your thoughts, use `/create-book-from-idea` (aliases: `/idea`, `/quick-book`).
+
+You'll only be asked for:
+- **Working title** — the AI can refine it
+- **Your idea** — stream of consciousness is fine. Write as much or as little as you want.
+
+The AI will:
+1. Extract genre, type, sub-genre, purpose, and a summary from your text
+2. Create the project
+3. Save your raw idea as `lore/idea.md` (always available in the lore editor)
+4. Generate all lore files (`basic-lore.md`, `characters.md`, `story-arc.md`, etc.) using your idea as the sole source of truth
+
+This flow is also available in the web UI via the **From Idea** button next to "New Book".
+
+---
+
+### Guided wizard: `/create-book`
 
 ### Step 1 — Basic metadata
 

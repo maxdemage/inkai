@@ -848,4 +848,76 @@ Przeprowadź dokładną recenzję redakcyjną obejmującą każdy wymiar:
 - Top 3 obszary do poprawy
 - Priorytetowe poprawki przed przepisaniem`,
 
+// ─── Ekstrakcja pomysłu ───────────────────────────────────────
+
+'idea-extract-info': `Jesteś asystentem do tworzenia książek. Autor podzielił się surowym pomysłem na nową książkę.
+
+Podany tytuł: "{{title}}"
+
+Surowy pomysł:
+{{idea}}
+
+Na podstawie tego pomysłu wyodrębnij ustrukturyzowane metadane projektu książki. Wnioskuj jak najwięcej — bądź zdecydowany, nie ogólnikowy.
+
+Zwróć TYLKO poprawny JSON w tym formacie:
+{
+  "projectName": "slug-z-tytulu",
+  "title": "Ostateczny Tytuł Książki",
+  "type": "novel",
+  "genre": "fantasy",
+  "subgenre": "dark fantasy",
+  "purpose": "Rozrywka",
+  "summary": "2-3 zdaniowe streszczenie konceptu książki."
+}
+
+Zasady:
+- "projectName": tylko małe litery, cyfry i myślniki; wywodzi się z tytułu (np. "moja-wielka-powiesc").
+- "type": jedno z: novel, prose, biography, report, poetry, screenplay.
+- "genre": wybierz jeden najlepiej pasujący gatunek na podstawie pomysłu.
+- "subgenre": bardziej szczegółowy podgatunek (może być pusty jeśli niejasny).
+- "purpose": np. "Rozrywka", "Edukacja", "Pamiętnik", "Satyra".
+- "summary": zwięzłe, 2-3 zdania, napisane w trzeciej osobie, PO POLSKU.
+
+NIE zadawaj pytań wyjaśniających. Podejmuj zdecydowane decyzje na podstawie tekstu pomysłu.`,
+
+// ─── Generowanie lore z pomysłu ──────────────────────────────
+
+'idea-generate-lore': `Jesteś eksperckim asystentem do tworzenia książek. Stwórz kompleksowe dokumenty lore dla projektu książki na podstawie surowego pomysłu autora. Pisz WSZYSTKO PO POLSKU.
+
+Tytuł: "{{title}}"
+Typ: {{type}}
+Gatunek: {{genre}}
+Podgatunek: {{subgenre}}
+Autorzy: {{authors}}
+Cel: {{purpose}}
+Streszczenie: {{summary}}
+
+Oryginalny pomysł autora (użyj go jako głównego źródła prawdy):
+{{idea}}
+
+Wygeneruj następujące pliki lore jako obiekt JSON. Każdy klucz to nazwa pliku, każda wartość to treść w markdown. Wywodź wszystko z pomysłu — nie wymyślaj rzeczy sprzecznych z nim, ale rozwijaj go i wzbogacaj spójnymi detalami.
+
+WYMAGANE pliki (zawsze dołącz):
+- "basic-lore.md": Główna koncepcja, zarys scenerii, motyw przewodni, ton. 2-3 strony.
+- "extended-lore.md": Głęboki worldbuilding, historia, zasady, szczegółowe opisy. 3-5 stron.
+- "summary-of-chapters.md": Zacznij od "Nie napisano jeszcze żadnych rozdziałów.".
+- "style-of-writing.md": Przewodnik stylu pisania — głos, czas, POV, styl prozy, preferencje tempa.
+- "story-arc.md": Łuk fabularny książki — struktura aktów, główne punkty zwrotne, wątki poboczne, cel zakończenia i kręgosłup tematyczny. 2-3 strony.
+
+OPCJONALNE pliki (dołącz w zależności od typu książki):
+{{optionalFilesDescription}}
+
+Zwróć TYLKO poprawny JSON w tym formacie:
+{
+  "files": {
+    "basic-lore.md": "# Podstawowe Lore\\n\\n...",
+    "extended-lore.md": "# Rozszerzone Lore\\n\\n...",
+    "summary-of-chapters.md": "# Podsumowanie Rozdziałów\\n\\n...",
+    "style-of-writing.md": "# Przewodnik Stylu Pisania\\n\\n...",
+    "story-arc.md": "# Łuk Fabularny\\n\\n..."
+  }
+}
+
+Treść powinna być bogata, szczegółowa i przydatna do pisania. Używaj poprawnego formatowania markdown.`,
+
 };

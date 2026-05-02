@@ -105,6 +105,40 @@ export async function buildLoreGenerationPrompt(info: {
   });
 }
 
+// ─── Idea Extraction ─────────────────────────────────────────
+
+export async function buildIdeaExtractPrompt(
+  title: string,
+  idea: string,
+): Promise<string> {
+  return loadTemplate('idea-extract-info', { title, idea });
+}
+
+// ─── Idea-Driven Lore Generation ─────────────────────────────
+
+export async function buildIdeaLorePrompt(info: {
+  title: string;
+  type: BookType;
+  genre: string;
+  subgenre: string;
+  authors: string[];
+  purpose: string;
+  summary: string;
+  idea: string;
+}): Promise<string> {
+  return loadTemplate('idea-generate-lore', {
+    title: info.title,
+    type: info.type,
+    genre: info.genre,
+    subgenre: info.subgenre,
+    authors: info.authors.join(', '),
+    purpose: info.purpose,
+    summary: info.summary,
+    idea: info.idea,
+    optionalFilesDescription: getOptionalFilesDescription(info.type),
+  });
+}
+
 // ─── Chapter Suggestion ──────────────────────────────────────
 
 export async function buildChapterSuggestionPrompt(

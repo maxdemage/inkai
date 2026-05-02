@@ -98,7 +98,8 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 |---------|---------|-------------|
 | `/help` | `/h`, `/?` | Show available commands |
 | `/config` | `/settings`, `/setup` | Configure LLM providers and settings |
-| `/create-book` | `/new`, `/create` | Create a new book project |
+| `/create-book` | `/new`, `/create` | Create a new book project (guided wizard) |
+| `/create-book-from-idea` | `/idea`, `/quick-book` | Create a book from a raw idea — AI extracts all metadata |
 | `/list` | `/ls` | List all book projects |
 | `/select [name]` | `/open`, `/use` | Select a book project to work on |
 | `/archive` | — | Archive, restore, or purge book projects |
