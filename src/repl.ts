@@ -5,6 +5,7 @@ import { changeStatusCommand } from './commands/change-status.js';
 import { charactersCommand } from './commands/characters.js';
 import { configCommand } from './commands/config.js';
 import { createBookCommand } from './commands/create-book.js';
+import { createBookFromIdeaCommand } from './commands/create-book-from-idea.js';
 import { createChapterCommand } from './commands/create-chapter.js';
 import { deleteChapterCommand } from './commands/delete-chapter.js';
 import { editBasicInfoCommand } from './commands/edit-basic-info.js';
@@ -44,6 +45,7 @@ function registerAllCommands(): void {
   registerCommand(charactersCommand);
   registerCommand(configCommand);
   registerCommand(createBookCommand);
+  registerCommand(createBookFromIdeaCommand);
   registerCommand(createChapterCommand);
   registerCommand(editBasicInfoCommand);
   registerCommand(editLoreCommand);

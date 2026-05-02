@@ -59,6 +59,8 @@ import {
   buildCharactersEditPrompt,
   buildLoreReviewPrompt,
   buildLoreReviewApplyPrompt,
+  buildIdeaExtractPrompt,
+  buildIdeaLorePrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
@@ -253,6 +255,121 @@ export async function startServer(webDistPath?: string): Promise<void> {
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }
+  });
+
+  // Idea-driven: extract metadata from raw idea text, then create book + lore (SSE stream)
+  app.post('/api/books/idea', async (req, res) => {
+    const sse = startSSE(res);
+    try {
+      const config = await loadConfig();
+      const { title, idea } = req.body as { title: string; idea: string };
+
+      if (!title?.trim() || !idea?.trim()) {
+        sse.send('error', { message: 'title and idea are required' });
+        sse.done();
+        return;
+      }
+
+      sse.send('progress', { message: 'Analysing your idea\u2026' });
+
+      // Step 1: extract structured info from the idea
+      interface ExtractedInfo {
+        projectName: string;
+        title: string;
+        type: BookType;
+        genre: string;
+        subgenre: string;
+        purpose: string;
+        summary: string;
+      }
+      let extracted: ExtractedInfo;
+      try {
+        const extractPrompt = await buildIdeaExtractPrompt(title.trim(), idea.trim());
+        const extractRaw = await chatSmall(config, [
+          { role: 'system', content: 'You are a book development assistant. Always respond with valid JSON.' },
+          { role: 'user', content: extractPrompt },
+        ], { jsonMode: true, temperature: 0.5 });
+        extracted = parseLLMJson<ExtractedInfo>(extractRaw, 'idea extraction');
+        // Sanitise projectName in case LLM produces invalid slug
+        extracted.projectName = extracted.projectName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || 'my-book';
+      } catch (err) {
+        sse.send('error', { message: 'Failed to analyse idea: ' + String(err) });
+        sse.done();
+        return;
+      }
+
+      sse.send('progress', { message: `Detected: ${extracted.type}, ${extracted.genre} \u2014 creating project\u2026` });
+
+      // Step 2: create book project
+      let book: BookRecord;
+      try {
+        book = await createBookProject(config, {
+          projectName: extracted.projectName,
+          title: extracted.title.trim() || title.trim(),
+          type: extracted.type,
+          genre: extracted.genre.trim(),
+          subgenre: (extracted.subgenre ?? '').trim(),
+          authors: ['Anonymous'],
+          purpose: (extracted.purpose ?? 'Entertainment').trim(),
+          summary: (extracted.summary ?? '').trim(),
+        });
+      } catch (err) {
+        sse.send('error', { message: 'Failed to create project: ' + String(err) });
+        sse.done();
+        return;
+      }
+
+      if (isGitAvailable() && config.git.enabled) {
+        await gitInit(getBookDir(config, book.projectName));
+      }
+
+      // Step 3: save idea.md to lore directory
+      sse.send('progress', { message: 'Saving your idea\u2026' });
+      await writeLoreFiles(config, book.projectName, {
+        'idea.md': `# Your Idea\n\n${idea.trim()}\n`,
+      });
+
+      // Step 4: generate lore from idea
+      sse.send('progress', { message: 'Generating lore files \u2014 this may take a moment\u2026' });
+      await setBookStatus(book.id, 'initial-processing');
+
+      try {
+        const lorePrompt = await buildIdeaLorePrompt({
+          title: book.title,
+          type: book.type,
+          genre: book.genre,
+          subgenre: book.subgenre,
+          authors: book.authors,
+          purpose: book.purpose,
+          summary: book.summary,
+          idea: idea.trim(),
+        });
+        const loreRaw = await chatWriter(config, [
+          { role: 'system', content: 'You are an expert book development assistant. Always respond with valid JSON containing lore files.' },
+          { role: 'user', content: lorePrompt },
+        ], { jsonMode: true, maxTokens: 8192, temperature: 0.7 });
+
+        const { files } = parseLLMJson<{ files: Record<string, string> }>(loreRaw, 'idea lore generation');
+        await writeLoreFiles(config, book.projectName, files);
+        sse.send('progress', { message: `Generated ${Object.keys(files).length} lore files.` });
+
+        if (isGitAvailable() && config.git.enabled && config.git.autoCommit) {
+          await gitCommit(getBookDir(config, book.projectName), `Initial lore for "${book.title}" (from idea)`);
+        }
+
+        await setBookStatus(book.id, 'work-in-progress');
+        sse.send('done', { book });
+      } catch (err) {
+        await setBookStatus(book.id, 'new');
+        sse.send('error', { message: 'Lore generation failed: ' + String(err), book });
+      }
+    } catch (err) {
+      sse.send('error', { message: String(err) });
+    }
+    sse.done();
   });
 
   // Final: create book + generate lore (SSE stream)

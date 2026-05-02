@@ -1,8 +1,9 @@
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
-import { BookOpen, Briefcase, Settings, Plus, ChevronRight, Bot } from 'lucide-react';
+import { BookOpen, Briefcase, Settings, Plus, ChevronRight, Bot, Lightbulb } from 'lucide-react';
 import { useState, createContext, useCallback } from 'react';
 import { useBooks, useJobs } from '../hooks';
 import CreateBookWizard from './CreateBookWizard';
+import CreateBookFromIdeaModal from './CreateBookFromIdeaModal';
 import MiniAgentModal from './MiniAgentModal';
 import StatusBadge from './StatusBadge';
 import type { BookRecord, ChapterJob } from '../types';
@@ -63,6 +64,7 @@ export default function Layout() {
   const { data: books = [] } = useBooks();
   const { data: jobs = [] } = useJobs(5000);
   const [showCreate, setShowCreate] = useState(false);
+  const [showIdea, setShowIdea] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [agentInitialQuery, setAgentInitialQuery] = useState<string | undefined>();
 
@@ -98,13 +100,23 @@ export default function Layout() {
         <div className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           <div className="flex items-center justify-between px-3 mb-2">
             <span className="text-xs font-semibold app-text-faint uppercase tracking-wider">Books</span>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="w-5 h-5 rounded app-accent-button transition-colors flex items-center justify-center"
-              title="New book"
-            >
-              <Plus size={12} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShowIdea(true)}
+                className="w-5 h-5 rounded app-accent-soft transition-colors flex items-center justify-center"
+                style={{ color: 'var(--accent-strong)' }}
+                title="From idea"
+              >
+                <Lightbulb size={11} />
+              </button>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="w-5 h-5 rounded app-accent-button transition-colors flex items-center justify-center"
+                title="New book"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
           </div>
 
           {activeBooks.length === 0 && (
@@ -194,6 +206,7 @@ export default function Layout() {
       </main>
 
       {showCreate && <CreateBookWizard onClose={() => setShowCreate(false)} />}
+      {showIdea && <CreateBookFromIdeaModal onClose={() => setShowIdea(false)} />}
       {showAgent && (
         <MiniAgentModal
           bookId={currentBookId}

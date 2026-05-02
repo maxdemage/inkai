@@ -847,4 +847,76 @@ Provide a thorough editorial review covering every dimension:
 - Top 3 areas for improvement
 - Recommended priority fixes before rewrite`,
 
+// ─── Idea Extraction ─────────────────────────────────────────
+
+'idea-extract-info': `You are a book development assistant. An author has shared a raw idea for a new book.
+
+Title provided: "{{title}}"
+
+Raw idea:
+{{idea}}
+
+From this idea, extract structured metadata for the book project. Infer as much as possible — be decisive, not vague.
+
+Return ONLY valid JSON in this exact format:
+{
+  "projectName": "url-friendly-slug-from-title",
+  "title": "Final Book Title",
+  "type": "novel",
+  "genre": "fantasy",
+  "subgenre": "dark fantasy",
+  "purpose": "Entertainment",
+  "summary": "A 2-3 sentence summary of the book concept."
+}
+
+Rules:
+- "projectName": lowercase letters, digits, and hyphens only; derived from the title (e.g. "my-great-novel").
+- "type": one of: novel, prose, biography, report, poetry, screenplay.
+- "genre": pick the single best-fit genre from the idea.
+- "subgenre": a more specific sub-genre label (can be empty string if unclear).
+- "purpose": e.g. "Entertainment", "Education", "Personal memoir", "Satire".
+- "summary": concise, 2-3 sentences, written in third person.
+
+Do NOT ask clarifying questions. Make confident decisions based on the idea text.`,
+
+// ─── Idea-Driven Lore Generation ─────────────────────────────
+
+'idea-generate-lore': `You are an expert book development assistant. Create comprehensive lore documents for a book project based on the author's raw idea.
+
+Title: "{{title}}"
+Type: {{type}}
+Genre: {{genre}}
+Sub-genre: {{subgenre}}
+Authors: {{authors}}
+Purpose: {{purpose}}
+Summary: {{summary}}
+
+Author's original idea (use this as the primary source of truth):
+{{idea}}
+
+Generate the following lore files as a JSON object. Each key is the filename, each value is the markdown content. Derive everything from the idea — do not invent things that contradict it, but do expand and enrich it with consistent details.
+
+REQUIRED files (always include):
+- "basic-lore.md": Core premise, setting overview, main themes, tone. 2-3 pages.
+- "extended-lore.md": Deep world-building, history, rules, detailed settings. 3-5 pages.
+- "summary-of-chapters.md": Start with "No chapters written yet.".
+- "style-of-writing.md": Writing style guide — voice, tense, POV, prose style, pacing preferences.
+- "story-arc.md": Book-level story arc — act structure, major turning points, subplot beats, ending target, and thematic spine. 2-3 pages.
+
+OPTIONAL files (include based on book type):
+{{optionalFilesDescription}}
+
+Return ONLY valid JSON in this format:
+{
+  "files": {
+    "basic-lore.md": "# Basic Lore\\n\\n...",
+    "extended-lore.md": "# Extended Lore\\n\\n...",
+    "summary-of-chapters.md": "# Chapter Summary\\n\\n...",
+    "style-of-writing.md": "# Writing Style Guide\\n\\n...",
+    "story-arc.md": "# Story Arc\\n\\n..."
+  }
+}
+
+Make the content rich, detailed, and useful for writing. Use proper markdown formatting.`,
+
 };
