@@ -89,6 +89,8 @@ export interface GitStatusResult {
   log: GitLogEntry[];
 }
 
+export interface GitDiffResult { diff: string; file: string; hash?: string; }
+
 // ── Mini Agent ──────────────────────────────────────────────────
 export interface GuiAgentSayStep      { type: 'say';      message: string; }
 export interface GuiAgentAskStep      { type: 'ask';      key: string; question: string; }

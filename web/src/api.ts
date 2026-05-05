@@ -1,4 +1,4 @@
-import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion, GuiAgentPlan, GitStatusResult } from './types';
+import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion, GuiAgentPlan, GitStatusResult, GitDiffResult } from './types';
 
 const BASE = '/api';
 
@@ -104,6 +104,11 @@ export const api = {
     status: (bookId: string) => req<GitStatusResult>(`/books/${bookId}/git`),
     commit: (bookId: string, message?: string) =>
       req<{ ok: boolean; message: string }>(`/books/${bookId}/git/commit`, { method: 'POST', ...json({ message: message ?? '' }) }),
+    diff: (bookId: string, file: string, hash?: string) => {
+      const params = new URLSearchParams({ file });
+      if (hash) params.set('hash', hash);
+      return req<GitDiffResult>(`/books/${bookId}/git/diff?${params}`);
+    },
   },
 };
 
