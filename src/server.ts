@@ -64,7 +64,7 @@ import {
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
 import { selectRelevantLore } from './lore.js';
-import { gitCommit, gitInit, isGitAvailable, gitStatus, checkGit } from './git.js';
+import { gitCommit, gitDiff, gitInit, isGitAvailable, gitStatus, checkGit } from './git.js';
 import { generateEpub, generateOdt } from './commands/export.js';
 import type { InkaiConfig, BookType, LoreQuestion, BookRecord, ReviewType, ReviewPersona } from './types.js';
 
@@ -1239,6 +1239,29 @@ Rules:
       if (!book) return;
       const result = await gitStatus(getBookDir(config, book.projectName));
       res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.get('/api/books/:id/git/diff', async (req, res) => {
+    try {
+      const config = await loadConfig();
+      const book = await requireBook(req.params.id, res);
+      if (!book) return;
+      if (!isGitAvailable()) { res.status(400).json({ error: 'Git not available' }); return; }
+      const file = typeof req.query.file === 'string' ? req.query.file : '';
+      const hash = typeof req.query.hash === 'string' ? req.query.hash : '';
+      // Prevent path traversal
+      if (file.includes('..') || file.startsWith('/')) {
+        res.status(400).json({ error: 'Invalid file path' }); return;
+      }
+      // Validate hash is a safe git ref (hex short-hash or full hash only)
+      if (hash && !/^[0-9a-f]{4,40}$/i.test(hash)) {
+        res.status(400).json({ error: 'Invalid hash' }); return;
+      }
+      const diff = await gitDiff(getBookDir(config, book.projectName), file || undefined, hash || undefined);
+      res.json({ diff, file, hash });
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }

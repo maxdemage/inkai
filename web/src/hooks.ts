@@ -11,6 +11,7 @@ export const keys = {
   lore: (bookId: string) => ['lore', bookId] as const,
   writingInstructions: (bookId: string) => ['writing-instructions', bookId] as const,
   gitStatus: (bookId: string) => ['git', bookId] as const,
+  gitDiff: (bookId: string, file: string, hash: string) => ['git', bookId, 'diff', file, hash] as const,
   jobs: ['jobs'] as const,
   job: (id: string) => ['jobs', id] as const,
   config: ['config'] as const,
@@ -66,6 +67,14 @@ export const useConfig = () =>
 
 export const useGitStatus = (bookId: string, enabled = false) =>
   useQuery({ queryKey: keys.gitStatus(bookId), queryFn: () => api.git.status(bookId), enabled, staleTime: 10_000 });
+
+export const useGitDiff = (bookId: string, file: string | null, hash?: string | null) =>
+  useQuery({
+    queryKey: keys.gitDiff(bookId, file ?? '', hash ?? ''),
+    queryFn: () => api.git.diff(bookId, file ?? '', hash ?? undefined),
+    enabled: !!bookId && (!!file || !!hash),
+    staleTime: hash ? 30_000 : 0,
+  });
 
 export function useUpdateBook() {
   const qc = useQueryClient();

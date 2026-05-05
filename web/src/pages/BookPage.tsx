@@ -9,7 +9,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import {
   useBook, useChapters, useLore, useUpdateBook,
-  useArchiveBook, useJobs, useDeleteChapter, useGitStatus, keys,
+  useArchiveBook, useJobs, useDeleteChapter, useGitStatus, useGitDiff, keys,
 } from '../hooks';
 import StatusBadge from '../components/StatusBadge';
 import CreateChapterModal from '../components/CreateChapterModal';
@@ -19,6 +19,7 @@ import LoreReviewModal from '../components/LoreReviewModal';
 import GenerateContentModal from '../components/GenerateContentModal';
 import ChapterActionModal from '../components/ChapterActionModal';
 import ChapterEditor from '../components/ChapterEditor';
+import { DiffViewer } from '../components/DiffViewer';
 import type { ChapterMeta, BookStatus } from '../types';
 import { api } from '../api';
 import { useQueryClient } from '@tanstack/react-query';
@@ -187,6 +188,10 @@ export default function BookPage() {
   const [commitMsg, setCommitMsg] = useState('');
   const [committing, setCommitting] = useState(false);
   const [commitResult, setCommitResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [selectedDiffFile, setSelectedDiffFile] = useState<string | null>(null);
+  const { data: diffData, isFetching: diffFetching } = useGitDiff(book?.id ?? '', selectedDiffFile);
+  const [selectedCommitHash, setSelectedCommitHash] = useState<string | null>(null);
+  const { data: commitDiffData, isFetching: commitDiffFetching } = useGitDiff(book?.id ?? '', null, selectedCommitHash);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
   const [editingLore, setEditingLore] = useState<string | null>(null);
   const [showEnhance, setShowEnhance] = useState(false);
@@ -732,10 +737,34 @@ export default function BookPage() {
                             : status === 'A' ? 'text-[color:var(--semantic-success-text)]'
                             : status === 'D' ? 'text-[color:var(--semantic-danger-text)]'
                             : 'app-text-faint';
+                          const isSelected = selectedDiffFile === file;
                           return (
-                            <div key={i} className="flex items-center gap-3 px-4 py-2 font-mono">
-                              <span className={`text-xs font-bold w-5 shrink-0 ${color}`}>{status || '?'}</span>
-                              <span className="text-xs app-text truncate">{file}</span>
+                            <div key={i}>
+                              <button
+                                onClick={() => setSelectedDiffFile(isSelected ? null : file)}
+                                className={`w-full flex items-center gap-3 px-4 py-2 font-mono text-left transition-colors hover:bg-[color:var(--hover-bg)] ${
+                                  isSelected ? 'bg-[color:var(--hover-bg)]' : ''
+                                }`}
+                              >
+                                <span className={`text-xs font-bold w-5 shrink-0 ${color}`}>{status || '?'}</span>
+                                <span className="text-xs app-text truncate flex-1">{file}</span>
+                                {status !== 'D' && (
+                                  <span className="text-[10px] app-text-faint shrink-0">
+                                    {isSelected ? '▲ hide' : '▼ diff'}
+                                  </span>
+                                )}
+                              </button>
+                              {isSelected && (
+                                <div className="border-t app-divider">
+                                  {diffFetching ? (
+                                    <div className="flex items-center gap-2 px-4 py-3 text-xs app-text-faint">
+                                      <Loader2 size={12} className="animate-spin" /> Loading diff…
+                                    </div>
+                                  ) : diffData ? (
+                                    <DiffViewer diff={diffData.diff} file={diffData.file} />
+                                  ) : null}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -752,15 +781,36 @@ export default function BookPage() {
                       <p className="px-4 py-3 text-sm app-text-faint">No commits yet.</p>
                     ) : (
                       <div className="divide-y app-divider">
-                        {gitData.log.map((entry, i) => (
-                          <div key={i} className="flex items-start gap-3 px-4 py-2.5">
-                            <code className="text-[11px] font-mono text-[color:var(--accent)] shrink-0 mt-0.5">{entry.hash}</code>
-                            <span className="flex-1 text-sm app-text leading-snug">{entry.message}</span>
-                            <span className="text-[11px] app-text-faint shrink-0 mt-0.5 whitespace-nowrap">
-                              {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            </span>
-                          </div>
-                        ))}
+                        {gitData.log.map((entry, i) => {
+                          const isSelected = selectedCommitHash === entry.hash;
+                          return (
+                            <div key={i}>
+                              <button
+                                onClick={() => setSelectedCommitHash(isSelected ? null : entry.hash)}
+                                className={`w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[color:var(--hover-bg)] ${
+                                  isSelected ? 'bg-[color:var(--hover-bg)]' : ''
+                                }`}
+                              >
+                                <code className="text-[11px] font-mono text-[color:var(--accent)] shrink-0 mt-0.5">{entry.hash}</code>
+                                <span className="flex-1 text-sm app-text leading-snug">{entry.message}</span>
+                                <span className="text-[11px] app-text-faint shrink-0 mt-0.5 whitespace-nowrap">
+                                  {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </span>
+                              </button>
+                              {isSelected && (
+                                <div className="border-t app-divider">
+                                  {commitDiffFetching ? (
+                                    <div className="flex items-center gap-2 px-4 py-3 text-xs app-text-faint">
+                                      <Loader2 size={12} className="animate-spin" /> Loading diff…
+                                    </div>
+                                  ) : commitDiffData ? (
+                                    <DiffViewer diff={commitDiffData.diff} file="" hash={entry.hash} />
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

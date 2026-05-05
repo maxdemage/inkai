@@ -77,6 +77,24 @@ export async function gitStatus(cwd: string): Promise<GitStatusResult> {
   }
 }
 
+export async function gitDiff(cwd: string, file?: string, hash?: string): Promise<string> {
+  if (!gitAvailable) return '';
+  try {
+    let args: string[];
+    if (hash) {
+      // Show the diff introduced by a specific commit
+      args = file ? ['show', hash, '--', file] : ['show', hash];
+    } else {
+      // Working tree vs HEAD (uncommitted changes)
+      args = file ? ['diff', 'HEAD', '--', file] : ['diff', 'HEAD'];
+    }
+    const { stdout } = await execFileAsync('git', args, { cwd }).catch(() => ({ stdout: '' }));
+    return stdout as string;
+  } catch {
+    return '';
+  }
+}
+
 export async function isGitRepo(cwd: string): Promise<boolean> {
   if (!gitAvailable) return false;
   try {
