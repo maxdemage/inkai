@@ -4,6 +4,14 @@ All notable changes to inkai are documented here.
 
 ---
 
+## 0.8.0 — 2026-05-05
+
+### Added
+- **Ideation** — A different aproach to start a book - no more genre selection and quesions - pure idea into a book template mechanism.
+- **git-diff** — If git is enabled you will have a full history of all changes, and you will be able to see it in a typical git view side by side;
+
+---
+
 ## 0.7.0 — 2026-04-18
 
 ### Added
