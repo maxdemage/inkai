@@ -54,7 +54,7 @@ export async function chatMedium(config: InkaiConfig, messages: ChatMessage[], o
 
 export async function chatWriter(config: InkaiConfig, messages: ChatMessage[], options?: ChatOptions): Promise<string> {
   const provider = getProviderForTier(config, 'writer');
-  return provider.chat(messages, { maxTokens: 8192, ...options });
+  return provider.chat(messages, { maxTokens: 16000, ...options });
 }
 
 export function clearProviderCache(): void {

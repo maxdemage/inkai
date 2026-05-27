@@ -83,7 +83,7 @@ export async function runChapterPipeline(
       content: 'You are an expert fiction writer. You receive a lore bible, style guide, and a detailed chapter plan. Write the complete chapter following the plan precisely. Output only the chapter in markdown.',
     },
     { role: 'user', content: writePrompt },
-  ], { maxTokens: 8192, temperature: 0.8 });
+  ], { maxTokens: 16000, temperature: 0.8 });
 
   callbacks?.onWriteComplete?.();
 
@@ -103,7 +103,7 @@ export async function runChapterPipeline(
         content: 'You are a quality assurance editor. Check the chapter against lore and plan. Fix issues directly. Always respond with valid JSON.',
       },
       { role: 'user', content: qaPrompt },
-    ], { jsonMode: true, maxTokens: 8192, temperature: 0.3 });
+    ], { jsonMode: true, maxTokens: 16000, temperature: 0.3 });
 
     try {
       const qaResult = parseLLMJson<{ changes_made: boolean; chapter?: string; issues_found?: string[] }>(qaResponse, 'chapter QA');
