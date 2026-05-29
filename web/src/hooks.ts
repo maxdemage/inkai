@@ -15,6 +15,7 @@ export const keys = {
   jobs: ['jobs'] as const,
   job: (id: string) => ['jobs', id] as const,
   config: ['config'] as const,
+  usage: ['usage'] as const,
 };
 
 export const useBooks = () => useQuery({ queryKey: keys.books, queryFn: api.books.list });
@@ -150,5 +151,16 @@ export function useUpdateConfig() {
   return useMutation({
     mutationFn: (data: Partial<import('./types').InkaiConfig>) => api.config.update(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.config }),
+  });
+}
+
+export const useUsage = (refetchInterval?: number) =>
+  useQuery({ queryKey: keys.usage, queryFn: api.usage.get, refetchInterval });
+
+export function useResetUsage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.usage.reset(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.usage }),
   });
 }

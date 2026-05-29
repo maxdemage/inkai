@@ -101,7 +101,7 @@ async function main(): Promise<void> {
       const defaults: Record<LLMProviderName, { small: string; medium: string; writer: string }> = {
         openai:    { small: 'gpt-4o-mini',            medium: 'gpt-4o',              writer: 'gpt-4o' },
         anthropic: { small: 'claude-sonnet-4-20250514', medium: 'claude-sonnet-4-20250514', writer: 'claude-opus-4-20250514' },
-        gemini:    { small: 'gemini-2.0-flash',        medium: 'gemini-2.5-pro',      writer: 'gemini-3.1-pro' },
+        gemini:    { small: 'gemini-3.1-flash-lite-preview', medium: 'gemini-3.1-pro-preview', writer: 'gemini-3.1-pro-preview' },
       };
 
       const d = defaults[provider];

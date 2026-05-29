@@ -31,7 +31,7 @@ import { storyArcCommand } from './commands/story-arc.js';
 import { summaryCommand } from './commands/summary.js';
 import { timelineCommand } from './commands/timeline.js';
 import { serveCommand } from './commands/serve.js';
-import { getAllBooks } from './db.js';
+import { usageCommand } from './commands/usage.js';import { getAllBooks } from './db.js';
 import { chatSmall } from './llm/manager.js';
 import { parseLLMJson } from './llm/parse.js';
 import type { AppContext } from './types.js';
@@ -71,6 +71,7 @@ function registerAllCommands(): void {
   registerCommand(summaryCommand);
   registerCommand(timelineCommand);
   registerCommand(serveCommand);
+  registerCommand(usageCommand);
 
   // Quit command
   registerCommand({

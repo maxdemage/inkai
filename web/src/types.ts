@@ -91,6 +91,20 @@ export interface GitStatusResult {
 
 export interface GitDiffResult { diff: string; file: string; hash?: string; }
 
+// ── Usage / cost tracking ───────────────────────────────────────
+export interface UsageTotals {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  calls: number;
+}
+export interface UsageSummary {
+  totals: UsageTotals;
+  byProvider: Record<string, UsageTotals>;
+  byModel: Record<string, UsageTotals>;
+}
+
 // ── Mini Agent ──────────────────────────────────────────────────
 export interface GuiAgentSayStep      { type: 'say';      message: string; }
 export interface GuiAgentAskStep      { type: 'ask';      key: string; question: string; }

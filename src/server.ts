@@ -4,7 +4,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { readFile, stat, open } from 'node:fs/promises';
-import { openSync } from 'node:fs';
+import { openSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { nanoid } from 'nanoid';
 
@@ -42,8 +42,7 @@ import {
   saveJob,
   type ChapterJob,
 } from './jobs.js';
-import { chatSmall, chatMedium, chatWriter } from './llm/manager.js';
-import {
+import { chatSmall, chatMedium, chatWriter } from './llm/manager.js';import {
   buildLoreQuestionsRound1Prompt,
   buildLoreQuestionsRound2Prompt,
   buildLoreGenerationPrompt,
@@ -63,12 +62,25 @@ import {
   buildIdeaLorePrompt,
 } from './prompts/templates.js';
 import { parseLLMJson } from './llm/parse.js';
+import { getUsageSummary, getUsageRecords, resetUsage } from './llm/usage.js';
 import { selectRelevantLore } from './lore.js';
 import { gitCommit, gitDiff, gitInit, isGitAvailable, gitStatus, checkGit } from './git.js';
 import { generateEpub, generateOdt } from './commands/export.js';
 import type { InkaiConfig, BookType, LoreQuestion, BookRecord, ReviewType, ReviewPersona } from './types.js';
 
 const PORT = parseInt(process.env.INKAI_PORT ?? '4242', 10);
+
+// Max simultaneous background chapter writers (override via env)
+const MAX_CONCURRENT_JOBS = Math.max(1, parseInt(process.env.INKAI_MAX_JOBS ?? '3', 10));
+
+// Read package version once at startup (dist/server.js → ../package.json)
+let VERSION = '0.0.0';
+try {
+  const pkgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+  VERSION = JSON.parse(readFileSync(pkgPath, 'utf-8')).version ?? VERSION;
+} catch {
+  // keep fallback
+}
 
 // ─── Default questions (fallback when LLM fails) ──────────────────────────────
 
@@ -143,7 +155,25 @@ export async function startServer(webDistPath?: string): Promise<void> {
   // HEALTH
   // ═══════════════════════════════════════════════════════════════════════════
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true, version: '0.4.0' }));
+  app.get('/api/health', (_req, res) => res.json({ ok: true, version: VERSION }));
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USAGE — token & cost tracking (this process)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  app.get('/api/usage', (req, res) => {
+    const summary = getUsageSummary();
+    if (req.query.detailed === 'true') {
+      res.json({ ...summary, records: getUsageRecords() });
+    } else {
+      res.json(summary);
+    }
+  });
+
+  app.delete('/api/usage', (_req, res) => {
+    resetUsage();
+    res.json({ ok: true });
+  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BOOKS — list & detail
@@ -594,6 +624,17 @@ export async function startServer(webDistPath?: string): Promise<void> {
       if (!guidelines?.trim()) { res.status(400).json({ error: 'guidelines required' }); return; }
 
       const nextChapter = book.chapterCount + 1;
+
+      // Cap concurrent background writers to avoid overload / rate-limit storms
+      const activeJobs = (await listJobs()).filter(
+        j => (j.status === 'running' || j.status === 'pending') && isJobProcessAlive(j.pid),
+      );
+      if (activeJobs.length >= MAX_CONCURRENT_JOBS) {
+        res.status(429).json({
+          error: `Too many active writing jobs (${activeJobs.length}/${MAX_CONCURRENT_JOBS}). Wait for one to finish.`,
+        });
+        return;
+      }
 
       const [styleGuide, chapterSummary, existingInstructions] = await Promise.all([
         readStyleGuide(config, book.projectName),
@@ -1423,6 +1464,15 @@ Rules:
       res.sendFile(join(webDistPath, 'index.html'));
     });
   }
+
+  // ─── Global error handler (safety net) ────────────────────────────────────
+  // Prevents unhandled errors from crashing the process or leaking stack traces.
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[inkai] Unhandled request error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 
   app.listen(PORT, '127.0.0.1', () => {
     console.log(`\n  inkai web server  →  http://localhost:${PORT}\n`);

@@ -1,4 +1,4 @@
-import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion, GuiAgentPlan, GitStatusResult, GitDiffResult } from './types';
+import type { BookRecord, ChapterMeta, ChapterJob, InkaiConfig, LoreQuestion, GuiAgentPlan, GitStatusResult, GitDiffResult, UsageSummary } from './types';
 
 const BASE = '/api';
 
@@ -93,6 +93,11 @@ export const api = {
     get: () => req<InkaiConfig>('/config'),
     update: (data: Partial<InkaiConfig>) =>
       req<{ ok: boolean }>('/config', { method: 'PUT', ...json(data) }),
+  },
+
+  usage: {
+    get: () => req<UsageSummary>('/usage'),
+    reset: () => req<{ ok: boolean }>('/usage', { method: 'DELETE' }),
   },
 
   agent: {
