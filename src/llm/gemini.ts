@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import type { LLMProvider, ChatMessage, ChatOptions } from '../types.js';
+import { withRetry } from './retry.js';
+import { recordUsage } from './usage.js';
 
 // Fiction writing needs relaxed safety — stories often include conflict, violence, and mature themes
 const SAFETY_SETTINGS = [
@@ -44,7 +46,10 @@ export class GeminiProvider implements LLMProvider {
     });
 
     try {
-      const result = await chat.sendMessage(lastMsg?.content ?? '');
+      const result = await withRetry(
+        () => chat.sendMessage(lastMsg?.content ?? ''),
+        { maxRetries: options?.maxRetries, timeoutMs: options?.timeoutMs },
+      );
       const response = result.response;
 
       // Check if prompt was blocked
@@ -52,11 +57,19 @@ export class GeminiProvider implements LLMProvider {
         throw new Error(`Gemini blocked the request (${response.promptFeedback.blockReason}). Try rephrasing your lore or chapter content.`);
       }
 
+      const meta = response.usageMetadata;
+      if (meta) {
+        recordUsage(this.name, this.model, meta.promptTokenCount ?? 0, meta.candidatesTokenCount ?? 0);
+      }
+
       return response.text();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('PROHIBITED_CONTENT') || msg.includes('blocked') || msg.includes('SAFETY')) {
         throw new Error('Gemini safety filter blocked this content. Fiction with conflict or mature themes may trigger this — consider using a different LLM provider for this tier.');
+      }
+      if (msg.includes('404') || msg.includes('not found') || msg.includes('is not supported for generateContent')) {
+        throw new Error(`Gemini model "${this.model}" was not found or is unavailable. Check the model name and update it with /config → "Configure LLM tiers".`);
       }
       throw err;
     }

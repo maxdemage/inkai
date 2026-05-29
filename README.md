@@ -50,7 +50,7 @@ inkai includes a full browser-based GUI. Every CLI action is available as a clic
 | **Export** | Download all chapters as EPUB or ODT directly from the book header |
 | **Reading view** | Fully themeable full-screen reader — app-theme-aware defaults, 7 backgrounds, 4 fonts, 4 font sizes, 7 text colors (all persisted); reading progress bar; chapter/review toggle; one-click edit; collapsible lore sidebar with keyword search; per-chapter author notes |
 | **Jobs** | Monitor background chapter-writing jobs with live log streaming |
-| **Settings** | Configure appearance themes, LLM providers, model tiers, git, and language |
+| **Settings** | Configure appearance themes, LLM providers, model tiers, git, and language; view live token usage & estimated cost (by model) |
 | **Agent** | Natural-language assistant — type what you want and it plans + executes the steps |
 
 > **Full GUI reference:** [GUI.md](GUI.md)
@@ -78,7 +78,9 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 - **Chapter Rewriting** — apply review feedback automatically
 - **Manual Chapter Editing** — edit any chapter directly in the GUI with dirty-state tracking and save confirmation
 - **Customisable Prompts** — edit `~/.inkai/prompts/*.md` to control how AI writes
-- **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view
+- **Background Writing** — chapter writing runs in a detached process; toast notification + live job strip in the book view; concurrent writers are capped (default 3, set `INKAI_MAX_JOBS`)
+- **Resilient LLM Calls** — every provider request automatically retries transient errors (rate limits, 5xx, network blips) with exponential backoff and is guarded by a request timeout
+- **Token & Cost Tracking** — per-session token counts and estimated USD cost, broken down by model and provider (CLI `/usage` command, the Settings page in the GUI, or `GET /api/usage`)
 - **CLI Book Reader** — read chapters in a comfortable terminal reader with keyboard navigation
 - **GUI Theme System** — curated dark and light workspace themes with persisted selection and broad styling coverage across the web UI
 - **GUI Reading View** — fully themeable reader (7 backgrounds including App Theme, 4 fonts, 4 sizes, 7 text colors including Theme, all persisted); dark app themes now default to dark reader surfaces; lore sidebar with keyword search
@@ -104,6 +106,7 @@ Open **http://localhost:5173** — Vite proxies all `/api` requests to `:4242`.
 | `/select [name]` | `/open`, `/use` | Select a book project to work on |
 | `/archive` | — | Archive, restore, or purge book projects |
 | `/jobs` | `/bg`, `/background` | Show background writing jobs (`/jobs clear` to remove finished) |
+| `/usage` | `/cost`, `/tokens` | Show LLM token usage and estimated cost for the session (`/usage reset` to clear) |
 | `/serve` | — | Start the web UI server on port 4242 (or `--port N`) |
 | `/reset-prompts` | `/prompts-reset` | Reset prompt files to defaults (asks language) |
 | `/deselect` | `/close`, `/back` | Deselect current book project |

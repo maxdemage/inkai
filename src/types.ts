@@ -63,11 +63,37 @@ export interface ChatOptions {
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
+  /** Hard wall-clock limit for a single request, in milliseconds. */
+  timeoutMs?: number;
+  /** Maximum retry attempts on transient errors (default 3). */
+  maxRetries?: number;
 }
 
 export interface LLMProvider {
   name: LLMProviderName;
   chat(messages: ChatMessage[], options?: ChatOptions): Promise<string>;
+}
+
+// ─── Token usage / cost tracking ─────────────────────────────
+
+export interface LLMUsage {
+  provider: LLMProviderName;
+  model: string;
+  tier?: LLMTier;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  /** Estimated cost in USD (0 when pricing is unknown). */
+  costUsd: number;
+  timestamp: string;
+}
+
+export interface UsageTotals {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  calls: number;
 }
 
 // ─── Config Types ─────────────────────────────────────────────

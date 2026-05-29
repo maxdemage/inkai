@@ -4,6 +4,21 @@ All notable changes to inkai are documented here.
 
 ---
 
+## 0.8.2 — 2026-05-29
+
+### Added
+- **Resilient LLM calls** — every OpenAI / Anthropic / Gemini request now retries transient errors (429, 5xx, network failures) with exponential backoff + jitter, and is guarded by a per-request timeout.
+- **Token & cost tracking** — per-session token counts and estimated USD cost, aggregated by model and provider. Usage is persisted to an append-only log at `~/.inkai/usage.jsonl`, so it survives restarts and is shared across the CLI, web server, and background worker. New `/usage` CLI command (aliases `/cost`, `/tokens`; `/usage reset` to clear), a **Token Usage & Cost** panel on the GUI Settings page, and a `GET /api/usage` endpoint.
+- **Concurrency cap for background writers** — caps simultaneous chapter-writing jobs (default 3, configurable via `INKAI_MAX_JOBS`) to avoid rate-limit storms.
+
+### Fixed
+- `/api/health` now reports the real package version instead of a hardcoded `0.4.0`.
+
+### Changed
+- Added a global Express error handler so unexpected errors return a clean 500 instead of leaking stack traces or crashing the server.
+
+---
+
 ## 0.8.0 — 2026-05-05
 
 ### Added

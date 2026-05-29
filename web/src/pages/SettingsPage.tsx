@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Eye, EyeOff, Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { useConfig, useUpdateConfig } from '../hooks';
+import { Save, Loader2, Eye, EyeOff, Check, ChevronDown, ChevronUp, BarChart3, RotateCcw } from 'lucide-react';
+import { useConfig, useUpdateConfig, useUsage, useResetUsage } from '../hooks';
 import type { InkaiConfig, LLMProviderName, LLMTier } from '../types';
 import { useTheme } from '../theme';
 
@@ -13,7 +13,7 @@ const PROVIDERS: { id: LLMProviderName; label: string; placeholder: string }[] =
 const TIER_MODELS: Record<LLMProviderName, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
   anthropic: ['claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'claude-haiku-3-5-20241022'],
-  gemini: ['gemini-2.5-pro-preview-03-25', 'gemini-2.0-flash-001', 'gemini-1.5-pro'],
+  gemini: ['gemini-3.1-pro-preview', 'gemini-3.1-flash-lite-preview', 'gemini-2.5-pro', 'gemini-2.0-flash'],
 };
 
 const TIER_LABELS: Record<LLMTier, { label: string; desc: string }> = {
@@ -58,6 +58,97 @@ function ApiKeyField({ provId, label, placeholder, value, onChange }: {
         <p className="text-xs app-text-faint">API key is already configured. Leave blank to keep current.</p>
       )}
     </div>
+  );
+}
+
+function fmtTokens(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
+function fmtCost(usd: number): string {
+  if (usd === 0) return '~$0.00';
+  return usd < 0.01 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
+}
+
+function UsagePanel() {
+  const { data: usage, isLoading } = useUsage(5000);
+  const resetUsage = useResetUsage();
+
+  const totals = usage?.totals;
+  const models = usage ? Object.entries(usage.byModel) : [];
+
+  return (
+    <section className="app-panel rounded-2xl p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold app-text-primary flex items-center gap-2">
+            <BarChart3 size={16} /> Token Usage &amp; Cost
+          </h2>
+          <p className="text-sm app-text-muted mt-0.5">
+            Cumulative LLM tokens across all books, with rough cost estimates. Persisted to disk
+            (<code>~/.inkai/usage.jsonl</code>) and shared across the CLI, server, and background worker.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => resetUsage.mutate()}
+          disabled={resetUsage.isPending || !totals?.calls}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg app-ghost-button transition-colors disabled:opacity-50"
+        >
+          <RotateCcw size={13} /> Reset
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm app-text-faint">Loading…</p>
+      ) : !totals || totals.calls === 0 ? (
+        <p className="text-sm app-text-faint">No LLM calls recorded yet.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Calls', value: fmtTokens(totals.calls) },
+              { label: 'Prompt tokens', value: fmtTokens(totals.promptTokens) },
+              { label: 'Output tokens', value: fmtTokens(totals.completionTokens) },
+              { label: 'Est. cost', value: fmtCost(totals.costUsd) },
+            ].map(stat => (
+              <div key={stat.label} className="rounded-xl border app-divider px-3 py-2.5 app-panel-strong">
+                <div className="text-xs app-text-faint">{stat.label}</div>
+                <div className="text-lg font-semibold app-text-primary tabular-nums">{stat.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium app-text-muted uppercase tracking-wide">By model</div>
+            <div className="rounded-xl border app-divider overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="app-panel-strong text-left app-text-faint">
+                    <th className="px-3 py-2 font-medium">Model</th>
+                    <th className="px-3 py-2 font-medium text-right">Tokens</th>
+                    <th className="px-3 py-2 font-medium text-right">Calls</th>
+                    <th className="px-3 py-2 font-medium text-right">Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {models
+                    .sort((a, b) => b[1].costUsd - a[1].costUsd)
+                    .map(([model, t]) => (
+                      <tr key={model} className="border-t app-divider">
+                        <td className="px-3 py-2 app-text font-mono text-xs truncate max-w-[200px]">{model}</td>
+                        <td className="px-3 py-2 text-right app-text tabular-nums">{fmtTokens(t.totalTokens)}</td>
+                        <td className="px-3 py-2 text-right app-text-muted tabular-nums">{t.calls}</td>
+                        <td className="px-3 py-2 text-right app-text tabular-nums">{fmtCost(t.costUsd)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -262,6 +353,8 @@ export default function SettingsPage() {
             );
           })}
         </section>
+
+        <UsagePanel />
 
         <section className="app-panel rounded-2xl p-5 space-y-4">
           <h2 className="text-base font-semibold app-text-primary">General</h2>
